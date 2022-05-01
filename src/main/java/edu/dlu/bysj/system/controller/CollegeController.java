@@ -49,9 +49,9 @@ public class CollegeController {
     @RequiresPermissions({"college:list"})
     @ApiOperation(value = "查询学院列表(根据学校id)")
     public CommonResult<TotalPackageVo<College>> collegeList(
-            @Valid CommonPage page, HttpServletRequest request, @RequestParam Integer schoolId) {
-//        String token = request.getHeader("jwt");
-//        Integer schoolId = JwtUtil.getSchoolId(token);
+            @Valid CommonPage page, HttpServletRequest request) {
+        String token = request.getHeader("jwt");
+        Integer schoolId = JwtUtil.getSchoolId(token);
         // 根据学校id查询学院并进行分页;
         TotalPackageVo<College> colleges = collegeService.collegePagination(page, schoolId);
         return CommonResult.success(colleges);
