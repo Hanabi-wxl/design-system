@@ -1,6 +1,5 @@
-package edu.dlu.bysj.system.query;
+package edu.dlu.bysj.system.model.query;
 
-import io.swagger.models.auth.In;
 import lombok.Data;
 
 import java.io.Serializable;

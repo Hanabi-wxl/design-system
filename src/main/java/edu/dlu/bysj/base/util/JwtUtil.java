@@ -13,9 +13,9 @@ import java.util.List;
  */
 public class JwtUtil {
     /**
-     * 设置过期时间 30 分钟 ,暂时修改为 300分钟有效
+     * 设置过期时间 60 分钟 ,暂时修改为 3小时有效
      */
-    private static final long TOKEN_EXPIRATION = 30 * 60 * 1000;
+    private static final long TOKEN_EXPIRATION = 3 * 60 * 60 * 1000;
 
     /**
      * 设置加密的密钥

@@ -7,6 +7,14 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
+
+/*
+ * @Description: 雪花算法 使用时单独注入
+ * @Author: sinre
+ * @Date: 2022/5/1 22:06
+ * @param null
+ * @return
+ **/
 @Component
 @Slf4j
 public class SnowflakeConfig {
@@ -17,7 +25,6 @@ public class SnowflakeConfig {
     @PostConstruct
     public void init(){
         workerId = NetUtil.ipv4ToLong(NetUtil.getLocalhostStr());
-        log.info("当前机器的workId:{}",workerId);
     }
     public synchronized long snowflakeId(){
         return snowflake.nextId();

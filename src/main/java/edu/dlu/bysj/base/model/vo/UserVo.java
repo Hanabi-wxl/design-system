@@ -24,8 +24,9 @@ public class UserVo {
     @ApiModelProperty(value = "性别")
     private String sex;
     @ApiModelProperty(value = "班级")
-    private String classId;
-
+    private Integer classId;
+    @ApiModelProperty(value = "班级")
+    private String className;
     @ApiModelProperty(value = "专业名称")
     private String majorName;
     @ApiModelProperty(value = "手机号")

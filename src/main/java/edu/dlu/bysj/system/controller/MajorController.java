@@ -7,7 +7,7 @@ import edu.dlu.bysj.base.model.vo.MajorVo;
 import edu.dlu.bysj.base.model.vo.TotalPackageVo;
 import edu.dlu.bysj.base.result.CommonResult;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
-import edu.dlu.bysj.system.query.MajorQueryDto;
+import edu.dlu.bysj.system.model.query.MajorQueryDto;
 import edu.dlu.bysj.system.service.MajorService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -16,8 +16,6 @@ import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import javax.validation.constraints.Min;
 
 /**
  * @author XiangXinGang

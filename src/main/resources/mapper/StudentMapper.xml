@@ -59,7 +59,7 @@
             </if>
 
             <if test="classId != null and classId != ''">
-                student.class_id = #{classId}
+                student.class_id = #{classId},
             </if>
             # 用来组织以上条件都不满足时出现的sql异常;
             student.status = 1
@@ -95,10 +95,13 @@
         student.phone_number as phone_number,
         student.email as email,
         student.can_use as can_use,
-        m.name as majorName
+        m.name as majorName,
+        c.name as className
         from student
         inner join major m
         on student.major_id = m.id
+        inner join class c
+        on c.id = student.class_id
         where student.status = 1
         and student.major_id = #{majorId}
         <if test="userName != null and userName != ''">

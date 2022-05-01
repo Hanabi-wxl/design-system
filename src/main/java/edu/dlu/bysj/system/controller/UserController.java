@@ -4,7 +4,8 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import edu.dlu.bysj.base.model.dto.UserInitDto;
+import edu.dlu.bysj.system.model.dto.UserAccountDto;
+import edu.dlu.bysj.system.model.dto.UserInitDto;
 import edu.dlu.bysj.base.model.entity.Student;
 import edu.dlu.bysj.base.model.entity.Teacher;
 import edu.dlu.bysj.base.model.entity.TeacherRole;
@@ -17,6 +18,7 @@ import edu.dlu.bysj.base.model.vo.UserVo;
 import edu.dlu.bysj.base.result.CommonResult;
 import edu.dlu.bysj.base.util.EncryptUtil;
 import edu.dlu.bysj.base.util.JwtUtil;
+import edu.dlu.bysj.base.util.SimpleHashUtil;
 import edu.dlu.bysj.common.service.StudentService;
 import edu.dlu.bysj.common.service.TeacherService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
@@ -288,6 +290,37 @@ public class UserController {
             Optional<Student> studentOptional = Optional.ofNullable(student);
             if (studentOptional.isPresent()) {
                 flag = pwd.equals(student.getPassword());
+            }
+        }
+        return flag ? CommonResult.success(null, "密码正确") : CommonResult.failed("密码错误");
+    }
+
+    @PostMapping(value = "/system/user/judgeOldPasswordById")
+    @LogAnnotation(content = "判断密码是否正确")
+    @RequiresPermissions({"user:judgex"})
+    @ApiOperation(value = "判断输入他人密码是否正确接口")
+    public CommonResult<Object> judgePassword(HttpServletRequest request, @RequestBody UserAccountDto accountDto) {
+        // 获取学生/教师id;
+        Integer userType = accountDto.getIsStudent();
+        Integer userId = accountDto.getUserId();
+        String pwd = accountDto.getPassword();
+        boolean flag = false;
+        // isStudent: 0为教师
+        if (userType == 0) {
+            // 教师
+            Teacher teacher = teacherService.getById(userId);
+            Optional<Teacher> teacherOptional = Optional.ofNullable(teacher);
+            if (teacherOptional.isPresent()) {
+                String password = SimpleHashUtil.generatePassword(pwd, teacher.getTeacherNumber());
+                flag = password.equals(teacher.getPassword());
+            }
+        } else {
+            // 学生
+            Student student = studentService.getById(userId);
+            Optional<Student> studentOptional = Optional.ofNullable(student);
+            if (studentOptional.isPresent()) {
+                String password = SimpleHashUtil.generatePassword(pwd, student.getStudentNumber());
+                flag = password.equals(student.getPassword());
             }
         }
         return flag ? CommonResult.success(null, "密码正确") : CommonResult.failed("密码错误");

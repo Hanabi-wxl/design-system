@@ -1,4 +1,4 @@
-package edu.dlu.bysj.base.model.dto;
+package edu.dlu.bysj.system.model.dto;
 
 import lombok.Data;
 
