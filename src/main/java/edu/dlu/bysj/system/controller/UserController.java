@@ -22,6 +22,7 @@ import edu.dlu.bysj.base.util.SimpleHashUtil;
 import edu.dlu.bysj.common.service.StudentService;
 import edu.dlu.bysj.common.service.TeacherService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
+import edu.dlu.bysj.system.model.dto.UserStateDto;
 import edu.dlu.bysj.system.service.TeacherRoleService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -168,7 +169,7 @@ public class UserController {
         return flag ? CommonResult.success(null) : CommonResult.failed();
     }
 
-    @GetMapping(value = "/system/user/changeStatus")
+    @PatchMapping(value = "/system/user/changeStatus")
     @LogAnnotation(content = "修改用户状态")
     @RequiresPermissions({"user:changeStatus"})
     @ApiOperation(value = "修改用户状态")
@@ -177,11 +178,12 @@ public class UserController {
             @ApiImplicitParam(name = "isStudents", value = "是否学生(1:是,0 ：不是)", required = true),
             @ApiImplicitParam(name = "canUse", value = "用户的使用状态", required = true)
     })
-    public CommonResult<Object> modifyUserCanUse(
-            @RequestParam("userId") String userId,
-            @RequestParam("isStudents") String isStudents,
-            @RequestParam("canUse") String canUse) {
+    public CommonResult<Object> modifyUserCanUse(@RequestBody UserStateDto userStateDto) {
         boolean flag = false;
+        String canUse = userStateDto.getCanUse();
+        String userId = userStateDto.getUserId();
+        String isStudents = userStateDto.getIsStudents();
+
         /*1,学生, 0 不是学生*/
         if (ONE.equals(isStudents)) {
             flag =
@@ -240,13 +242,13 @@ public class UserController {
         String token = request.getHeader("jwt");
         List<Integer> roleIds = JwtUtil.getRoleIds(token);
         // 判断和三种主要的交集; 专业管理员()，学院管理员,校级管理员
+
         int integer = 0;
         if (roleIds != null && !roleIds.isEmpty()) {
             integer = roleIds.stream().max((a, b) -> a - b).get();
         }
         integer = Math.min(integer, 6);
         List<Integer> param = new ArrayList<>();
-
         for (int i = 3; i < integer; i++) {
             param.add(i);
         }
