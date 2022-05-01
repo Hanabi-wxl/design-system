@@ -156,12 +156,12 @@ public class UserController {
         /*1,学生, 0 教师*/
         if (ONE.equals(isStudent)) {
             flag =
-                    studentService.update(
-                            null, new UpdateWrapper<Student>().set("password", password).eq("id", userId));
+                studentService.update(
+                        null, new UpdateWrapper<Student>().set("password", password).eq("id", userId));
         } else {
             flag =
-                    teacherService.update(
-                            null, new UpdateWrapper<Teacher>().set("password", password).eq("id", userId));
+                teacherService.update(
+                        null, new UpdateWrapper<Teacher>().set("password", password).eq("id", userId));
         }
         return flag ? CommonResult.success(null) : CommonResult.failed();
     }
