@@ -2,11 +2,9 @@ package edu.dlu.bysj.notification.controller;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import edu.dlu.bysj.base.model.entity.Major;
 import edu.dlu.bysj.base.model.entity.Notice;
 import edu.dlu.bysj.base.model.entity.NoticeFile;
-import edu.dlu.bysj.base.model.enums.NoticeStatusEnum;
-import edu.dlu.bysj.base.model.enums.NoticeTypeEnum;
 import edu.dlu.bysj.base.model.query.NoticeListQuery;
 import edu.dlu.bysj.base.model.vo.AddNoticeVo;
 import edu.dlu.bysj.base.model.vo.NoticeVo;
@@ -17,6 +15,7 @@ import edu.dlu.bysj.log.annotation.LogAnnotation;
 import edu.dlu.bysj.notification.service.NoticeFileService;
 import edu.dlu.bysj.notification.service.NoticeService;
 import edu.dlu.bysj.paper.service.FileInformationService;
+import edu.dlu.bysj.system.service.MajorService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
@@ -49,13 +48,17 @@ public class NotifyController {
 
     private final NoticeFileService noticeFileService;
 
+    private final MajorService majorService;
+
     private final FileInformationService fileInformationService;
 
 
     public NotifyController(NoticeService noticeService,
                             NoticeFileService noticeFileService,
-                            FileInformationService fileInformationService) {
+                            FileInformationService fileInformationService,
+                            MajorService majorService) {
         this.noticeService = noticeService;
+        this.majorService = majorService;
         this.noticeFileService = noticeFileService;
         this.fileInformationService = fileInformationService;
     }
@@ -66,34 +69,17 @@ public class NotifyController {
     @ApiOperation(value = "查询本专业通知列表")
     public CommonResult<TotalPackageVo<NoticeVo>> obtainNotifyList(@Valid NoticeListQuery query,
                                                                    HttpServletRequest request) {
-        String jwt = request.getHeader("jwt");
-        TotalPackageVo<NoticeVo> noticeVoTotalPackageVo = new TotalPackageVo<>();
-        if (!StringUtils.isEmpty(jwt)) {
-            QueryWrapper<Notice> wrapper = null;
-            if (query.getSearch() != null && !StringUtils.isEmpty(query.getSearch())) {
-                wrapper = new QueryWrapper<Notice>().eq("major_id", JwtUtil.getMajorId(jwt)).like("title", query.getSearch());
-            } else {
-                wrapper = new QueryWrapper<Notice>().eq("major_id", JwtUtil.getMajorId(jwt));
-            }
 
-            Page<Notice> page = new Page<>(query.getPageNumber(), query.getPageSize());
-            Page<Notice> noticeList = noticeService.page(page, wrapper);
-            long total = noticeList.getTotal();
-            List<NoticeVo> result = new ArrayList<>();
-            if (page.getRecords() != null && !page.getRecords().isEmpty()) {
-                for (Notice element : page.getRecords()) {
-                    NoticeVo noticeVo = new NoticeVo();
-                    noticeVo.setNoticeName(element.getTitle());
-                    noticeVo.setTime(element.getDate());
-                    noticeVo.setUnit(NoticeTypeEnum.noticeMessage(element.getType()));
-                    noticeVo.setNoticeId(element.getId());
-                    noticeVo.setImportance(NoticeStatusEnum.noticeStatus(element.getImportance()));
-                    result.add(noticeVo);
-                }
-            }
-            noticeVoTotalPackageVo.setTotal((int) total);
-            noticeVoTotalPackageVo.setArrays(result);
-        }
+        String jwt = request.getHeader("jwt");
+        Integer majorId = JwtUtil.getMajorId(jwt);
+        Major major = majorService.getOne(new QueryWrapper<Major>().eq("id", majorId));
+        Integer collegeId = major.getCollegeId();
+        List<NoticeVo> allNoticeList = noticeService.allNoticeList(majorId,collegeId);
+
+        TotalPackageVo<NoticeVo> noticeVoTotalPackageVo = new TotalPackageVo<>();
+        noticeVoTotalPackageVo.setTotal(allNoticeList.size());
+        noticeVoTotalPackageVo.setArrays(allNoticeList);
+
 
         return CommonResult.success(noticeVoTotalPackageVo);
     }
@@ -103,7 +89,7 @@ public class NotifyController {
     @LogAnnotation(content = "新增/修改通知")
     @RequiresPermissions({"notice:add"})
     @ApiOperation(value = "新增/修改通知")
-    public CommonResult<Object> modifyNotice(@Valid AddNoticeVo noticeVo,
+    public CommonResult<Object> modifyNotice( @RequestBody AddNoticeVo noticeVo,
                                              HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
         boolean noticeFlag = false;
@@ -142,7 +128,21 @@ public class NotifyController {
 
         return noticeFlag ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
     }
-
+//
+//    @RequiresPermissions({"notice:list"})
+//    @GetMapping(value = "/notice/getNoticeById/{noticeId}")
+//    @ApiOperation(value = "获取已增消息用于修改")
+//    public CommonResult<Object> getNoticeById(@PathVariable("noticeId") @NotNull Integer noticeId){
+//
+//        List<QueryWrapper<Notice>> notice = new ArrayList<>();
+//
+//        QueryWrapper<Notice> queryWrapper = new QueryWrapper<>();
+//        queryWrapper.eq("id",noticeId);
+//
+//        notice.add(queryWrapper);
+//
+//        return CommonResult.success(notice);
+//    }
 
     @GetMapping(value = "/notice/detail/{noticeId}")
     @LogAnnotation(content = "查看通知详情")
@@ -172,7 +172,8 @@ public class NotifyController {
     @ApiOperation(value = "删除通知")
     @ApiImplicitParam(name = "noticeId", value = "通知id")
     public CommonResult<Object> deleteNotice(@PathVariable("noticeId") @NotNull Integer noticeId) {
-        boolean fileFlag = noticeFileService.remove(new QueryWrapper<NoticeFile>().eq("notice_id", noticeId));
+//        boolean fileFlag = noticeFileService.remove(new QueryWrapper<NoticeFile>().eq("notice_id", noticeId));
+        boolean fileFlag = true;
         boolean noticeFlag = noticeService.removeById(noticeId);
         return (fileFlag && noticeFlag) ? CommonResult.success("删除成功") : CommonResult.failed("删除失败");
     }

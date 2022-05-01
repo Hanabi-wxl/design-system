@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.notification.mapper.NoticeMapper">
+    <select id="allNoticeList" resultType="edu.dlu.bysj.base.model.vo.NoticeVo">
+        SELECT
+               notice.id as noticeId,
+            notice.title as noticeName,
+            notice.date as time,
+            notice.sender_id as unit,
+            notice.importance as importance,
+            notice.type as type
+        FROM notice
+        WHERE TYPE = 0
+                OR (TYPE = 2 AND major_id = #{majorId})
+                OR (TYPE = 1 AND college_id = #{collegeId})
+    </select>
+</mapper>

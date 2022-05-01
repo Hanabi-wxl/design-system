@@ -21,10 +21,14 @@ public class NoticeVo {
     @ApiModelProperty(value = "时间")
     @JsonFormat(pattern = "yyy-MM-dd:hh:mm:ss", timezone = "GMT+8")
     private LocalDateTime time;
-    @ApiModelProperty(value = "发布单位(通知类型（0：全校通知，1：学院通知，2：专业通知）)")
+    @ApiModelProperty(value = "发布单位(通知类型（0：校，1：学院通知，2：专业通知）)")
     private String unit;
     @ApiModelProperty(value = "消息id")
     private Integer noticeId;
     @ApiModelProperty(value = "通知状态（0：置顶，1：普通，2：隐藏）")
     private String importance;
+    @ApiModelProperty(value = "通知状态（0：置顶，1：普通，2：隐藏）")
+    private Integer type;
+    @ApiModelProperty(value = "通知状态（0：置顶，1：普通，2：隐藏）")
+    private String typeName;
 }
