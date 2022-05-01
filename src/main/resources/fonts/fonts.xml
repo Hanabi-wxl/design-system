@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<fontFamilies>
+    <fontFamily name="宋体"><!--字体名称-->
+        <normal>fonts/SimSunFont.ttf</normal><!--字体文件的路径-->
+        <bold>fonts/SimSunFont.ttf</bold>
+        <italic>fonts/SimSunFont.ttf</italic>
+        <boldItalic>fonts/SimSunFont.ttf</boldItalic>
+        <pdfEncoding>Identity-H</pdfEncoding><!--这里的定义就与上面1.1的图设置相匹配了-->
+        <pdfEmbedded>true</pdfEmbedded>
+        <exportFonts>
+            <export key="net.sf.jasperreports.html">'宋体', Arial, Helvetica, sans-serif</export>
+            <export key="net.sf.jasperreports.xhtml">'宋体', Arial, Helvetica, sans-serif</export>
+        </exportFonts>
+    </fontFamily>
+</fontFamilies>

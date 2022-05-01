@@ -1,0 +1,41 @@
+package edu.dlu.bysj.document.service;
+
+import java.io.IOException;
+import java.util.List;
+
+import javax.servlet.http.HttpServletResponse;
+
+import edu.dlu.bysj.document.entity.PaperCoverTemplate;
+import edu.dlu.bysj.document.entity.SubjectApproveFormTemplate;
+
+/**
+ * @author XiangXinGang
+ * @date 2021/11/17 16:05
+ */
+public interface FileDownLoadService {
+    /**
+     * 打包该专业的下载论文封皮信息的
+     * 
+     * @param majorId
+     * @return
+     */
+    List<PaperCoverTemplate> packPaperCoverData(Integer majorId);
+
+    /**
+     * 打包题目审批表数据
+     * 
+     * @param subjectId
+     * @return
+     */
+    SubjectApproveFormTemplate packPageSubjectApproveFormData(String subjectId);
+
+    /**
+     * 下载选题统计表
+     * 
+     * @param majorId
+     *            专业id
+     * @param response
+     *            返回结果
+     */
+    void staticsSubjectTable(Integer majorId, HttpServletResponse response) throws IOException;
+}

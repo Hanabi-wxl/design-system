@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.common.mapper.TeacherMapper">
+
+    <resultMap id="teacherLimitMap" type="edu.dlu.bysj.base.model.vo.UserVo">
+        <id column="id" property="userId"/>
+        <result column="teacher_number" property="userNumber"/>
+        <result column="teacherName" property="userName"/>
+        <result column="sex" property="sex"/>
+        <result column="majorName" property="majorName"/>
+        <result column="phone_number" property="phone"/>
+        <result column="email" property="email"/>
+        <result column="can_use" property="canUse"/>
+    </resultMap>
+
+    <resultMap id="collegeMajorMap" type="edu.dlu.bysj.base.model.vo.CollegeMajorVo">
+        <id column="id" property="majorId"/>
+        <result column="name" property="majorName"/>
+    </resultMap>
+
+    <!-- adminApprovalListPagination该查询结果集映射   -->
+    <resultMap id="adminApprovalMap" type="edu.dlu.bysj.base.model.dto.AdminApprovalConvey">
+        <id column="id" property="subjectId"/>
+        <result column="subject_name" property="subjectName"/>
+        <result column="first_teacher_id" property="firstTeacherId"/>
+        <result column="second_teacher_id" property="secondTeacherId"/>
+        <result column="student_id" property="studentId"/>
+        <result column="filing_number" property="fillingNumber"/>
+        <result column="content" property="progress"/>
+    </resultMap>
+
+    <update id="updateTeacherInformation">
+        update teacher
+        <set>
+            <if test="userName != null and userName != '' ">
+                teacher.name = #{userName},
+            </if>
+
+            <if test="sex != null and sex !=''">
+                teacher.sex = #{sex},
+            </if>
+            <if test="phone != null and phone != ''">
+                teacher.phone_number = #{phone},
+            </if>
+
+            <if test="email != null and email != ''">
+                teacher.email = #{email},
+            </if>
+
+            <if test="titleId != null and titleId != ''">
+                teacher.title_id = #{titleId},
+            </if>
+
+            <if test="degreeId != null and degreeId != ''">
+                teacher.degree_id = #{degreeId},
+            </if>
+
+            <if test="majorId != null and majorId != ''">
+                teacher.major_id = #{majorId},
+            </if>
+            <if test="officeId != null and officeId != ''">
+                teacher.office_id = #{officeId}
+            </if>
+            # 阻止全为以上条件不满足是sql异常;
+        </set>
+        where teacher.id = #{userId} and teacher.status = 1
+    </update>
+
+
+    <select id="teacherRoles" resultType="java.lang.Integer">
+        select distinct teacher_role.role_id
+        from teacher_role
+        where teacher_id = #{teacherId}
+    </select>
+
+    <select id="teacherLimitByQuery" resultMap="teacherLimitMap">
+        <choose>
+            <when test="userName != null and userName != ''">
+                <bind name="pattern_name" value="'%'+userName+'%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="userNumber != null and userNumber != ''">
+                <bind name="pattern_number" value="'%'+userNumber+'%'"/>
+            </when>
+        </choose>
+
+        select teacher.teacher_number as teacher_number,
+        teacher.id as id,
+        teacher.phone_number as phone_number,
+        teacher.name as teacherName,
+        teacher.sex as sex,
+        teacher.email as email,
+        teacher.can_use as can_use,
+        major.name as majorName
+        from teacher
+        inner join
+        major
+        on teacher.major_id = major.id
+        where teacher.status = 1
+        and teacher.major_id = #{majorId}
+        <if test="userName != null and userName != ''">
+            and teacher.name like #{pattern_name}
+        </if>
+
+        <if test="userNumber != null and userNumber != ''">
+            and teacher.teacher_number like #{pattern_number}
+        </if>
+        limit #{pageNumber}, #{pageSize}
+    </select>
+
+    <!--teacherLimitByQuery 的 total 总数目-->
+
+    <select id="totalTeacherLimitByQuery" resultType="java.lang.Integer">
+        <choose>
+            <when test="userName != null and userName != ''">
+                <bind name="pattern_name" value="'%'+userName+'%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="userNumber != null and userNumber != ''">
+                <bind name="pattern_number" value="'%'+userNumber+'%'"/>
+            </when>
+        </choose>
+
+        select count(*) as total
+        from teacher
+        inner join
+        major
+        on teacher.major_id = major.id
+        where teacher.status = 1
+        and teacher.major_id = #{majorId}
+        <if test="userName != null and userName != ''">
+            and teacher.name like #{pattern_name}
+        </if>
+
+        <if test="userNumber != null and userNumber != ''">
+            and teacher.teacher_number like #{pattern_number}
+        </if>
+    </select>
+
+
+    <select id="teacherDegreeAndTitle" resultType="edu.dlu.bysj.base.model.dto.DegreeAndTileConvey">
+        select degree.name as degreeName, title.name as titleName, title.level as titleLevel, office.name as officeName,
+            degree.id as degreeId,title.id as titleId,office.id as officeId, major.name as majorName, major.id as majorId
+        from (
+                 select teacher.degree_id as degreeId, teacher.title_id as titleId,teacher.office_id as officeId, teacher.major_id as majorId
+                 from teacher
+                 where teacher.id = #{teacherId}
+            ) as t
+                 inner join degree
+                            on degree.id = t.degreeId
+                 inner join title
+                            on title.id = t.titleId
+                 inner join major
+                            on major.id = t.majorId
+                 inner join office
+                            on office.id = t.officeId;
+    </select>
+    <select id="schoolIdByTeacherNumber" resultType="java.lang.Integer">
+        select college.school_id
+
+        from college
+        where college.id = (
+            select major.college_id
+
+            from major
+
+            where major.code = (
+                select teacher.major_id
+                from teacher
+                where teacher.teacher_number = #{teacherNumber}
+                  and teacher.status = 1))
+
+    </select>
+
+
+    <select id="getTeacherDetailInformation" resultType="edu.dlu.bysj.base.model.vo.TeacherDetailVo">
+        select teacher.name           as username,
+               teacher.teacher_number as teacherNumber,
+               m.name                 as major,
+               o.name                 as office,
+               d.name                 as degree,
+               teacher.sex            as sex,
+               teacher.phone_number   as phone,
+               teacher.email          as email,
+               t.name                 as title,
+               teacher.id             as teacherId
+        from teacher
+                 inner join major m
+                            on teacher.major_id = m.id
+                 inner join office o
+                            on m.id = o.major_id
+                 inner join degree d
+                            on teacher.degree_id = d.id
+                 inner join title t
+                            on teacher.title_id = t.id
+        where teacher.major_id = #{majorId}
+          and teacher.status = 1
+    </select>
+
+
+    <select id="getTeacherMajorByCollegeId" resultMap="collegeMajorMap">
+
+        select major.id, major.name
+        from major
+        where major.status = 1
+          and major.college_id in (
+            select major.college_id
+            from major
+            where major.id = #{majorId})
+
+    </select>
+
+    <select id="getAllTeacherId" resultType="java.lang.Integer">
+        select teacher.id
+        from teacher
+        where teacher.status = 1
+    </select>
+
+
+    <select id="getTeacherRoleName" resultType="edu.dlu.bysj.base.model.vo.RoleSimplifyVo">
+        select role.id as roleId , role.name as roleName
+        from role
+        <where>
+            role.status = 1
+            <if test="roleIds != null and roleIds.size() != 0">
+                and role.id in
+                <foreach collection="list" open="(" separator="," close=")" item="element">
+                    #{element}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+
+    <select id="selectAllByMajorId" resultType="edu.dlu.bysj.base.model.vo.TeacherSimplyVo">
+        select teacher.id as teacherId, teacher.name as teacherName
+        from teacher
+        <where>
+            teacher.status = 1
+            <if test="majorId != null">
+                and teacher.major_id = #{majorId}
+            </if>
+        </where>
+
+    </select>
+
+
+    <select id="selectTeacherInfoByTeacherId" resultType="edu.dlu.bysj.base.model.vo.TeacherShortenVo">
+        select y.name, y.titleName as title, y.majorName as major, y.email, college.name as college
+
+        from (select t.name, t.email, title.name as titleName, major.name as majorName, major.college_id
+              from (select teacher.name, teacher.title_id, teacher.major_id, teacher.email
+                    from teacher
+                    where teacher.status = 1
+                      and teacher.id = #{teacherId}) as t
+
+                       inner join title
+                                  on title.id = t.title_id
+
+                       inner join major
+                                  on t.major_id = major.id) as y
+                 inner join college
+                            on college.id = y.college_id;
+    </select>
+
+    <!--    查询该专业下的teacherId,用于删除缓存，无论该教师是否被逻辑删除,用于删除缓存-->
+    <select id="selectAllTeacherIdByMajorId" resultType="java.lang.Integer">
+        select teacher.id
+        from teacher
+        where teacher.major_id = #{majorId}
+    </select>
+
+    <!--    通过学院查询该学院下的所有老师集合,用户删除缓存-->
+    <select id="selectAllTeacherIdByCollegeId" resultType="java.lang.Integer">
+        select teacher.id
+        from teacher
+        where teacher.major_id in (
+            select major.id
+            from major
+            where major.college_id = #{collegeId}
+        )
+    </select>
+
+    <select id="firstAndSecondTeacherInfo" resultType="java.util.Map">
+        select t.id, t.name as teacherName, major.name as majorName, title.name as titleName
+        from (select teacher.name, teacher.major_id, teacher.title_id, teacher.id
+              from teacher
+              where teacher.status = 1
+                and teacher.id in (#{firstTeacherId}, #{secondTeacherId}))
+                 as t
+
+                 left join major
+                           on major.id = t.major_id
+
+                 left join title
+                           on title.id = t.title_id
+
+    </select>
+
+    <select id="TeacherInfoByTeacherId" resultType="java.util.Map">
+        select t.id, t.name as teacherName, t.phone_number, title.name as TitleName
+        from (select teacher.name, teacher.phone_number, teacher.title_id, teacher.id
+        from teacher
+        where teacher.status = 1
+
+        <if test="set != null and set.size > 0">
+            and teacher.id in
+            <foreach collection="set" item="value" open="(" separator="," close=")">
+                #{value}
+            </foreach>
+        </if>
+
+        <if test="set == null and list.set == 0">
+            # 考虑当集合为空会出现 语法错误，单独特判写一个永远不会到达的值, id ，不能为null
+            and teacher.id in(null)
+        </if>
+
+        ) as t
+        left join title
+        on title.id = t.title_id
+    </select>
+
+
+    <select id="adminApproveListByTeacherCondition" resultMap="adminApprovalMap">
+
+        <choose>
+            <when test="teacherName != null and teacherName != '' ">
+                <bind name="userName_pattern" value="'%'+teacherName+'%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="teacherNumber != null and teacherNumber != '' ">
+                <bind name="userNumber_pattern" value="'%'+teacherNumber+'%'"/>
+            </when>
+        </choose>
+
+        select x.id,
+        x.subject_name,
+        x.first_teacher_id,
+        x.second_teacher_id,
+        x.student_id,
+        progress.content
+        from (select subject.id,
+        subject.subject_name,
+        subject.first_teacher_id,
+        subject.second_teacher_id,
+        subject.progress_id,
+        subject.student_id
+        from subject
+        where subject.status = 1 and subject.grade = #{grade}
+        and subject.id in (
+        select subject_major.subject_id
+        from subject_major
+        where subject_major.major_id = #{majorId}
+        )) as x
+
+        left join teacher
+        on teacher.id = x.first_teacher_id or teacher.id = x.second_teacher_id
+        left join progress
+        on progress.id = x.progress_id
+
+
+        <where>
+
+            <if test=" teacherName != null and teacherName != ''">
+                teacher.name like #{userName_pattern}
+            </if>
+
+            <if test="teacherNumber != null and teacherNumber != ''">
+                and teacher.teacher_number like #{userNumber_pattern}
+            </if>
+
+        </where>
+
+        limit #{start}, #{pageSize}
+
+    </select>
+
+    <select id="totalAdminApproveListTeacherCondition" resultType="java.lang.Integer">
+        <choose>
+            <when test="teacherName != null and teacherName != '' ">
+                <bind name="userName_pattern" value="'%'+teacherName+'%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="teacherNumber != null and teacherNumber != '' ">
+                <bind name="userNumber_pattern" value="'%'+teacherNumber+'%'"/>
+            </when>
+        </choose>
+
+        select count(x.id) as total
+
+        from (select subject.id,
+        subject.first_teacher_id,
+        subject.second_teacher_id,
+        subject.progress_id
+        from subject
+        where subject.status = 1
+        and subject.grade = #{grade}
+        and subject.id in (
+        select subject_major.subject_id
+        from subject_major
+        where subject_major.major_id = #{majorId}
+        )) as x
+
+        left join teacher
+        on teacher.id = x.first_teacher_id or teacher.id = x.second_teacher_id
+        left join progress
+        on progress.id = x.progress_id
+
+        <where>
+
+            <if test=" teacherName != null and teacherName != ''">
+                teacher.name like #{userName_pattern}
+            </if>
+
+            <if test="teacherNumber != null and teacherNumber != ''">
+                and teacher.teacher_number like #{userNumber_pattern}
+            </if>
+
+        </where>
+    </select>
+
+    <select id="pluralMajorTeacherInfoByMajorId" resultType="edu.dlu.bysj.base.model.vo.TeacherSimplyVo">
+        select teacher.id as teacherId, teacher.name as teacherName
+        from teacher
+        where
+        teacher.status = 1
+        and teacher.major_id in
+        <if test="list != null and list.size > 0">
+            <foreach collection="list" item="value" open="(" separator="," close=")">
+                #{value}
+            </foreach>
+        </if>
+        <if test="list == null and list.size == 0">
+            (null)
+        </if>
+    </select>
+    <select id="ApprovelFormTeacherInfo" resultType="java.util.Map">
+        select t.id, t.name as teacherName, title.name as titleName, major.name as majorName
+
+        from (select teacher.id, teacher.name, teacher.title_id, teacher.major_id
+        from teacher
+        where teacher.status =1 and teacher.id in
+        <if test="list !=null and list.size > 0">
+            <foreach collection="list" item="value" open="(" separator="," close=")">
+                #{value}
+            </foreach>
+        </if>
+
+        <if test="list == null or list.size == 0">
+            (null)
+        </if>
+
+        ) as t
+
+        left join major
+        on t.major_id = major.id
+
+        left join title
+        on t.title_id = title.id
+    </select>
+
+
+</mapper>

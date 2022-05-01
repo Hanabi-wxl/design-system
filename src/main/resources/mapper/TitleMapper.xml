@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.common.mapper.TitleMapper">
+
+    <select id="selectAll" resultType="java.util.Map">
+        select title.id, title.name
+        from title
+        where title.status = 1
+        order by title.id
+    </select>
+</mapper>

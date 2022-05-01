@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.common.mapper.StudentMapper">
+    <resultMap id="studentLimitMap" type="edu.dlu.bysj.base.model.vo.UserVo">
+        <id column="userId" property="userId"/>
+        <result column="student_number" property="userNumber"/>
+        <result column="studentName" property="userName"/>
+        <result column="sex" property="sex"/>
+        <result column="phone_number" property="phone"/>
+        <result column="email" property="email"/>
+        <result column="can_use" property="canUse"/>
+        <result column="majorName" property="majorName"/>
+    </resultMap>
+
+    <resultMap id="adminApproveByStudentMap" type="edu.dlu.bysj.base.model.dto.ApproveConditionConvey">
+        <id column="id" property="subjectId"/>
+        <result column="subject_name" property="subjectName"/>
+        <result column="filing_number" property="fillingNumber"/>
+        <result column="first_teacher_id" property="firstTeacherId"/>
+        <result column="second_teacher_id" property="secondTeacherId"/>
+        <result column="name" property="studentName"/>
+        <result column="phone_number" property="studentPhone"/>
+        <result column="student_number" property="studentNumber"/>
+        <result column="content" property="progress"/>
+    </resultMap>
+
+    <resultMap id="adjustFirstTeacherMap" type="edu.dlu.bysj.base.model.vo.StudentInfoVo">
+        <id column="id" property="subjectId"/>
+        <result column="subject_name" property="subjectName"/>
+        <result column="name" property="studentName"/>
+        <result column="student_number" property="studentNumber"/>
+        <result column="phone_number" property="studentPhone"/>
+        <result column="content" property="progress"/>
+    </resultMap>
+
+
+    <update id="updateStudentInformation">
+        update student
+
+        <set>
+            <if test="userName != null and userName != ''">
+                student.name = #{userName},
+            </if>
+
+            <if test="sex != null and sex != ''">
+                student.sex = #{sex},
+            </if>
+
+            <if test="phone != null and phone != ''">
+                student.phone_number =#{phone},
+            </if>
+
+            <if test="email != null and email != ''">
+                student.email = #{email},
+            </if>
+
+            <if test="majorId != null and majorId != ''">
+                student.major_id = #{majorId},
+            </if>
+
+            <if test="classId != null and classId != ''">
+                student.class_id = #{classId}
+            </if>
+            # 用来组织以上条件都不满足时出现的sql异常;
+            student.status = 1
+        </set>
+        where student.id = #{userId}
+    </update>
+    <update id="eliminateStudentSubjectId">
+        update student
+        set student.subject_id = #{value}
+        where student.status = 1
+          and student.subject_id = #{subjectId}
+    </update>
+
+
+    <select id="studentLimitByQuery" resultMap="studentLimitMap">
+        <choose>
+            <when test="userName != null and userName != ''">
+                <bind name="pattern_name" value="'%'+userName+'%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="userNumber != null and userNumber != ''">
+                <bind name="pattern_number" value="'%'+userNumber+'%'"/>
+            </when>
+        </choose>
+
+        select student.student_number as student_number,
+        student.id as userId,
+        student.name as studentName,
+        student.class_id as classId,
+        student.sex as sex,
+        student.phone_number as phone_number,
+        student.email as email,
+        student.can_use as can_use,
+        m.name as majorName
+        from student
+        inner join major m
+        on student.major_id = m.id
+        where student.status = 1
+        and student.major_id = #{majorId}
+        <if test="userName != null and userName != ''">
+            and student.name like #{pattern_name}
+        </if>
+
+        <if test="userNumber != null and userNumber != ''">
+            and student_number like #{pattern_number}
+        </if>
+        limit #{pageNumber}, #{pageSize}
+    </select>
+
+    <!--    studentLimitByQuery 的总条数-->
+    <select id="totalStudentLimitByQuery" resultType="java.lang.Integer">
+        <choose>
+            <when test="userName != null and userName != ''">
+                <bind name="pattern_name" value="'%'+userName+'%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="userNumber != null and userNumber != ''">
+                <bind name="pattern_number" value="'%'+userNumber+'%'"/>
+            </when>
+        </choose>
+
+        select count(*) as total
+        from student
+        inner join major m
+        on student.major_id = m.id
+        where student.status = 1
+        and student.major_id = #{majorId}
+        <if test="userName != null and userName != ''">
+            and student.name like #{pattern_name}
+        </if>
+
+        <if test="userNumber != null and userNumber != ''">
+            and student_number like #{pattern_number}
+        </if>
+
+    </select>
+
+
+    <select id="getSchoolIdByStudentNumber" resultType="java.lang.Integer">
+        select college.school_id
+        from college
+        where college.id =
+              (select major.college_id
+               from major
+               where major.id =
+                     (select student.major_id
+                      from student
+                      where student.student_number = #{studentNumber}))
+    </select>
+    <select id="searcherInformationById" resultType="edu.dlu.bysj.base.model.vo.StudentDetailVo">
+        select t.name        as username,
+               t.number      as studentNumber,
+               m.name        as major,
+               t.sex         as sex,
+               t.PhoneNumber as phone,
+               t.email       as email,
+               c.name        as className,
+               t.id          as studentId,
+               t.canUse      as canUse
+        from (select student.id             as id,
+                     student.class_id       as classId,
+                     student.major_id       as majorId,
+                     student.name           as name,
+                     student.student_number as number,
+                     student.sex            as sex,
+                     student.email          as email,
+                     student.phone_number   as PhoneNumber,
+                     student.can_use        as canUse
+              from student
+              where student.status = 1
+                and student.id = #{userId}
+            ) as t
+                 inner join major as m
+                            on t.majorId = m.id
+                 inner join class c
+                            on c.id = t.classId
+
+    </select>
+    <select id="studentInfoById" resultType="java.util.Map">
+        select s.id,
+               s.name           as studentName,
+               major.name       as studentMajorName,
+               class.name       as ClassName,
+               s.student_number as studentNumber
+        from (select student.id, student.name, student.class_id, student.major_id, student.student_number
+              from student
+              where student.status = 1
+                and student.id = #{studentId}) as s
+
+                 left join major
+                           on major.id = s.major_id
+                 left join class
+                           on class.id = s.id
+
+
+    </select>
+
+    <select id="teacherSubjectListStudentInfo" resultType="java.util.Map">
+        select
+        s.id,
+        s.name,
+        s.student_number,
+        s.phone_number,
+        major.name as majorName,
+        class.name as className,
+        college.name as collegeName
+        from (
+            select student.name, student.student_number, student.phone_number, student.major_id, student.class_id,student.id
+            from student
+            where student.status = 1
+            <if test="list != null and list.size > 0">
+                and student.id in
+                <foreach collection="list" item="value" open="(" separator="," close=")">
+                    #{value}
+                </foreach>
+            </if>
+
+            <if test="list == null or list.size == 0">
+                and student.id in(null)
+            </if>
+        ) as s
+
+        left join major
+        on major.id = s.major_id
+
+        left join class
+        on class.id = s.class_id
+
+        left join college
+        on college.id = major.college_id
+
+    </select>
+
+
+    <select id="adminApproveStudentInfoById" resultType="java.util.Map">
+        select student.id ,student.name,student.student_number,student.phone_number
+        from student
+        where student.status = 1
+
+        <if test="list != null and list.size > 0">
+            and student.id in
+            <foreach collection="list" item="value" open="(" separator="," close=")">
+                #{value}
+            </foreach>
+        </if>
+
+
+        <if test="list == null and list.size  == 0">
+            # 当List为null 该查询是没有值的，需要写一特殊值，防止出现语法异常的情况,
+            and student.id in(null)
+        </if>
+
+    </select>
+
+
+    <select id="adminApproveByCondition" resultType="edu.dlu.bysj.base.model.dto.ApproveConditionConvey">
+        <choose>
+            <when test="studentName != null and studentName != '' ">
+                <bind name="userName_pattern" value="'%'+studentName+'%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="studentNumber != null and studentNumber != '' ">
+                <bind name="userNumber_pattern" value="'%'+studentNumber+'%'"/>
+            </when>
+        </choose>
+
+
+        select x.id,
+        x.subject_name,
+        x.filing_number,
+        x.first_teacher_id,
+        x.second_teacher_id,
+        student.name,
+        student.phone_number,
+        student.student_number,
+        progress.content
+        from (select subject.id,
+        subject.subject_name,
+        subject.filing_number,
+        subject.first_teacher_id,
+        subject.second_teacher_id,
+        subject.student_id,
+        subject.progress_id
+        from subject
+        where subject.status = 1 and subject.grade = #{grade} and subject.id in (
+        select subject_major.subject_id
+        from subject_major
+        where subject_major.major_id = #{majorId})) as x
+        left join student
+        on student.id = x.student_id
+
+        left join progress
+        on progress.id = x.progress_id
+
+        <where>
+
+            <if test="studentName != null and studentName != ''">
+                student.name like #{userName_pattern}
+            </if>
+
+            <if test="studentNumber != null and studentNumber != ''">
+                and student.student_number like #{userNumber_pattern}
+            </if>
+
+        </where>
+
+        limit #{start}, #{pageSize}
+    </select>
+
+    <select id="totalAdminApproveByCondition" resultType="java.lang.Integer">
+        <choose>
+            <when test="studentName != null and studentName != '' ">
+                <bind name="userName_pattern" value="'%'+studentName+'%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="studentNumber != null and studentNumber != '' ">
+                <bind name="userNumber_pattern" value="'%'+studentNumber+'%'"/>
+            </when>
+        </choose>
+
+        select count(x.id) as total
+        from (select subject.id,
+        subject.student_id,
+        subject.progress_id
+        from subject
+        where subject.status = 1
+        and subject.grade = #{grade}
+        and subject.id in (
+        select subject_major.subject_id
+        from subject_major
+        where subject_major.major_id = #{majorId}
+        )) as x
+        left join student
+        on student.id = x.student_id
+
+        left join progress
+        on progress.id = x.progress_id
+
+        <where>
+
+            <if test="studentName != null and studentName != ''">
+                student.name like #{userName_pattern}
+            </if>
+
+            <if test="studentNumber != null and studentNumber != ''">
+                and student.student_number like #{userNumber_pattern}
+            </if>
+
+        </where>
+
+    </select>
+    <select id="definiteSubjectStudentList" resultMap="adjustFirstTeacherMap">
+        <choose>
+            <when test="userName != null and userName != ''">
+                <bind name="name_pattern" value="'%'+userName+'%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="userNumber != null and userNumber != ''">
+                <bind name="number_pattern" value="'%'+userNumber+'%'"/>
+            </when>
+        </choose>
+
+        select subject.subject_name,
+        subject.id,
+        student.name,
+        student.student_number,
+        student.phone_number,
+        p.content
+        from student
+        inner join subject
+        on student.subject_id = subject.id
+        left join progress p
+        on subject.progress_id = p.id
+        left join teacher t
+        on subject.first_teacher_id = t.id
+        where subject.status = 1
+        and subject.major_id = 2
+        and subject.grade = 2021
+        <choose>
+            <when test="type != null and  type == 1">
+                # 学生
+                <if test="userName != null and userName != ''">
+                    and student.name like #{name_pattern}
+                </if>
+
+                <if test="userNumber != null and userNumber != ''">
+                    and student.student_number like #{number_pattern}
+                </if>
+            </when>
+
+            <when test="type != null and  type == 0">
+                # 教师
+                <if test="userName != null and userName != ''">
+                    and t.name like #{name_pattern}
+                </if>
+
+                <if test="userNumber != null and userNumber != ''">
+                    and t.teacher_number like #{number_pattern}
+                </if>
+            </when>
+        </choose>
+
+    </select>
+
+
+</mapper>

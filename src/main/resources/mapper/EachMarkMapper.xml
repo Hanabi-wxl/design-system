@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.defense.mapper.EachMarkMapper">
+    <resultMap id="eachMarkInfoMap" type="edu.dlu.bysj.base.model.vo.MutualEvaluationVo">
+        <id column="subjectId" property="subjectId"/>
+        <result column="subject_name" property="subjectName"/>
+        <result column="teacherName" property="teacherName"/>
+        <result column="titleName" property="title"/>
+        <result column="studentName" property="studentName"/>
+        <result column="className" property="className"/>
+        <result column="content" property="progress"/>
+        <result column="phone_number" property="teacherPhone"/>
+        <result column="majorName" property="teacherMajor"/>
+    </resultMap>
+
+
+    <select id="selectEachMarkInfoByQuery" resultMap="eachMarkInfoMap">
+        <choose>
+            <when test="query.userName != null and query.userName != ''">
+                <bind name="name_pattern" value="'%'+query.userName+'%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="query.userNumber != null and query.userNumber != ''">
+                <bind name="number_pattern" value="'%'+query.userNumber+'%'"/>
+            </when>
+        </choose>
+
+        select s.id as subjectId ,
+        s.subject_name,
+        teacher.name as teacherName,
+        title.name as titleName,
+        student.name as studentName,
+        class.name as className,
+        progress.content,
+        teacher.phone_number,
+        major.name as majorName
+        from
+
+        (select subject.first_teacher_id,subject.student_id,subject.subject_name,subject.id,subject.progress_id
+        from subject
+        where subject.status = 1
+        <if test="query.teacherId != null">
+            and subject.first_teacher_id = 1
+        </if>
+        and subject.grade = #{query.year}
+        and subject.major_id = #{query.majorId}) as s
+        left join progress
+        on s.progress_id = progress.id
+
+        left join teacher
+        on teacher.id = s.first_teacher_id
+
+        left join major
+        on teacher.major_id = major.id
+
+        left join title
+        on teacher.title_id = title.id
+
+        left join student
+        on student.id = s.student_id
+
+        left join class
+        on student.class_id = class.id
+
+        <if test="query.type == 1">
+            <where>
+                <if test="query.userName != null and query.userName != ''">
+                    and teacher.name like #{name_pattern}
+                </if>
+                <if test="query.userNumber != null and query.userNumber != ''">
+                    and teacher.teacher_number like #{number_pattern}
+                </if>
+            </where>
+        </if>
+
+
+        <if test="query.type == 0">
+            <where>
+                <if test="query.userName != null and query.userName != ''">
+                    and student.name like #{name_pattern}
+                </if>
+                <if test="query.userNumber != null and query.userNumber != ''">
+                    and student.student_number like #{number_pattern}
+                </if>
+            </where>
+        </if>
+        limit #{start}, #{pageSize}
+
+    </select>
+    <select id="totalEachMarkInfoByQuery" resultType="java.lang.Integer">
+        <choose>
+            <when test="query.userName != null and query.userName != ''">
+                <bind name="name_pattern" value="'%'+query.userName+'%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="query.userNumber != null and query.userNumber != ''">
+                <bind name="number_pattern" value="'%'+query.userNumber+'%'"/>
+            </when>
+        </choose>
+
+        select count(s.id) as total
+        from
+
+        (select subject.first_teacher_id,subject.student_id,subject.subject_name,subject.id,subject.progress_id
+        from subject
+        where subject.status = 1
+        <if test="query.teacherId != null">
+            and subject.first_teacher_id = 1
+        </if>
+        and subject.grade = #{query.year}
+        and subject.major_id = #{query.majorId}) as s
+        left join progress
+        on s.progress_id = progress.id
+
+        left join teacher
+        on teacher.id = s.first_teacher_id
+
+        left join major
+        on teacher.major_id = major.id
+
+        left join title
+        on teacher.title_id = title.id
+
+        left join student
+        on student.id = s.student_id
+
+        left join class
+        on student.class_id = class.id
+
+        <if test="query.type == 1">
+            <where>
+                <if test="query.userName != null and query.userName != ''">
+                    and teacher.name like #{name_pattern}
+                </if>
+                <if test="query.userNumber != null and query.userNumber != ''">
+                    and teacher.teacher_number like #{number_pattern}
+                </if>
+            </where>
+        </if>
+
+
+        <if test="query.type == 0">
+            <where>
+                <if test="query.userName != null and query.userName != ''">
+                    and student.name like #{name_pattern}
+                </if>
+                <if test="query.userNumber != null and query.userNumber != ''">
+                    and student.student_number like #{number_pattern}
+                </if>
+            </where>
+        </if>
+
+    </select>
+
+    <select id="selectEachMarkTeacherName" resultType="java.util.Map">
+        select e.id, teacher.name
+        from (select each_mark.teacher_id, each_mark.subject_id as id
+        from each_mark
+        where each_mark.status = 1
+        and each_mark.subject_id in
+        <if test="subjectList != null and subjectList.size > 0">
+            <foreach collection="subjectList" item="value" open="(" separator="," close=")">
+                #{value}
+            </foreach>
+        </if>
+
+        <if test="subjectList == null or subjectList.size == 0">
+            (null)
+        </if>
+        ) as e
+        left join teacher
+        on teacher.id = e.teacher_id
+    </select>
+
+    <select id="selectTeacherGuide" resultType="edu.dlu.bysj.base.model.dto.EachMarkConvey">
+        select subject.id as subjectId, subject.first_teacher_id as teacherId, subject.status
+        from subject
+        where subject.status = 1
+          and subject.major_id = #{majorId}
+          and subject.grade = #{grade}
+    </select>
+    <select id="selectEachMarkTeacherBySubject" resultType="java.util.Map">
+        select e.subject_id         as id,
+               teacher.name         as otherName,
+               major.name           as otherMajor,
+               teacher.phone_number as otherPhone
+        from (select each_mark.subject_id, each_mark.teacher_id
+              from each_mark
+              where each_mark.status
+                and each_mark.subject_id = #{subjectId}) as e
+
+                 left join teacher
+                           on teacher.id = e.teacher_id
+
+                 left join major
+                           on teacher.major_id = major.id
+    </select>
+
+
+</mapper>

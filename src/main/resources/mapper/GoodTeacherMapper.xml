@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.grade.mapper.GoodTeacherMapper">
+    <resultMap id="goodTeacherMap" type="edu.dlu.bysj.base.model.vo.MajorExcellentTeacherVo">
+        <result column="name" property="teacherName"/>
+        <result column="teacher_number" property="teacherNumber"/>
+        <result column="phone_number" property="teacherPhone"/>
+        <result column="A" property="ANumber"/>
+        <result column="B" property="BNumber"/>
+        <result column="C" property="CNumber"/>
+        <result column="D" property="DNumber"/>
+        <result column="F" property="FNumber"/>
+        <result column="isSecond" property="secondNumber"/>
+        <result column="id" property="teacherId"/>
+    </resultMap>
+
+
+    <select id="selectGoodTeacherInfo" resultMap="goodTeacherMap">
+        <choose>
+            <when test="teacherNumber != null and teacherNumber != '' ">
+                <bind name="number_pattern" value="'%'+teacherNumber+'%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="teacherName != null and teacherName != ''">
+                <bind name="name_pattern" value="'%'+teacherName+'%'"/>
+            </when>
+        </choose>
+
+        select teacher.name,
+        teacher.teacher_number,
+        teacher.phone_number,
+        sum(if(score.sum_score >= 90, 1, 0)) as A,
+        sum(if((score.sum_score between 80 and 89), 1, 0)) as B,
+        sum(if((score.sum_score between 70 and 79), 1, 0)) as C,
+        sum(if((score.sum_score between 60 and 69), 1, 0)) as D,
+        sum(if(score.sum_score &lt; 60, 1, 0)) as F,
+        sum(if(score.is_second = 1, 1, 0)) as isSecond,
+        teacher.id
+        from score
+        inner join subject
+        on score.subject_id = subject.id
+        inner join teacher
+        on subject.first_teacher_id = teacher.id
+        inner join major
+        on teacher.major_id = major.id
+        where subject.status = 1
+        and score.status = 1
+        and major.id = #{majorId}
+        <if test="teacherNumber != null and teacherNumber != ''">
+            and teacher.teacher_number like #{number_pattern},
+        </if>
+
+        <if test="teacherName != null and teacherName != ''">
+            and teacher.name like #{name_pattern}
+        </if>
+        group by teacher.id;
+    </select>
+</mapper>

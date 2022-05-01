@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.system.mapper.ClassMapper">
+    <resultMap id="simplifyClassInfo" type="edu.dlu.bysj.base.model.vo.ClassSimplifyVo">
+        <id column="id" property="classId"/>
+        <result column="name" property="className"/>
+    </resultMap>
+
+    <select id="selectAllSimplifyClass" resultMap="simplifyClassInfo">
+        select class.id, class.name
+        from class
+        where class.major_id = #{majorId}
+          and class.status = 1
+        order by class.id
+    </select>
+</mapper>

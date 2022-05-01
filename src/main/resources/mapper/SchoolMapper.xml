@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.system.mapper.SchoolMapper">
+    <resultMap id="simplifySchoolMap" type="edu.dlu.bysj.base.model.vo.SchoolSimplifyVo">
+        <id column="id" property="schoolId"/>
+        <result column="name" property="schoolName"/>
+    </resultMap>
+
+    <select id="selectSchool" resultMap="simplifySchoolMap">
+        select school.id, school.name
+        from school
+        where status = 1
+        order by school.id
+    </select>
+</mapper>

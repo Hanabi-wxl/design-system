@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.common.mapper.OfficeMapper">
+
+    <resultMap id="officeSimpleMap" type="edu.dlu.bysj.base.model.vo.OfficeSimplifyVo">
+        <id column="id" property="officeId"/>
+        <result column="name" property="officeName"/>
+    </resultMap>
+    <select id="selectAllSimplifyOffice" resultMap="officeSimpleMap">
+        select office.id, office.name
+        from office
+        where office.status = 1
+        order by office.id
+    </select>
+</mapper>

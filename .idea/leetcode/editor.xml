@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="LeetcodeEditor">
+    <option name="projectConfig">
+      <map>
+        <entry key="$PROJECT_DIR$/../../LeetCode/leetcode/editor/cn/BestTimeToBuyAndSellStock .java">
+          <value>
+            <LeetcodeEditor>
+              <option name="contentPath" value="$PROJECT_DIR$/../../LeetCode/leetcode/editor/cn/doc/content/BestTimeToBuyAndSellStock .md" />
+              <option name="frontendQuestionId" value="leetcode-cn.com121" />
+              <option name="host" value="leetcode-cn.com" />
+              <option name="path" value="$PROJECT_DIR$/../../LeetCode/leetcode/editor/cn/BestTimeToBuyAndSellStock .java" />
+              <option name="titleSlug" value="best-time-to-buy-and-sell-stock" />
+            </LeetcodeEditor>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/../../LeetCode/leetcode/editor/cn/CountHillsAndValleysInAnArray .java">
+          <value>
+            <LeetcodeEditor>
+              <option name="contentPath" value="$PROJECT_DIR$/../../LeetCode/leetcode/editor/cn/doc/content/CountHillsAndValleysInAnArray .md" />
+              <option name="frontendQuestionId" value="leetcode-cn.com2210" />
+              <option name="host" value="leetcode-cn.com" />
+              <option name="path" value="$PROJECT_DIR$/../../LeetCode/leetcode/editor/cn/CountHillsAndValleysInAnArray .java" />
+              <option name="titleSlug" value="count-hills-and-valleys-in-an-array" />
+            </LeetcodeEditor>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/../../LeetCode/leetcode/editor/cn/FindPalindromeWithFixedLength .java">
+          <value>
+            <LeetcodeEditor>
+              <option name="contentPath" value="$PROJECT_DIR$/../../LeetCode/leetcode/editor/cn/doc/content/FindPalindromeWithFixedLength .md" />
+              <option name="frontendQuestionId" value="leetcode-cn.com2217" />
+              <option name="host" value="leetcode-cn.com" />
+              <option name="path" value="$PROJECT_DIR$/../../LeetCode/leetcode/editor/cn/FindPalindromeWithFixedLength .java" />
+              <option name="titleSlug" value="find-palindrome-with-fixed-length" />
+            </LeetcodeEditor>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/../../LeetCode/leetcode/editor/cn/MaximumSubarray .java">
+          <value>
+            <LeetcodeEditor>
+              <option name="contentPath" value="$PROJECT_DIR$/../../LeetCode/leetcode/editor/cn/doc/content/MaximumSubarray .md" />
+              <option name="frontendQuestionId" value="leetcode-cn.com53" />
+              <option name="host" value="leetcode-cn.com" />
+              <option name="path" value="$PROJECT_DIR$/../../LeetCode/leetcode/editor/cn/MaximumSubarray .java" />
+              <option name="titleSlug" value="maximum-subarray" />
+            </LeetcodeEditor>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/../../LeetCode/leetcode/editor/cn/MinimumDeletionsToMakeArrayBeautiful .java">
+          <value>
+            <LeetcodeEditor>
+              <option name="contentPath" value="$PROJECT_DIR$/../../LeetCode/leetcode/editor/cn/doc/content/MinimumDeletionsToMakeArrayBeautiful .md" />
+              <option name="frontendQuestionId" value="leetcode-cn.com2216" />
+              <option name="host" value="leetcode-cn.com" />
+              <option name="path" value="$PROJECT_DIR$/../../LeetCode/leetcode/editor/cn/MinimumDeletionsToMakeArrayBeautiful .java" />
+              <option name="titleSlug" value="minimum-deletions-to-make-array-beautiful" />
+            </LeetcodeEditor>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

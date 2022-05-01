@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.paper.mapper.TopicMapper">
+
+    <resultMap id="selectSubjectMap" type="edu.dlu.bysj.base.model.vo.SelectedVo">
+        <id column="id" property="subjectId"/>
+        <result column="subject_name" property="subjectName"/>
+        <result column="teacherName" property="teacherName"/>
+        <result column="titleName" property="title"/>
+        <result column="paperTypeName" property="paperType"/>
+        <result column="sourceName" property="subjectResource"/>
+    </resultMap>
+
+    <resultMap id="unselectsTopicStudentMap" type="edu.dlu.bysj.base.model.vo.UnselectStudentVo">
+        <id column="id" property="studentId"/>
+        <result column="studentName" property="studentName"/>
+        <result column="student_number" property="studentNumber"/>
+        <result column="className" property="className"/>
+    </resultMap>
+
+    <resultMap id="unselectSubjectMap" type="edu.dlu.bysj.base.model.vo.UnSelectTopicVo">
+        <id column="id" property="subjectId"/>
+        <result column="subject_name" property="subjectName"/>
+        <result column="teacherName" property="firstTeacherName"/>
+        <result column="majorName" property="firstTeacherMajor"/>
+    </resultMap>
+    <select id="selectStudentChooseInfo" resultMap="selectSubjectMap">
+        select s.id,
+               s.subject_name,
+               teacher.name      as teacherName,
+               t.name            as titleName,
+               subject_type.name as paperTypeName,
+               source.name       as sourceName
+        from (select subject.id,
+                     subject.subject_name,
+                     subject.first_teacher_id,
+                     subject.subject_type_id,
+                     subject.source_id
+              from subject
+              where subject.status = 1
+                and (subject.id = #{firstSubjectId} or subject.id = #{secondSubjectId})) as s
+                 left join teacher
+                           on teacher.id = s.first_teacher_id
+
+                 left join title t
+                           on teacher.title_id = t.id
+
+                 left join subject_type
+                           on subject_type.id = s.subject_type_id
+
+                 left join source
+                           on source.id = s.source_id
+
+
+    </select>
+    <!--    #                 当为 1 的时执行first_subject_id,
+                              当为 2的时候执行second_subject_id
+    -->
+    <select id="firstAndSecondVolunteer" resultType="edu.dlu.bysj.base.model.vo.UnselectStudentVo">
+
+        select student.id,
+        student.name as studentName,
+        c.name as className,
+        student.student_number
+
+        from (
+        select topics.student_id
+        from topics
+        where topics.status = 1
+        <if test="type != null and type == 1">
+            and topics.first_subject_id = #{subjectId}
+        </if>
+
+        <if test="type != null and type == 2">
+            and topics.second_subject_id = #{subjectId}
+        </if>
+
+        ) as t
+        left join student
+        on student.id = t.student_id
+
+        left join class c
+        on student.class_id = c.id
+
+
+    </select>
+
+    <!--在student 的subjectId 应该初始化未 -1 ,代表该题目未被选中，在教师进行选题的过程中，其他的持有该题目的未被选中的
+    学生应该将subjectId置为-1-->
+    <select id="unChooseTopicStudent" resultMap="unselectsTopicStudentMap">
+        <choose>
+            <when test="studentNumber != null and  studentNumber != '' ">
+                <bind name="number_pattern" value="'%'+studentNumber+'%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="studentName != null and studentName != '' ">
+                <bind name="name_pattern" value="'%'+studentName+'%'"/>
+            </when>
+        </choose>
+
+        select
+        student.id,
+        student.name as studentName,
+        student.student_number,
+        c.name as className
+        from student
+        left join class c on student.class_id = c.id
+
+        where student.status = 1
+        and student.major_id = #{majorId}
+        and c.grade = #{grade}
+        and student.subject_id = -1
+        <if test="studentNumber != null and  studentNumber != '' ">
+            and student.student_number like #{number_pattern}
+        </if>
+        <if test="studentName != null and studentName != '' ">
+            and student.name like #{name_pattern}
+        </if>
+    </select>
+
+
+    <select id="unChooseSubject" resultMap="unselectSubjectMap">
+        <choose>
+            <when test="teacherNumber != null and teacherNumber != ''">
+                <bind name="number_pattern" value="'%'+teacherNumber+'%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="teacherName != null and teacherName != ''">
+                <bind name="name_pattern" value="'%'+teacherName+'%'"/>
+            </when>
+        </choose>
+        select s.id,
+        s.subject_name,
+        t.name as teacherName,
+        m.name as majorName
+
+        from (select subject.id, subject.subject_name, subject.first_teacher_id
+        from subject
+        where subject.status = 1
+        and subject.grade = #{grade}
+        and subject.major_id = #{majorId}) as s
+
+        left join student
+        on student.subject_id = s.id
+        left join teacher t
+        on t.id = s.first_teacher_id
+        left join major m
+        on t.major_id = m.id
+        where student.subject_id is null
+
+        <if test="teacherName != null and teacherName != ''">
+            and t.name like #{name_pattern}
+        </if>
+
+        <if test="teacherNumber != null and teacherNumber != ''">
+            and t.teacher_number like #{number_pattern}
+        </if>
+
+
+    </select>
+</mapper>

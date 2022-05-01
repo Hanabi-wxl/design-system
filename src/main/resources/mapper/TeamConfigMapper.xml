@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.defense.mapper.TeamConfigMapper">
+
+    <select id="similarGuideOrOtherTeacher" resultType="java.lang.Integer">
+        select team.id
+        from team
+        where team.status = 1
+          and team.grade = #{grade}
+          and team.major_id = #{majorId}
+          and team.id in (
+            select team_user.team_id
+            from team_user
+            where team_user.status = 1
+              and team_user.user_id = #{teacherId}
+              and team_user.is_student = 0)
+    </select>
+    <select id="differentGuideTeacher" resultType="java.lang.Integer">
+        select team.id
+        from team
+        where team.status = 1
+          and team.grade = #{grade}
+          and team.major_id = #{majorId}
+          and team.id in (
+            select team_id
+            from team_user
+            where team_user.status = 1
+              and team_user.is_student = 0
+              and team_user.user_id != #{teacherId})
+    </select>
+</mapper>

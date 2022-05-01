@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.common.mapper.DegreeMapper">
+
+    <resultMap id="simplifyDegreeMap" type="edu.dlu.bysj.base.model.vo.DegreeSimplifyVo">
+        <id column="id" property="degreeId"/>
+        <result column="name" property="degreeName"/>
+    </resultMap>
+
+    <select id="selectAllSimplifyDegree" resultMap="simplifyDegreeMap">
+        select degree.id, degree.name
+        from degree
+        where degree.status = 1
+        order by degree.id
+    </select>
+</mapper>

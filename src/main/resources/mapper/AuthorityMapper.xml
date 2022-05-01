@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.security.mapper.AuthorityMapper">
+
+    <select id="studentPermissions" resultType="java.lang.String">
+        select authority.description
+        from authority
+        where authority.id in (
+            select authority_id
+            from (select functions.id as id
+                  from functions
+                           inner join (select function_id as id from role_function where role_id = #{roleId}) as t
+                                      on functions.id = t.id
+                  where start_time &lt; #{currentTime}
+                    and end_time &gt; #{currentTime}
+                 ) as x
+                     inner join function_authority
+                                on function_authority.function_id = x.id
+        )
+    </select>
+
+    <select id="teacherPermissions" resultType="java.lang.String">
+        select authority.description
+        from authority
+        where authority.id in (
+        select authority_id
+        from function_authority
+        where function_id in (
+        select function_id
+        from (select function_id
+        from role_function
+        where role_function.role_id in
+        <foreach item="role" index="index" collection="roleIds"
+                 open="(" separator="," close=")">
+            #{role}
+        </foreach>
+        ) as t
+        inner join functions
+        on t.function_id = functions.id
+        where functions.start_time > #{currentTime}
+        and end_time > #{currentTime}
+        ))
+    </select>
+
+
+    <select id="allAuthority" resultType="java.lang.String">
+        select authority.description
+        from authority
+        where authority.status = 1
+    </select>
+
+</mapper>

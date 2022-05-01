@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.system.mapper.CollegeMapper">
+    <select id="getCollegeByCondition" resultType="edu.dlu.bysj.base.model.entity.College">
+        select id,name,college_code,status
+        from college
+        <where>
+            college.status = 1
+            <if test="id != null and id != ''">
+                and college.id = #{id}
+            </if>
+            <if test="collegeCode != null and collegeCode != ''">
+                and college.college_code = #{collegeCode}
+            </if>
+            <if test="name != null and name != ''">
+                and college.name = #{name}
+            </if>
+        </where>
+    </select>
+
+    <select id="getCollegeBySchoolId" resultType="edu.dlu.bysj.base.model.vo.CollegeSimpleInoVo">
+        select college.id as collegeId, college.name as collegeName
+        from college
+        where college.status = 1
+          and college.school_id = #{schoolId}
+    </select>
+</mapper>

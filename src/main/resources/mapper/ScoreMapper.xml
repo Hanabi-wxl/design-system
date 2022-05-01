@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.grade.mapper.ScoreMapper">
+    <resultMap id="groupScoreMap" type="edu.dlu.bysj.base.model.vo.GroupScoreVo">
+        <result column="name" property="studentPhone"/>
+        <result column="student_number" property="studentNumber"/>
+        <result column="phone_number" property="studentPhone"/>
+        <result column="serial" property="serial"/>
+        <result column="teacherScore" property="teacherScore"/>
+        <result column="processScore" property="processScore"/>
+        <result column="otherScore" property="otherScore"/>
+        <result column="total_self_summary" property="summary"/>
+        <result column="total_process" property="process"/>
+        <result column="total_complete_quality" property="quality"/>
+        <result column="total_ability" property="ability"/>
+        <result column="is_second" property="isSecond"/>
+        <result column="subject_id" property="subjectId"/>
+    </resultMap>
+
+    <select id="selectScoreByTeam" resultMap="groupScoreMap">
+        select student.name,
+               student.student_number,
+               student.phone_number,
+               t.serial,
+               (score.first_quality + score.first_ability + score.first_complete) as teacherScore,
+               (score.process_attitude + score.process_discipline + score.process_report +
+                score.process_complete)                                           as processScore,
+               (score.other_quality + score.other_ability + score.other_complete) as otherScore,
+               score.total_self_summary,
+               score.total_process,
+               score.total_quality,
+               score.total_complete_quality,
+               score.total_ability,
+               score.is_second,
+               score.subject_id
+        from (select team_user.user_id, team_user.serial
+              from team_user
+              where team_user.status = 1
+                and team_user.is_student = 1
+                and team_user.team_id = #{teamId}) as t
+                 left join student
+                           on t.user_id = student.id
+                 left join score
+                           on student.subject_id = score.subject_id
+        where score.status = 1
+          and student.status = 1
+
+    </select>
+
+    <!--    xml 中的大于小于可能会冲突使用mybatis提供的特殊符合替代  &lt; 小于-->
+    <select id="selectStudentNumByScore" resultType="edu.dlu.bysj.base.model.vo.TeacherYearEvaluationVo">
+        select sum(if(score.sum_score >= 90, 1, 0))               as A,
+               sum(if((score.sum_score between 80 and 89), 1, 0)) as B,
+               sum(if((score.sum_score between 70 and 79), 1, 0)) as C,
+               sum(if((score.sum_score between 60 and 69), 1, 0)) as D,
+               sum(if(score.sum_score &lt; 60, 1, 0))             as F,
+               sum(if(score.is_second = 1, 1, 0))                 as isSecond,
+               s.grade                                            as year
+        from (select subject.id, subject.grade
+              from subject
+              where subject.status = 1
+                and subject.first_teacher_id = #{teacherId}) as s
+                 inner join score
+                            on s.id = score.subject_id
+        group by grade
+
+    </select>
+    <select id="selectSubjectByTeacherIdAndYear" resultType="edu.dlu.bysj.base.model.dto.SubjectInfoConvey">
+        select student.name    as studentName,
+               s.subject_name  as subjectName,
+               score.sum_score as score
+        from (select subject.id, subject.subject_id, subject_name, subject.student_id
+              from subject
+              where subject.status = 1
+                and subject.first_teacher_id = 1
+                and subject.grade = 1) as s
+                 inner join student
+                            on s.student_id = student.id
+                 inner join score
+                            on s.student_id = score.subject_id
+    </select>
+    <select id="selectByMajorId" resultType="edu.dlu.bysj.base.model.vo.ScoreSummaryVo">
+        select count(*)                as total,
+               sum(if(
+                               (score.process_attitude +
+                                score.process_discipline +
+                                score.process_report +
+                                score.process_complete) * 100 >= 15 * 0.9 * 100
+                   , 1, 0)) / count(*) as processOutstanding,
+
+               sum(if(
+                           (score.process_attitude +
+                            score.process_discipline +
+                            score.process_report +
+                            score.process_complete) * 100 between 15 * 0.8 * 100 and 20 * 0.89 * 100
+                   , 1, 0)) / count(*) as processGood,
+
+               sum(if(
+                           (score.process_attitude +
+                            score.process_discipline +
+                            score.process_report +
+                            score.process_complete) * 100 between 15 * 0.7 * 100 and 20 * 0.79 * 100
+                   , 1, 0)) / count(*) as processMiddle,
+
+
+               sum(if(
+                           (score.process_attitude +
+                            score.process_discipline +
+                            score.process_report +
+                            score.process_complete) * 100 between 15 * 0.6 * 100 and 20 * 0.69 * 100
+                   , 1, 0)) / count(*) as processBad,
+
+               sum(if(
+                           (score.process_attitude +
+                            score.process_discipline +
+                            score.process_report +
+                            score.process_complete) * 100 between 0 and 15 * 0.59 * 100
+                   , 1, 0)) / count(*) as processFailed,
+
+
+               sum(if(
+                               (score.process_attitude +
+                                score.process_discipline +
+                                score.process_report +
+                                score.process_complete) * 100 = 0
+                   , 1, 0)) / count(*) as processNoScore,
+
+
+               sum(if(
+                               (score.first_quality +
+                                score.first_ability +
+                                score.first_complete) * 100 >= 20 * 0.9 * 100
+                   , 1, 0)) / count(*) as firstOutstanding,
+
+               sum(if(
+                           (score.first_quality +
+                            score.first_ability +
+                            score.first_complete) * 100 between 20 * 0.8 * 100 and 15 * 0.89 * 100
+                   , 1, 0)) / count(*) as firstGood,
+
+               sum(if(
+                           (score.first_quality +
+                            score.first_ability +
+                            score.first_complete) * 100 between 20 * 0.7 * 100 and 15 * 0.79 * 100
+                   , 1, 0)) / count(*) as firstMiddle,
+
+               sum(if(
+                           (score.first_quality +
+                            score.first_ability +
+                            score.first_complete) * 100 between 20 * 0.6 * 100 and 15 * 0.69 * 100
+                   , 1, 0)) / count(*) as firstBad,
+
+
+               sum(if(
+                           (score.first_quality +
+                            score.first_ability +
+                            score.first_complete) * 100 between 0 and 20 * 0.59 * 100
+                   , 1, 0)) / count(*) as firstFailed,
+
+
+               sum(if(
+                               (score.first_quality +
+                                score.first_ability +
+                                score.first_complete) * 100 = 0
+                   , 1, 0)) / count(*) as firstNoScore,
+
+
+               sum(if(
+                               (score.other_quality +
+                                score.other_ability +
+                                score.other_complete) * 100 >= 20 * 0.9
+                   , 1, 0)) / count(*) as otherOutstanding,
+
+
+               sum(if(
+                           (score.other_quality +
+                            score.other_ability +
+                            score.other_complete) * 100 between 20 * 0.8 * 100 and 20 * 0.89 * 100
+                   , 1, 0)) / count(*) as otherGood,
+
+               sum(if(
+                           (score.other_quality +
+                            score.other_ability +
+                            score.other_complete) * 100 between 20 * 0.7 * 100 and 20 * 0.79 * 100
+                   , 1, 0)) / count(*) as otherMiddle,
+
+
+               sum(if(
+                           (score.other_quality +
+                            score.other_ability +
+                            score.other_complete) * 100 between 20 * 0.6 * 100 and 20 * 0.69 * 100
+                   , 1, 0)) / count(*) as otherBad,
+
+
+               sum(if(
+                           (score.other_quality +
+                            score.other_ability +
+                            score.other_complete) * 100 between 0 and 20 * 0.59 * 100
+                   , 1, 0)) / count(*) as otherFailed,
+
+
+               sum(if(
+                               (score.other_quality +
+                                score.other_ability +
+                                score.other_complete) * 100 = 0
+                   , 1, 0)) / count(*) as otherNoScore,
+
+               sum(if(
+                               (score.total_self_summary +
+                                score.total_process +
+                                score.total_quality +
+                                score.total_complete_quality +
+                                score.total_ability) * 100 >= 45 * 0.9 * 100
+                   , 1, 0)) / count(*) as totalOutstanding,
+
+
+               sum(if(
+                           (score.total_self_summary +
+                            score.total_process +
+                            score.total_quality +
+                            score.total_complete_quality +
+                            score.total_ability) * 100 between 45 * 0.8 * 100 and 45 * 0.89 * 100
+                   , 1, 0)) / count(*) as totalGood,
+
+
+               sum(if(
+                           (score.total_self_summary +
+                            score.total_process +
+                            score.total_quality +
+                            score.total_complete_quality +
+                            score.total_ability) * 100 between 45 * 0.7 * 100 and 45 * 0.79 * 100
+                   , 1, 0)) / count(*) as totalMiddle,
+
+
+               sum(if(
+                           (score.total_self_summary +
+                            score.total_process +
+                            score.total_quality +
+                            score.total_complete_quality +
+                            score.total_ability) * 100 between 45 * 0.6 * 100 and 45 * 0.69 * 100
+                   , 1, 0)) / count(*) as totalBad,
+
+
+               sum(if(
+                           (score.total_self_summary +
+                            score.total_process +
+                            score.total_quality +
+                            score.total_complete_quality +
+                            score.total_ability) * 100 between 0 and 45 * 0.59 * 100
+                   , 1, 0)) / count(*) as totalFailed,
+
+
+               sum(if(
+                               (score.total_self_summary +
+                                score.total_process +
+                                score.total_quality +
+                                score.total_complete_quality +
+                                score.total_ability) * 100 = 0
+                   , 1, 0)) / count(*) as totalNoScore
+
+
+        from score
+
+                 left join subject
+                           on score.subject_id = subject.id
+                 left join student
+                           on subject.student_id = student.id
+
+        where student.major_id = #{majorId}
+          and subject.grade = #{year}
+          and score.status = 1
+          and subject.status = 1
+          and student.status = 1
+          and student.subject_id != -1
+    </select>
+
+
+</mapper>

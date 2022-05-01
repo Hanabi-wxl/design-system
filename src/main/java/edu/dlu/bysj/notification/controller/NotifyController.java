@@ -1,0 +1,179 @@
+package edu.dlu.bysj.notification.controller;
+
+import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import edu.dlu.bysj.base.model.entity.Notice;
+import edu.dlu.bysj.base.model.entity.NoticeFile;
+import edu.dlu.bysj.base.model.enums.NoticeStatusEnum;
+import edu.dlu.bysj.base.model.enums.NoticeTypeEnum;
+import edu.dlu.bysj.base.model.query.NoticeListQuery;
+import edu.dlu.bysj.base.model.vo.AddNoticeVo;
+import edu.dlu.bysj.base.model.vo.NoticeVo;
+import edu.dlu.bysj.base.model.vo.TotalPackageVo;
+import edu.dlu.bysj.base.result.CommonResult;
+import edu.dlu.bysj.base.util.JwtUtil;
+import edu.dlu.bysj.log.annotation.LogAnnotation;
+import edu.dlu.bysj.notification.service.NoticeFileService;
+import edu.dlu.bysj.notification.service.NoticeService;
+import edu.dlu.bysj.paper.service.FileInformationService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiOperation;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * @author XiangXinGang
+ * @date 2021/11/8 20:39
+ */
+@RestController
+@Api(tags = "通知列表")
+@RequestMapping(value = "/notificationManagement")
+@Validated
+public class NotifyController {
+
+    private final NoticeService noticeService;
+
+    private final NoticeFileService noticeFileService;
+
+    private final FileInformationService fileInformationService;
+
+
+    public NotifyController(NoticeService noticeService,
+                            NoticeFileService noticeFileService,
+                            FileInformationService fileInformationService) {
+        this.noticeService = noticeService;
+        this.noticeFileService = noticeFileService;
+        this.fileInformationService = fileInformationService;
+    }
+
+    @GetMapping(value = "/notice/list")
+    @RequiresPermissions({"notice:list"})
+    @LogAnnotation(content = "查询本专业的通知列表")
+    @ApiOperation(value = "查询本专业通知列表")
+    public CommonResult<TotalPackageVo<NoticeVo>> obtainNotifyList(@Valid NoticeListQuery query,
+                                                                   HttpServletRequest request) {
+        String jwt = request.getHeader("jwt");
+        TotalPackageVo<NoticeVo> noticeVoTotalPackageVo = new TotalPackageVo<>();
+        if (!StringUtils.isEmpty(jwt)) {
+            QueryWrapper<Notice> wrapper = null;
+            if (query.getSearch() != null && !StringUtils.isEmpty(query.getSearch())) {
+                wrapper = new QueryWrapper<Notice>().eq("major_id", JwtUtil.getMajorId(jwt)).like("title", query.getSearch());
+            } else {
+                wrapper = new QueryWrapper<Notice>().eq("major_id", JwtUtil.getMajorId(jwt));
+            }
+
+            Page<Notice> page = new Page<>(query.getPageNumber(), query.getPageSize());
+            Page<Notice> noticeList = noticeService.page(page, wrapper);
+            long total = noticeList.getTotal();
+            List<NoticeVo> result = new ArrayList<>();
+            if (page.getRecords() != null && !page.getRecords().isEmpty()) {
+                for (Notice element : page.getRecords()) {
+                    NoticeVo noticeVo = new NoticeVo();
+                    noticeVo.setNoticeName(element.getTitle());
+                    noticeVo.setTime(element.getDate());
+                    noticeVo.setUnit(NoticeTypeEnum.noticeMessage(element.getType()));
+                    noticeVo.setNoticeId(element.getId());
+                    noticeVo.setImportance(NoticeStatusEnum.noticeStatus(element.getImportance()));
+                    result.add(noticeVo);
+                }
+            }
+            noticeVoTotalPackageVo.setTotal((int) total);
+            noticeVoTotalPackageVo.setArrays(result);
+        }
+
+        return CommonResult.success(noticeVoTotalPackageVo);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @PostMapping(value = "/notice/addOrModify")
+    @LogAnnotation(content = "新增/修改通知")
+    @RequiresPermissions({"notice:add"})
+    @ApiOperation(value = "新增/修改通知")
+    public CommonResult<Object> modifyNotice(@Valid AddNoticeVo noticeVo,
+                                             HttpServletRequest request) {
+        String jwt = request.getHeader("jwt");
+        boolean noticeFlag = false;
+
+        if (!StringUtils.isEmpty(jwt)) {
+            Notice notice = null;
+            if (ObjectUtil.isNotNull(noticeVo.getNoticeId())) {
+                notice = noticeService.getById(noticeVo.getNoticeId());
+            }
+
+            if (ObjectUtil.isNull(notice)) {
+                notice = new Notice();
+            }
+            notice.setCollegeId(noticeVo.getCollegeId());
+            notice.setMajorId(noticeVo.getMajorId());
+            notice.setType(noticeVo.getType());
+            notice.setImportance(noticeVo.getType());
+            notice.setTitle(noticeVo.getTitle());
+            notice.setContent(noticeVo.getContent());
+            notice.setSenderId(JwtUtil.getUserId(jwt));
+            notice.setDate(LocalDateTime.now());
+
+            noticeFlag = noticeService.saveOrUpdate(notice);
+            /*若有文件则插入文件类型*/
+            Integer id = notice.getId();
+            if (noticeVo.getFileId() != null && !noticeVo.getFileId().isEmpty()) {
+                for (Integer fileId : noticeVo.getFileId()) {
+                    /*插入新的值*/
+                    NoticeFile file = new NoticeFile();
+                    file.setFileId(fileId);
+                    file.setNoticeId(id);
+                    boolean flag = noticeFileService.save(file);
+                }
+            }
+        }
+
+        return noticeFlag ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
+    }
+
+
+    @GetMapping(value = "/notice/detail/{noticeId}")
+    @LogAnnotation(content = "查看通知详情")
+    @RequiresPermissions({"notice:detail"})
+    @ApiOperation(value = "获取通知详情")
+    @ApiImplicitParam(name = "noticeId", value = "通知id")
+    public CommonResult<Map<String, Object>> obtainNoticeDetail(@PathVariable("noticeId") @NotNull Integer noticeId) {
+        Notice notice = noticeService.getById(noticeId);
+        List<NoticeFile> files = noticeFileService.list(new QueryWrapper<NoticeFile>().eq("notice_id", noticeId));
+
+        List<String> fileUrl = new ArrayList<>();
+        List<String> fileName = new ArrayList<>();
+
+        //TODO 暂未完成,对文件地址和名称的显示,可能需要搭建一个自己的文件服务器
+
+        Map<String, Object> map = new HashMap<>(16);
+        map.put("content", notice.getContent());
+        map.put("fileUrl", fileUrl);
+        map.put("fileName", fileName);
+        return CommonResult.success(map);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @GetMapping(value = "/notice/delete/{noticeId}")
+    @LogAnnotation(content = "删除通知")
+    @RequiresPermissions({"notice:delete"})
+    @ApiOperation(value = "删除通知")
+    @ApiImplicitParam(name = "noticeId", value = "通知id")
+    public CommonResult<Object> deleteNotice(@PathVariable("noticeId") @NotNull Integer noticeId) {
+        boolean fileFlag = noticeFileService.remove(new QueryWrapper<NoticeFile>().eq("notice_id", noticeId));
+        boolean noticeFlag = noticeService.removeById(noticeId);
+        return (fileFlag && noticeFlag) ? CommonResult.success("删除成功") : CommonResult.failed("删除失败");
+    }
+}

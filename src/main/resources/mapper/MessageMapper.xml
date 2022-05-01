@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.paper.mapper.MessageMapper">
+    <resultMap id="messageReviverMap" type="edu.dlu.bysj.base.model.vo.MessageVo">
+        <id column="id" property="messageId"/>
+        <result column="title" property="messageTitle"/>
+        <result column="name" property="senderName"/>
+        <result column="send_time" property="sendTime"/>
+        <result column="has_read" property="hasRead"/>
+    </resultMap>
+
+    <resultMap id="messageSenderMap" type="edu.dlu.bysj.base.model.vo.ReceiveMessageVo">
+        <id column="id" property="messageId"/>
+        <result column="title" property="messageTitle"/>
+        <result column="receiver_id" property="receiverId"/>
+        <result column="send_time" property="sendTime"/>
+        <result column="has_read" property="hasRead"/>
+        <result column="name" property="receiverName"/>
+    </resultMap>
+
+    <select id="selectMessageAsReviver" resultMap="messageReviverMap">
+        select m.title,
+               m.id,
+               teacher.name,
+               m.send_time,
+               m.has_read
+
+        from (select message.title,
+                     message.id,
+                     message.send_time,
+                     message.has_read,
+                     message.sender_id
+              from message
+              where message.status = 1
+                and message.receiver_id = #{reviverId}) as m
+
+                 left join teacher
+                           on m.sender_id = teacher.id
+        where teacher.status = 1
+        limit #{start}, #{pageSize}
+    </select>
+    <select id="totalMessageAsReviver" resultType="java.lang.Integer">
+        select count(m.id) as total
+        from (select message.id,
+                     message.sender_id
+              from message
+              where message.status = 1
+                and message.receiver_id = 1) as m
+
+                 left join teacher
+                           on m.sender_id = teacher.id
+
+        where teacher.status = 1
+    </select>
+    <select id="selectMessageAsSender" resultType="edu.dlu.bysj.base.model.vo.ReceiveMessageVo">
+        select m.title,
+               m.id,
+               m.receiver_id,
+               m.send_time,
+               m.has_read,
+               student.name
+        from (select message.id, message.title, message.send_time, message.has_read, message.receiver_id
+              from message
+              where message.status = 1
+                and message.sender_id = #{senderId}) as m
+                 left join student
+                           on m.receiver_id = student.id
+        limit #{start}, #{pageSize}
+    </select>
+
+
+</mapper>

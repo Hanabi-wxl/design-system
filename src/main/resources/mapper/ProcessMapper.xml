@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.paper.mapper.ProcessMapper">
+
+    <resultMap id="processDetailMap" type="edu.dlu.bysj.base.model.vo.ProcessDetailVo">
+        <result column="week" property="week"/>
+        <result column="student_comment" property="studentContent"/>
+        <result column="teacher_comment" property="teacherContent"/>
+        <result column="student_date" property="studentTime"/>
+        <result column="name" property="teacherName"/>
+    </resultMap>
+
+    <select id="selectProcessInfoBySubjectId" resultMap="processDetailMap">
+        select process.week,
+               process.student_comment,
+               process.teacher_comment,
+               process.student_date,
+               process.teacher_date,
+               t.name
+        from process
+                 left join subject s on s.id = process.subject_id
+                 left join teacher t
+                           on s.first_teacher_id = t.id
+        where process.status = 1
+          and process.subject_id = #{subjectId}
+    </select>
+</mapper>

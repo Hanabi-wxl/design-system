@@ -1,0 +1,11 @@
+package edu.dlu.bysj.paper.service;
+
+import com.baomidou.mybatisplus.extension.service.IService;
+import edu.dlu.bysj.base.model.entity.FileInfomation;
+
+/**
+ * @author XiangXinGang
+ * @date 2021/11/8 8:32
+ */
+public interface FileInformationService extends IService<FileInfomation> {
+}

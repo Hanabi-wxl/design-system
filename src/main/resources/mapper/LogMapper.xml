@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.log.mapper.LogMapper">
+
+    <select id="selectAllByDateAndType" resultType="edu.dlu.bysj.base.model.entity.Log">
+        <choose>
+            <when test="year != null and year != ''">
+                <bind name="pattern_year" value="'%'+year+'%'"/>
+            </when>
+        </choose>
+
+        SELECT id,date,is_student,user_id,type,message,ip,status
+        FROM log
+        <where>
+            status = 1
+            <if test="type != null and type != ''">
+                and type = #{type}
+            </if>
+            <if test="year != null and year != ''">
+                and convert(date,DATETIME ) LIKE #{pattern_year}
+            </if>
+        </where>
+    </select>
+</mapper>

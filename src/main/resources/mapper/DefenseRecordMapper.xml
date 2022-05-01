@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.defense.mapper.DefenceRecordMapper">
+    <resultMap id="similarTeamMap" type="edu.dlu.bysj.base.model.vo.SimilarTeamStudentVo">
+        <id column="id" property="subjectId"/>
+        <result column="subject_name" property="subjectName"/>
+        <result column="teacherName" property="firstName"/>
+        <result column="studentName" property="studentName"/>
+        <result column="phone" property="studentPhone"/>
+        <result column="number" property="studentNumber"/>
+        <result column="content" property="progress"/>
+    </resultMap>
+
+    <select id="studentInfoOfGroup" resultMap="similarTeamMap">
+        select subject.id,
+               subject.subject_name,
+               teacher.name     as teacherName,
+               title.name       as titleName,
+               s.name           as studentName,
+               s.phone_number   as phone,
+               s.student_number as number,
+               progress.content
+        from (select student.id, student.student_number, student.phone_number, student.name, student.subject_id
+              from student
+              where student.status = 1
+                and student.id in (
+                  select team_user.user_id
+                  from team_user
+                  where team_user.status = 1
+                    and team_user.team_id = (select team.id
+                                             from team
+                                             where team.status = 1
+                                               and team.major_id = #{teamNumber}
+                                               and team.grade = #{grade}
+                                               and team.team_number = #{teamNumber})
+                    and team_user.is_student = 1
+              )) as s
+
+                 left join subject
+                           on s.subject_id = subject.id
+                 left join teacher
+                           on subject.first_teacher_id = teacher.id
+                 left join title
+                           on teacher.id = title.id
+                 left join progress
+                           on subject.progress_id = progress.id
+        limit #{start}, #{pageSize}
+    </select>
+
+    <!--    统计组内学生个数即可，后面采用的是左连接保存左边部分-->
+    <select id="totalInfoOfGroup" resultType="java.lang.Integer">
+        select count(team_user.user_id)
+        from team_user
+        where team_user.status = 1
+          and team_user.team_id = (select team.id
+                                   from team
+                                   where team.status = 1
+                                     and team.major_id = #{majorId}
+                                     and team.grade = #{grade}
+                                     and team.team_number = #{teamNumber})
+          and team_user.is_student = 1
+    </select>
+</mapper>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.defense.mapper.TeamUserMapper">
+    <resultMap id="studentTeamInfoMap" type="edu.dlu.bysj.base.model.vo.ReplyInformationVo">
+        <result column="team_number" property="groupNumber"/>
+        <result column="start_date" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="address" property="address"/>
+        <result column="request" property="requirement"/>
+        <result column="serial" property="serial"/>
+    </resultMap>
+
+
+    <select id="selectTeamInfoByStudentId" resultMap="studentTeamInfoMap">
+        select team.team_number,
+               team.start_date,
+               team.end_time,
+               team.address,
+               team.request,
+               t.serial
+        from (select team_user.team_id, team_user.serial
+              from team_user
+              where team_user.status = 1
+                and team_user.user_id = #{studentId}
+                and team_user.is_student = #{isStudentId}) as t
+                 inner join team
+                            on t.team_id = team.id
+    </select>
+
+    <select id="selectStudentGrade" resultType="java.lang.Integer">
+        select class.grade
+        from class
+        where class.status = 1
+          and class.id = (select student.class_id
+                          from student
+                          where student.status = 1
+                            and student.id = #{studentId})
+    </select>
+</mapper>

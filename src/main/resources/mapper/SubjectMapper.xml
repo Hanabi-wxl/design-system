@@ -1,0 +1,563 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.common.mapper.SubjectMapper">
+    <!-- adminApprovalListPagination该查询结果集映射   -->
+    <resultMap id="adminApprovalMap" type="edu.dlu.bysj.base.model.dto.AdminApprovalConvey">
+        <id column="id" property="subjectId"/>
+        <result column="subject_name" property="subjectName"/>
+        <result column="first_teacher_id" property="firstTeacherId"/>
+        <result column="second_teacher_id" property="secondTeacherId"/>
+        <result column="student_id" property="studentId"/>
+        <result column="filing_number" property="fillingNumber"/>
+        <result column="content" property="progress"/>
+    </resultMap>
+
+    <resultMap id="entrustSubjectMap" type="edu.dlu.bysj.base.model.vo.EntrustInfoVo">
+        <id column="id" property="subjectId"/>
+        <result column="subject_name" property="subjectNames"/>
+        <result column="teacherName" property="firstName"/>
+        <result column="titleName" property="firstTitle"/>
+        <result column="studentName" property="studentName"/>
+        <result column="student_number" property="studentNumber"/>
+        <result column="phone_number" property="studentPhone"/>
+        <result column="content" property="progress"/>
+        <result column="filing_number" property="fillingNumber"/>
+
+    </resultMap>
+
+    <resultMap id="studentSelectSubjectMap" type="edu.dlu.bysj.base.model.vo.TopicsVo">
+        <id column="id" property="subjectId"/>
+        <result column="subject_name" property="subjectName"/>
+        <result column="teacherName" property="teacherName"/>
+        <result column="titleName" property="title"/>
+    </resultMap>
+
+    <resultMap id="SureSelectedMap" type="edu.dlu.bysj.base.model.vo.DetermineStudentVo">
+        <id column="id" property="subjectId"/>
+        <result column="subject_name" property="subjectName"/>
+        <result column="studentName" property="studentName"/>
+        <result column="student_number" property="studentNumber"/>
+        <result column="phone_number" property="studentPhone"/>
+        <result column="majorName" property="studentMajor"/>
+        <result column="className" property="studentClass"/>
+        <result column="content" property="progress"/>
+    </resultMap>
+
+    <resultMap id="topicSelectStatics" type="edu.dlu.bysj.document.entity.TopicSelectStaticsTemplate">
+        <result column="subject_name" property="topicName"/>
+        <result column="studentName" property="studentName"/>
+        <result column="className" property="className"/>
+        <result column="guidName" property="guideName"/>
+        <result column="sourceName" property="topicSource"/>
+        <result column="typeName" property="topicType"/>
+        <result column="title_abstract" property="content"/>
+        <result column="necessity" property="necessity"/>
+        <result column="feasibility" property="feasiblity"/>
+    </resultMap>
+
+
+    <resultMap id="paperCoverMap" type="edu.dlu.bysj.document.entity.PaperCoverTemplate">
+        <result column="subject_name" property="subjectTitle"/>
+        <result column="studentName" property="studentName"/>
+        <result column="student_number" property="studentNumber"/>
+        <result column="name" property="className"/>
+        <result column="guideName" property="guideTeacherName"/>
+    </resultMap>
+    <update id="removeSubjectById">
+        UPDATE subject SET status=0 WHERE subject_id=#{subjectId} AND status=1
+    </update>
+    <select id="subjectSimplifyInfo" resultType="edu.dlu.bysj.base.model.vo.SubjectSimplifyVo">
+        select s.student_id as subjectId, s.subject_name as subjectName, p.content as progress
+        from (select subject.student_id, subject.subject_name, subject.progress_id
+              from subject
+              where subject.student_id = #{studentId}) as s
+                 inner join progress as p
+                            on p.id = s.progress_id
+    </select>
+
+    <select id="subjectListByMajorId" resultType="edu.dlu.bysj.base.model.vo.ApprovalTaskBookVo">
+        <choose>
+            <when test="userNumber != null and userNumber != '' ">
+                <bind name="pattern_userNumber" value="'%'+userNumber+ '%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="userName != null and userName != ''">
+                <bind name="pattern_userName" value="'%'+userName+'%'"/>
+            </when>
+        </choose>
+
+        select t.id as subjectId,
+        t.subject_name as subjectName,
+        t2.name as firstName,
+        t3.name as firstTitle,
+        s.student_number as studentNumber,
+        s.name as studentName,
+        s.phone_number as studentPhone,
+        p.content as progress
+        from (select subject.id, subject.subject_name, subject.first_teacher_id, subject.student_id,
+        subject.progress_id, subject.grade
+        from subject
+        where subject.status = 1 and subject.major_id = #{majorId}) as t
+
+        inner join student as s
+        on s.id = t.student_id
+
+        inner join progress as p
+        on p.id = t.progress_id
+
+        inner join teacher as t2
+        on t2.id = t.first_teacher_id
+
+        inner join title as t3
+        on t3.id = t2.title_id
+        <choose>
+            <when test="type  != 1">
+                <where>
+                    <if test="userName != null and userName != ''">
+                        s.name like #{pattern_userName}
+                    </if>
+                    <if test="userNumber != null and userNumber != ''">
+                        and s.student_number like #{pattern_userNumber}
+                    </if>
+                    <if test="year != null and year != ''">
+                        and t.grade = #{year}
+                    </if>
+                </where>
+            </when>
+
+            <otherwise>
+                <where>
+                    <if test="userName != null and userName != ''">
+                        t2.name like #{pattern_userName}
+                    </if>
+                    <if test="userNumber != null and userNumber != ''">
+                        and t2.teacher_number like #{pattern_userNumber}
+                    </if>
+
+                    <if test="year != null and year != ''">
+                        and t.grade = #{year}
+                    </if>
+                </where>
+            </otherwise>
+
+        </choose>
+        limit #{pageNumber}, #{pageSize}
+    </select>
+
+    <!--    查询subjectListByMajorId 对应的 total  -->
+    <select id="totalSubjectListByMajorId" resultType="java.lang.Integer">
+        <choose>
+            <when test="userNumber != null and userNumber != '' ">
+                <bind name="pattern_userNumber" value="'%'+userNumber+ '%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="userName != null and userName != ''">
+                <bind name="pattern_userName" value="'%'+userName+'%'"/>
+            </when>
+        </choose>
+
+        select count(*) as total
+        from (select subject.id, subject.subject_name, subject.first_teacher_id, subject.student_id,
+        subject.progress_id, subject.grade
+        from subject
+        where subject.status = 1 and subject.major_id = #{majorId}) as t
+
+        inner join student as s
+        on s.id = t.student_id
+
+        inner join progress as p
+        on p.id = t.progress_id
+
+        inner join teacher as t2
+        on t2.id = t.first_teacher_id
+
+        inner join title as t3
+        on t3.id = t2.title_id
+        <choose>
+            <when test="type  != 1">
+                <where>
+                    <if test="userName != null and userName != ''">
+                        s.name like #{pattern_userName}
+                    </if>
+                    <if test="userNumber != null and userNumber != ''">
+                        and s.student_number like #{pattern_userNumber}
+                    </if>
+                    <if test="year != null and year != ''">
+                        and t.grade = #{year}
+                    </if>
+                </where>
+            </when>
+
+            <otherwise>
+                <where>
+                    <if test="userName != null and userName != ''">
+                        t2.name like #{pattern_userName}
+                    </if>
+                    <if test="userNumber != null and userNumber != ''">
+                        and t2.teacher_number like #{pattern_userNumber}
+                    </if>
+
+                    <if test="year != null and year != ''">
+                        and t.grade = #{year}
+                    </if>
+                </where>
+            </otherwise>
+
+        </choose>
+    </select>
+
+
+    <select id="teacherSubjectListByTeacherIdAndGrade" resultType="edu.dlu.bysj.base.model.vo.SubjectDetailVo">
+        select s.id,
+               s.subjectId,
+               s.subject_name   as subjectName,
+               progress.content as progress,
+               grade,
+               s.student_id     as studentId,
+               t.name as teacherName,
+               t.phone_number as teacherPhone
+
+        from (select subject.id,subject.subject_id as subjectId, subject.subject_name, subject.grade, subject.progress_id, subject.student_id
+              from subject
+              where subject.status = 1
+                and subject.first_teacher_id = #{teacherId}
+                and grade = #{grade}) as s
+
+                 left join progress
+                           on progress.id = s.progress_id
+                 left join teacher as t
+                           on t.id = #{teacherId}
+
+        limit #{start} ,#{pageSize}
+    </select>
+    <select id="totalSubjectListByTeacher" resultType="java.lang.Integer">
+        select count(s.id) as total
+        from (select subject.id, subject.subject_name, subject.grade, subject.progress_id
+              from subject
+              where subject.status = 1
+                and subject.first_teacher_id = #{teacherId}
+                and grade = #{grade}) as s
+
+                 left join progress
+                           on progress.id = s.progress_id
+    </select>
+
+
+    <select id="adminApprovalListPagination" resultMap="adminApprovalMap">
+        select s.id,
+        s.subject_name,
+        s.first_teacher_id,
+        s.second_teacher_id,
+        s.student_id,
+        s.filing_number,
+        progress.content
+
+        from (select subject.id,
+        subject.subject_name,
+        subject.first_teacher_id,
+        subject.second_teacher_id,
+        subject.progress_id,
+        subject.student_id,
+        subject.filing_number
+        from subject
+        where subject.status = 1
+        <if test="teacherId != null">
+            and subject.first_teacher_id = 1
+        </if>
+        and grade = #{grade}
+
+        and subject.id in
+
+        (select subject_major.subject_id
+        from subject_major
+        where subject_major.major_id = #{majorId})) as s
+
+        left join progress
+
+        on progress.id = s.progress_id
+
+        limit #{start} , #{pageSize}
+    </select>
+
+    <select id="totalAdminApprovalList" resultType="java.lang.Integer">
+
+        select count(s.id) as total
+
+        from (select subject.id,subject.progress_id
+        from subject
+        where subject.status = 1
+        <if test="teacherId != null">
+            and subject.first_teacher_id = 1
+        </if>
+        and grade = #{grade}
+
+        and subject.id in
+
+        (select subject_major.subject_id
+        from subject_major
+        where subject_major.major_id = #{majorId})) as s
+
+        left join progress
+
+        on progress.id = s.progress_id
+
+    </select>
+
+
+    <select id="entrustSubjectPagination" resultMap="entrustSubjectMap">
+        select s.id,
+        s.subject_name,
+        teacher.name as teacherName,
+        t.name as titleName,
+        student.name as studentName,
+        student.student_number,
+        student.phone_number,
+        progress.content,
+        s.filing_number
+
+        from (select subject.id,
+        subject.subject_name,
+        subject.first_teacher_id,
+        subject.student_id,
+        subject.filing_number,
+        subject.progress_id
+        from subject
+        where subject.status = 1
+        <if test="subjectIds != null and subjectIds.size > 0">
+            and subject.id in
+            <foreach collection="subjectIds" item="value" open="(" separator="," close=")">
+                #{value}
+            </foreach>
+        </if>
+
+        <if test="subjectIds == null  or subjectIds.size == 0 ">
+            # 应对List、集合为空foreach不不执行问题
+            and subject.id in(null)
+        </if>
+
+        ) as s
+
+        left join teacher
+        on teacher.id = s.first_teacher_id
+
+        left join student
+        on student.id = s.student_id
+
+        left join progress
+        on progress.id = s.progress_id
+
+        left join title t
+        on teacher.title_id = t.id
+
+        limit #{start} ,#{pageSize}
+
+    </select>
+    <select id="totalEntrustSubject" resultType="java.lang.Integer">
+        select count( subject.id) as total
+        from subject
+        where subject.status = 1
+        <if test="subjectIds != null and subjectIds.size > 0">
+            and subject.id in
+            <foreach collection="subjectIds" item="value" open="(" separator="," close=")">
+                #{value}
+            </foreach>
+        </if>
+
+        <if test="subjectIds == null  or subjectIds.size == 0 ">
+            # 应对List、集合为空foreach不不执行问题
+            and subject.id in(null)
+        </if>
+
+    </select>
+
+
+    <select id="studentSelectSubject" resultMap="studentSelectSubjectMap">
+        <choose>
+            <when test="teacherName != null and teacherName != ''">
+                <bind name="teacherName_pattern" value="'%'+teacherName+'%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="subjectName != null and subjectName != ''">
+                <bind name="subjectName_pattern" value="'%'+subjectName+'%'"/>
+            </when>
+        </choose>
+
+        select s.id, s.subject_name, teacher.name as teacherName, t.name as titleName
+        from (select subject.id, subject.subject_name, subject.first_teacher_id
+        from subject
+        where subject.status = 1
+        and subject.major_id = #{majorId}
+        and subject.grade = #{grade}
+        ) as s
+
+        left join teacher
+        on teacher.id = s.first_teacher_id
+        left join title t
+        on teacher.title_id = t.id
+        <where>
+            <if test="teacherName != null and teacherName != '' ">
+                teacher.name like #{teacherName_pattern}
+            </if>
+            <if test="subjectName != null and subjectName != '' ">
+                and s.subject_name like #{subjectName_pattern}
+            </if>
+        </where>
+
+        limit #{start}, #{pageSize}
+    </select>
+
+    <select id="totalStudentSelectSubject" resultType="java.lang.Integer">
+
+        <choose>
+            <when test="teacherName != null and teacherName != ''">
+                <bind name="teacherName_pattern" value="'%'+teacherName+'%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="subjectName != null and subjectName != ''">
+                <bind name="subjectName_pattern" value="'%'+subjectName+'%'"/>
+            </when>
+        </choose>
+
+        select count(s.id)
+
+        from
+        (select subject.id, subject.first_teacher_id,subject.subject_name
+        from subject
+        where subject.status = 1
+        and subject.major_id = #{majorId}
+        and subject.grade = #{grade}) as s
+
+        left join teacher
+        on teacher.id = s.first_teacher_id
+
+        <where>
+            <if test="teacherName != null and teacherName != '' ">
+                teacher.name like #{teacherName_pattern}
+            </if>
+            <if test="subjectName != null and subjectName != '' ">
+                and s.subject_name like #{subjectName_pattern}
+            </if>
+        </where>
+
+    </select>
+
+    <select id="determinStudentSubject" resultMap="SureSelectedMap">
+        select s.id,
+               s.subject_name,
+               student.name as studentName,
+               student.student_number,
+               student.phone_number,
+               m.name       as majorName,
+               c.name       as className,
+               p.content
+        from (select subject.id, subject.subject_name, subject.student_id, subject.progress_id
+              from subject
+              where subject.status = 1
+                and subject.first_teacher_id = #{teacherId}
+                and subject.grade = #{grade}
+                and subject.student_id is not null)
+                 as s
+
+                 left join student
+                           on student.id = s.student_id
+
+                 left join major m
+                           on student.major_id = m.id
+                 left join class c
+                           on student.class_id = c.id
+
+                 left join progress p
+                           on p.id = s.progress_id
+        limit #{start}, #{pageSize}
+    </select>
+
+
+    <select id="totalDeterminestudentSubject" resultType="java.lang.Integer">
+        select count(subject.id) as totoal
+        from subject
+        where subject.status = 1
+          and subject.first_teacher_id = #{teacherId}
+          and subject.grade = #{grade}
+          and subject.student_id is not null
+    </select>
+
+    <select id="selectPaperCoverInfo" resultMap="paperCoverMap">
+        select subject.subject_name,
+               student.name as studentName,
+               student.student_number,
+               class.name,
+               teacher.name as guideName
+
+        from subject
+                 inner join student
+                            on subject.student_id = student.id
+                 inner join teacher
+                            on subject.first_teacher_id = teacher.id
+                 inner join class
+                            on student.class_id = class.id
+        where subject.status = 1
+          and student.status = 1
+          and teacher.status = 1
+          and class.status = 1
+          and student.major_id = #{majorId}
+    </select>
+
+    <select id="selectAllSelectStaticsByMajorId"
+            resultMap="topicSelectStatics">
+
+        select s.subject_name,
+               student.name      as studentName,
+               class.name        as className,
+               teacher.name      as guidName,
+               source.name       as sourceName,
+               subject_type.name as typeName,
+               s.title_abstract,
+               s.necessity,
+               s.feasibility
+
+        from (select subject.id,
+                     subject.subject_name,
+                     subject.student_id,
+                     subject.first_teacher_id,
+                     subject.subject_type_id,
+                     subject.source_id,
+                     subject.title_abstract,
+                     subject.necessity,
+                     subject.feasibility
+              from subject
+              where subject.major_id = #{majorId}) as s
+
+                 inner join student
+                            on s.student_id = student.id
+
+                 inner join class
+                            on student.class_id = class.id
+
+                 inner join teacher
+                            on s.first_teacher_id = teacher.id
+
+                 inner join source
+                            on s.source_id = source.id
+
+                 inner join subject_type
+                            on s.subject_type_id = subject_type.id
+
+
+    </select>
+    <select id="selectBySubjectId" resultType="edu.dlu.bysj.base.model.entity.Subject">
+        select * from subject where subject_id = #{subjectId}
+    </select>
+    <select id="listBySubjectIds" resultType="edu.dlu.bysj.base.model.entity.Subject">
+        select * from subject where subject_id = #{id1} or subject_id = #{id2}
+    </select>
+
+
+</mapper>

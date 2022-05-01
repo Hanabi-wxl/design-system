@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.system.mapper.FunctionMapper">
+    <resultMap id="personFunctionMap" type="edu.dlu.bysj.base.model.vo.FunctionSimplifyVo">
+        <id column="id" property="functionId"/>
+        <result column="name" property="functionName"/>
+        <result column="parent_id" property="fatherId"/>
+    </resultMap>
+
+
+    <update id="updateStartTimeAndEndTime">
+        update functions
+        <set>
+            <if test="startTime !=null and startTime!= null">
+                function.start_time = #{startTime},
+            </if>
+            <if test="endTime !=null and endTime != null">
+                function.end_time = #{endTime},
+            </if>
+            function.status = 1
+        </set>
+        where function.id = #{functionId}
+    </update>
+
+
+    <select id="getPersonFunction" resultMap="personFunctionMap">
+        select functions.id, functions.name, functions.parent_id
+        from functions
+        where functions.id in (select role_function.function_id
+        from role_function
+        where role_function.status = 1
+        and role_function.role_id in
+        <foreach collection="roles" open="(" item="value" close=")" separator=",">
+            #{value}
+        </foreach>
+        )
+        and functions.start_time &lt; #{currentTime}
+        and functions.end_time &gt; #{currentTime}
+
+
+    </select>
+
+    <select id="getFunctionByMajorId" resultType="edu.dlu.bysj.base.model.vo.FunctionTimeVo">
+        SELECT name       as functionName,
+               start_time as startTime,
+               end_time   as endTime,
+               id         as functionId,
+               parent_id  as fatherId
+        FROM functions
+        WHERE status = 1
+          AND (major_id = #{majorId})
+    </select>
+</mapper>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.dlu.bysj.defense.mapper.TeamMapper">
+    <resultMap id="teacherGroupInfoMap" type="edu.dlu.bysj.base.model.vo.ReplyTeacherVo">
+        <result column="team_number" property="groupNumber"/>
+        <result column="majorName" property="major"/>
+        <result column="start_date" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="resposiblity" property="roleName"/>
+        <result column="name" property="teacherName"/>
+        <result column="is_repeat" property="isSecond"/>
+    </resultMap>
+
+
+    <select id="selectTeacherGroupInfo" resultMap="teacherGroupInfoMap">
+        select team.team_number,
+               major.name as majorName,
+               team.start_date,
+               team.end_time,
+               team.address,
+               t.resposiblity,
+               teacher.name,
+               team.is_repeat
+        from (select team_user.team_id, team_user.resposiblity, team_user.user_id
+              from team_user
+              where team_user.status = 1
+                and team_user.user_id = #{teacherId}
+                and team_user.is_student = #{isStudent}) as t
+                 left join team
+                           on t.team_id = team.id
+                 left join teacher
+                           on t.user_id = teacher.id
+                 left join major
+                           on teacher.major_id = major.id
+        where team.grade = #{grade}
+          and team.status = 1
+          and teacher.status = 1
+          and major.status = 1
+
+    </select>
+    <select id="selectStudentInfofSimilarGroup" resultType="edu.dlu.bysj.base.model.vo.StudentGroupVo">
+        select student.name as studentName, t.resposiblity as roleName
+
+        from (select team_user.user_id, team_user.resposiblity
+              from team_user
+              where team_user.status = 1
+                and team_user.team_id = #{teamId}
+                and team_user.is_student = #{isStudent}) as t
+                 left join student
+                           on t.user_id = student.id
+    </select>
+</mapper>
