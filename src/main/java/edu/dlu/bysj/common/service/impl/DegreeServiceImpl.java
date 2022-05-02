@@ -31,7 +31,7 @@ public class DegreeServiceImpl extends ServiceImpl<DegreeMapper, Degree> impleme
         degreeMapper.selectAllSimplifyDegree();
         if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
             Long size = redisTemplate.boundListOps(key).size();
-            result = redisTemplate.opsForList().range(key, 0, size);
+            result = (List<DegreeSimplifyVo>) redisTemplate.opsForList().range(key, 0, size).get(0);
         } else {
             result = degreeMapper.selectAllSimplifyDegree();
             if (result != null && !result.isEmpty()) {
