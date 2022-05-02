@@ -28,7 +28,7 @@ public class OfficeServiceImpl extends ServiceImpl<OfficeMapper, Office> impleme
     List<OfficeSimplifyVo> result = null;
     if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
       Long size = redisTemplate.boundListOps(key).size();
-      result = redisTemplate.boundListOps(key).range(0, size);
+      result = (List<OfficeSimplifyVo>) redisTemplate.boundListOps(key).range(0, size).get(0);
     } else {
       result = officeMapper.selectAllSimplifyOffice();
       if (result != null && !result.isEmpty()) {
