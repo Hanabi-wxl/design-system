@@ -23,6 +23,7 @@ import edu.dlu.bysj.common.service.StudentService;
 import edu.dlu.bysj.common.service.TeacherService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
 import edu.dlu.bysj.system.model.dto.UserStateDto;
+import edu.dlu.bysj.system.service.CollegeService;
 import edu.dlu.bysj.system.service.TeacherRoleService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -52,15 +53,17 @@ public class UserController {
 
     private final TeacherRoleService teacherRoleService;
 
+    private final CollegeService collegeService;
+
 
     public static final String ONE = "1";
 
     public UserController(StudentService studentService, TeacherService teacherService,
-                          TeacherRoleService teacherRoleService) {
+                          TeacherRoleService teacherRoleService, CollegeService collegeService) {
         this.studentService = studentService;
         this.teacherService = teacherService;
         this.teacherRoleService = teacherRoleService;
-
+        this.collegeService = collegeService;
     }
 
     @GetMapping(value = "system/user/list")
@@ -211,15 +214,14 @@ public class UserController {
             @RequestParam("roleId") Integer roleId,
             @RequestParam("type") String type) {
         boolean flag = false;
+        TeacherRole teacherRole = new TeacherRole();
+        teacherRole.setRoleId(roleId);
+        teacherRole.setTeacherId(teacherId);
         /*1,新增, 0 删除*/
         if (ONE.equals(type)) {
-            TeacherRole teacherRole = new TeacherRole();
-            teacherRole.setRoleId(roleId);
-            teacherRole.setTeacherId(teacherId);
-            flag = teacherRoleService.save(teacherRole);
+            flag = teacherRoleService.saveRole(teacherRole);
         } else {
-            flag = teacherRoleService.remove(
-                    new QueryWrapper<TeacherRole>().eq("role_id", roleId).eq("teacher_id", teacherId));
+            flag = teacherRoleService.removeRole(teacherRole);
         }
         return flag ? CommonResult.success(null) : CommonResult.failed();
     }
@@ -240,6 +242,7 @@ public class UserController {
     @ApiOperation(value = "管理员列表")
     public CommonResult<Map<String, Object>> managerList(HttpServletRequest request) {
         String token = request.getHeader("jwt");
+        Integer collegeId = collegeService.getCollegeIdByMajorId(JwtUtil.getMajorId(token));
         List<Integer> roleIds = JwtUtil.getRoleIds(token);
         // 判断和三种主要的交集; 专业管理员()，学院管理员,校级管理员
 
@@ -258,8 +261,10 @@ public class UserController {
         // 查询拥有参数中权限的所有人;
         for (Integer value : param) {
             String key = ManagerEnum.mangerRoleName(value);
-            List<AdminVo> adminVos = teacherRoleService.teacherMangerRoles(value, JwtUtil.getMajorId(token));
-            result.put(key, adminVos);
+            if(value == 3){
+                List<AdminVo> adminVos3 = teacherRoleService.getMajorAdmin(collegeId);
+                result.put(key, adminVos3);
+            }
         }
 
         return CommonResult.success(result);

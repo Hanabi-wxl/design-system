@@ -30,4 +30,13 @@ public interface CollegeMapper extends BaseMapper<College> {
      */
     List<CollegeSimpleInoVo> getCollegeBySchoolId(Integer schoolId);
 
+    /*
+     * @Description:  根据专业id获取学院id
+     * @Author: sinre
+     * @Date: 2022/5/2 11:07
+     * @param majorId
+     * @return java.lang.Integer
+     **/
+    Integer getCollegeId(Integer majorId);
+
 }

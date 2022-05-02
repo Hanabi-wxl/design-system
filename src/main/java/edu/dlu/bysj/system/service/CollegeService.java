@@ -36,4 +36,6 @@ public interface CollegeService extends IService<College> {
      * @return CollegeSimpleInfo 信息
      */
     List<CollegeSimpleInoVo> obtainCollegeInfoBySchool(Integer schoolId);
+
+    Integer getCollegeIdByMajorId(Integer majorId);
 }

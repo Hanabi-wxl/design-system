@@ -24,4 +24,8 @@
         where college.status = 1
           and college.school_id = #{schoolId}
     </select>
+
+    <select id="getCollegeId" resultType="java.lang.Integer">
+        select college_id from major where major.id=#{majorId}
+    </select>
 </mapper>

@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="edu.dlu.bysj.system.mapper.TeacherRoleMapper">
 
-    <select id="getAllByRoleId" resultType="java.lang.Integer">
+    <select id="getAllRoleById" resultType="java.lang.Integer">
         select role.id
         from role
         where role.status = 1
@@ -45,5 +45,41 @@
                             on major.id = x.majoriId
         where major.id = #{majorId}
           and major.status = 1
+    </select>
+
+    <select id="getMajorAdminByCollegeId" resultType="edu.dlu.bysj.base.model.vo.AdminVo">
+        # id -> college.majorId
+        # 3 -> teacher_role.teacherId
+        # teacherId and majorId -> teacher.other
+
+        select tr.id as teacherId, m.id as majorId from college c
+        left join teacher_role tr on tr.role_id = 3 and tr.status=1
+        left join major m on c.id = m.college_id
+        where c.id = #{collegeId}
+
+#         select m.name as majorName,
+#                m.id as majorId
+#         from major m
+#         inner join teacher_role on role_id = 3
+#         where college_id=#{id}
+
+#         select ttr.roleId,
+#                ttr.roleName,
+#                ttr.teacherId,
+#                t.teacher_number  as teacherNumber,
+#                t.name            as teacherName,
+#                t.phone_number    as teacherPhone,
+#                t.email           as teacherEmail,
+#                m.name            as majorName
+#         from (
+#             select tr.role_id as roleId,
+#             tr.teacher_id as teacherId,
+#             r.name as roleName
+#             from teacher_role tr
+#             left join role r on r.id = tr.role_id
+#             where role_id = 3
+#         ) as ttr
+#         inner join teacher t on t.id = ttr.teacherId
+#         inner join major m on t.major_id = m.id
     </select>
 </mapper>

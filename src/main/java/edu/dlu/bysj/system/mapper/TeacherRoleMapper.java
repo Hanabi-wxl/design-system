@@ -21,7 +21,9 @@ public interface TeacherRoleMapper extends BaseMapper<TeacherRole> {
      * @param teacherId 教师id
      * @return 角色集合
      */
-    Set<Integer> getAllByRoleId(String teacherId);
+    Set<Integer> getAllRoleById(String teacherId);
+
+
 
     /**
      * 根据角色id 获取该角色对应的所有老师
@@ -30,4 +32,13 @@ public interface TeacherRoleMapper extends BaseMapper<TeacherRole> {
      * @return 对应类别的教师集合;
      */
     List<AdminVo> getMangerList(@Param("roleId") Integer roleId, @Param("majorId") Integer majorId);
+
+    /*
+     * @Description: 根据角色id获取对应管理员信息
+     * @Author: sinre
+     * @Date: 2022/5/2 10:11
+     * @param i
+     * @return java.util.List<edu.dlu.bysj.base.model.vo.AdminVo>
+     **/
+    List<AdminVo> getMajorAdminByCollegeId(int collegeId);
 }

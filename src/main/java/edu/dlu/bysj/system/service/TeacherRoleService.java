@@ -31,4 +31,31 @@ public interface TeacherRoleService extends IService<TeacherRole> {
      * @return 对应的role信息集合;
      */
     List<AdminVo> teacherMangerRoles(Integer roleId, Integer majorId);
+
+    /*
+     * @Description: 获取专业管理员信息
+     * @Author: sinre
+     * @Date: 2022/5/2 10:03
+     * @param i
+     * @return java.util.List<edu.dlu.bysj.base.model.vo.AdminVo>
+     **/
+    List<AdminVo> getMajorAdmin(Integer collegeId);
+
+    /*
+     * @Description: 新增role
+     * @Author: sinre
+     * @Date: 2022/5/2 13:24
+     * @param teacherRole
+     * @return boolean
+     **/
+    boolean saveRole(TeacherRole teacherRole);
+
+    /*
+     * @Description: 删除role
+     * @Author: sinre
+     * @Date: 2022/5/2 13:24
+     * @param teacherRole
+     * @return boolean
+     **/
+    boolean removeRole(TeacherRole teacherRole);
 }

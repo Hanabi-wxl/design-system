@@ -94,6 +94,18 @@ public class CollegeServiceImpl extends ServiceImpl<CollegeMapper, College>
         return result;
     }
 
+    /*
+     * @Description:  根据专业id获取学院id
+     * @Author: sinre
+     * @Date: 2022/5/2 11:07
+     * @param majorId
+     * @return java.lang.Integer
+     **/
+    @Override
+    public Integer getCollegeIdByMajorId(Integer majorId) {
+        return collegeMapper.getCollegeId(majorId);
+    }
+
     /**
      * 向 redis hash 中存放单个数据
      *
