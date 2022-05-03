@@ -12,6 +12,7 @@ import edu.dlu.bysj.base.model.vo.TotalPackageVo;
 import edu.dlu.bysj.base.result.CommonResult;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
+import edu.dlu.bysj.notification.mapper.NoticeMapper;
 import edu.dlu.bysj.notification.service.NoticeFileService;
 import edu.dlu.bysj.notification.service.NoticeService;
 import edu.dlu.bysj.paper.service.FileInformationService;
@@ -52,15 +53,19 @@ public class NotifyController {
 
     private final FileInformationService fileInformationService;
 
+    private final NoticeMapper noticeMapper;
+
 
     public NotifyController(NoticeService noticeService,
                             NoticeFileService noticeFileService,
                             FileInformationService fileInformationService,
-                            MajorService majorService) {
+                            MajorService majorService,
+                            NoticeMapper noticeMapper) {
         this.noticeService = noticeService;
         this.majorService = majorService;
         this.noticeFileService = noticeFileService;
         this.fileInformationService = fileInformationService;
+        this.noticeMapper = noticeMapper;
     }
 
     @GetMapping(value = "/notice/list")
@@ -79,7 +84,6 @@ public class NotifyController {
         TotalPackageVo<NoticeVo> noticeVoTotalPackageVo = new TotalPackageVo<>();
         noticeVoTotalPackageVo.setTotal(allNoticeList.size());
         noticeVoTotalPackageVo.setArrays(allNoticeList);
-
 
         return CommonResult.success(noticeVoTotalPackageVo);
     }
@@ -128,21 +132,19 @@ public class NotifyController {
 
         return noticeFlag ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
     }
-//
-//    @RequiresPermissions({"notice:list"})
-//    @GetMapping(value = "/notice/getNoticeById/{noticeId}")
-//    @ApiOperation(value = "获取已增消息用于修改")
-//    public CommonResult<Object> getNoticeById(@PathVariable("noticeId") @NotNull Integer noticeId){
-//
-//        List<QueryWrapper<Notice>> notice = new ArrayList<>();
-//
-//        QueryWrapper<Notice> queryWrapper = new QueryWrapper<>();
-//        queryWrapper.eq("id",noticeId);
-//
-//        notice.add(queryWrapper);
-//
-//        return CommonResult.success(notice);
-//    }
+
+    @RequiresPermissions({"notice:list"})
+    @GetMapping(value = "/notice/getNoticeById/{noticeId}")
+    @ApiOperation(value = "获取已增消息用于修改")
+    public CommonResult<Object> getNoticeById(@PathVariable("noticeId") @NotNull Integer noticeId){
+
+    QueryWrapper<Notice> queryWrapper = new QueryWrapper<>();
+    queryWrapper.eq("id",noticeId);
+
+    List<Notice> list = noticeMapper.selectList(queryWrapper);
+
+    return CommonResult.success(list);
+    }
 
     @GetMapping(value = "/notice/detail/{noticeId}")
     @LogAnnotation(content = "查看通知详情")
