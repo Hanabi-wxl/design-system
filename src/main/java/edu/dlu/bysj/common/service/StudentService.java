@@ -67,4 +67,13 @@ public interface StudentService extends IService<Student> {
     List<StudentInfoVo> checkAdjustedSubjectMentor(Integer majorId, Integer year, Integer type, String userName, String useNumber);
 
     boolean addStudent(ModifyUserVo userVo);
+
+    /*
+     * @Description: 根据学号获取学生信息
+     * @Author: sinre
+     * @Date: 2022/5/3 21:04
+     * @param number
+     * @return edu.dlu.bysj.base.model.vo.StudentDetailVo
+     **/
+    StudentDetailVo checkStudentInfoByNumber(Integer number);
 }

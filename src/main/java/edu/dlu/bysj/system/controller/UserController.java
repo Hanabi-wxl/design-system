@@ -91,14 +91,7 @@ public class UserController {
         return CommonResult.success(result);
     }
 
-    /*
-     * @Description: 添加requestBody 获取请求体内的数据
-     * @Author: sinre
-     * @Date: 2022/4/26 13:02
-     * @param userVo
-     * @param response
-     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
-     **/
+
     @PostMapping(value = "/system/user/change")
     @LogAnnotation(content = "修该用户信息")
     @RequiresPermissions({"use:change"})

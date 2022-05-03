@@ -22,6 +22,8 @@ public class StudentDetailVo {
     private String studentNumber;
     @ApiModelProperty(value = "专业")
     private String major;
+    @ApiModelProperty(value = "专业id")
+    private Integer majorId;
     @ApiModelProperty(value = "性别")
     private String sex;
     @ApiModelProperty(value = "手机号")
@@ -30,8 +32,12 @@ public class StudentDetailVo {
     private String email;
     @ApiModelProperty(value = "班级名称")
     private String className;
+    @ApiModelProperty(value = "班级id")
+    private Integer classId;
     @ApiModelProperty(value = "学生id")
     private Integer studentId;
+    @ApiModelProperty(value = "学院id")
+    private Integer collegeId;
     @ApiModelProperty(value = "可使用")
     private Integer canUse;
     public StudentDetailVo() {

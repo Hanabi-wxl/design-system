@@ -31,6 +31,8 @@ public class UserVo {
     private String majorName;
     @ApiModelProperty(value = "角色id")
     private Integer roleId;
+//    @ApiModelProperty(value = "学院id")
+//    private Integer collegeId;
     @ApiModelProperty(value = "手机号")
     private String phone;
     @ApiModelProperty(value = "电子邮箱")

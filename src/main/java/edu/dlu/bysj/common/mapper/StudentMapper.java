@@ -141,4 +141,7 @@ public interface StudentMapper extends BaseMapper<Student> {
                                                    @Param("type") Integer type,
                                                    @Param("userName") String userName,
                                                    @Param("userNumber") String userNumber);
+
+    StudentDetailVo checkStudentInfoByNumber(Integer number);
+
 }

@@ -4,7 +4,6 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import edu.dlu.bysj.base.model.entity.Major;
-import edu.dlu.bysj.base.model.entity.Student;
 import edu.dlu.bysj.base.model.entity.Teacher;
 import edu.dlu.bysj.base.model.query.TopicApprovalListQuery;
 import edu.dlu.bysj.base.model.vo.*;
@@ -16,7 +15,6 @@ import edu.dlu.bysj.system.service.ClassService;
 import edu.dlu.bysj.system.service.FunctionService;
 import edu.dlu.bysj.system.service.MajorService;
 import edu.dlu.bysj.system.service.SchoolService;
-import io.jsonwebtoken.Jwt;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -124,11 +122,7 @@ public class InformationController {
     @RequiresPermissions({"common:studentInformation"})
     @ApiOperation(value = "通过Id获取学生个人信息")
     public CommonResult<StudentDetailVo> studentInformationByNumber(@RequestParam("studentNumber") Integer number) {
-        Student student = studentService.getOne(new QueryWrapper<Student>().eq("student_number",number));
-        StudentDetailVo detailVo = new StudentDetailVo();
-        detailVo.setUsername(student.getName());
-        detailVo.setMajor(String.valueOf(student.getMajorId()));
-        detailVo.setClassName(String.valueOf(student.getClassId()));
+        StudentDetailVo detailVo = studentService.checkStudentInfoByNumber(number);
         return CommonResult.success(detailVo);
     }
 

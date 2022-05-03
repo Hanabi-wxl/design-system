@@ -33,8 +33,6 @@ public class LogController {
     if (!StringUtils.isEmpty(type)) {
       list = logService.allLogByYearAndType(type, year);
     }
-    int i = 1 / 0;
-
     return CommonResult.success(list);
   }
 }

@@ -2,12 +2,14 @@ package edu.dlu.bysj.common.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.dlu.bysj.base.model.dto.DegreeAndTileConvey;
 import edu.dlu.bysj.base.model.entity.Student;
 import edu.dlu.bysj.base.model.entity.Teacher;
+import edu.dlu.bysj.base.model.entity.TeacherRole;
 import edu.dlu.bysj.base.model.enums.RedisKeyEnum;
 import edu.dlu.bysj.base.model.enums.SexEnum;
 import edu.dlu.bysj.base.model.enums.TitleRankEnum;
@@ -17,6 +19,8 @@ import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.base.util.SimpleHashUtil;
 import edu.dlu.bysj.common.mapper.TeacherMapper;
 import edu.dlu.bysj.common.service.TeacherService;
+import edu.dlu.bysj.system.mapper.TeacherRoleMapper;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -45,6 +49,9 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher>
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private TeacherRoleMapper teacherRoleMapper;
 
     @Override
     public List<Integer> getTeacherRoles(Integer teacherId) {
@@ -236,6 +243,12 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher>
         teacher.setCanUse(1);
         teacher.setStatus(1);
         int insert = teacherMapper.insert(teacher);
-        return insert != 0;
+        Teacher teacher1 = teacherMapper.selectOne(new QueryWrapper<Teacher>().eq("teacher_number", teacher.getTeacherNumber()));
+        TeacherRole teacherRole = new TeacherRole();
+        teacherRole.setTeacherId(teacher1.getId());
+        teacherRole.setRoleId(2);
+        teacherRole.setStatus(1);
+        int insert1 = teacherRoleMapper.insert(teacherRole);
+        return insert == 1 && insert1 == 1;
     }
 }

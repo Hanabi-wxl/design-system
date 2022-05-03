@@ -105,4 +105,10 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student>
         int insert = studentMapper.insert(student);
         return insert != 0;
     }
+
+    @Override
+    public StudentDetailVo checkStudentInfoByNumber(Integer number) {
+        return studentMapper.checkStudentInfoByNumber(number);
+    }
+
 }

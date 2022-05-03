@@ -96,6 +96,7 @@
         student.email as email,
         student.can_use as can_use,
         m.name as majorName,
+        m.college_id as collegeId,
         c.name as className
         from student
         inner join major m
@@ -160,10 +161,13 @@
         select t.name        as username,
                t.number      as studentNumber,
                m.name        as major,
+               m.college_id  as collegeId,
+               m.id          as majorId,
                t.sex         as sex,
                t.PhoneNumber as phone,
                t.email       as email,
                c.name        as className,
+               c.id          as classId,
                t.id          as studentId,
                t.canUse      as canUse
         from (select student.id             as id,
@@ -414,6 +418,38 @@
                 </if>
             </when>
         </choose>
+
+    </select>
+    <select id="checkStudentInfoByNumber" resultType="edu.dlu.bysj.base.model.vo.StudentDetailVo">
+        select t.name        as username,
+               t.number      as studentNumber,
+               m.name        as major,
+               m.college_id  as collegeId,
+               m.id          as majorId,
+               t.sex         as sex,
+               t.PhoneNumber as phone,
+               t.email       as email,
+               c.name        as className,
+               c.id          as classId,
+               t.id          as studentId,
+               t.canUse      as canUse
+        from (select student.id             as id,
+                     student.class_id       as classId,
+                     student.major_id       as majorId,
+                     student.name           as name,
+                     student.student_number as number,
+                     student.sex            as sex,
+                     student.email          as email,
+                     student.phone_number   as PhoneNumber,
+                     student.can_use        as canUse
+              from student
+              where student.status = 1
+                and student.student_number = #{userId}
+             ) as t
+                 inner join major as m
+                            on t.majorId = m.id
+                 inner join class c
+                            on c.id = t.classId
 
     </select>
 

@@ -111,7 +111,7 @@ public class MajorServiceImpl extends ServiceImpl<MajorMapper, Major> implements
         if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
             Long size = redisTemplate.boundListOps(key).size();
             if (ObjectUtil.isNotNull(size)) {
-                Object range = redisTemplate.boundListOps(key).range(0, size);
+                Object range = redisTemplate.boundListOps(key).range(0, size).get(0);
                 result = (List<UserVo>) range;
             }
         } else {
