@@ -37,7 +37,6 @@
                             and teacher_role.status = 1) as t
                              inner join role
                                         on role.id = t.role_id) as z
-
                        inner join teacher
                                   on teacher.id = z.teacherId
               where teacher.status = 1) x
@@ -46,8 +45,24 @@
         where major.id = #{majorId}
           and major.status = 1
     </select>
-
-    <select id="getMajorAdminByCollegeId" resultType="edu.dlu.bysj.base.model.vo.AdminVo">
+    <select id="getMajorAdminList" resultType="edu.dlu.bysj.base.model.vo.AdminVo">
+        select t.id as teacherId,
+               t.email as teacherEmail,
+               t.phone_number as teacherPhone,
+               t.name as teacherName,
+               t.teacher_number as teacherNumber,
+               m.name as majorName,
+               m.id as roleId
+        from teacher t
+        left join major m on m.id = t.major_id
+        where t.can_use = 1 and m.status = 1 and t.id in
+        <foreach collection="ids" open="(" close=")" separator="," index="index" item="id">
+            #{id}
+        </foreach>
 
     </select>
+    <select id="getAllIdByRole" resultType="java.lang.Integer">
+        select tr.teacher_id from teacher_role tr where tr.role_id = #{roleId} and tr.status = 1
+    </select>
+
 </mapper>

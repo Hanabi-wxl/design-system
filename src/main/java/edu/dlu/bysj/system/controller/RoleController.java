@@ -1,11 +1,14 @@
 package edu.dlu.bysj.system.controller;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import edu.dlu.bysj.base.model.entity.Role;
 import edu.dlu.bysj.base.model.entity.RoleFunction;
 import edu.dlu.bysj.base.model.enums.RedisKeyEnum;
 import edu.dlu.bysj.base.result.CommonResult;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
+import edu.dlu.bysj.system.model.dto.RoleDto;
+import edu.dlu.bysj.system.model.dto.RoleFunctionDto;
 import edu.dlu.bysj.system.service.RoleFunctionService;
 import edu.dlu.bysj.system.service.RoleService;
 import io.swagger.annotations.Api;
@@ -67,27 +70,20 @@ public class RoleController {
     @LogAnnotation(content = "新建角色")
     @RequiresPermissions({"role:add"})
     @ApiOperation(value = "新建角色")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "roleName", value = "角色名称", required = true),
-            @ApiImplicitParam(name = "description", value = "对于角色的描述", required = true)
-    })
-    public CommonResult<Object> roleAdd(String roleName, String description) {
-
-        Role role = new Role();
-        role.setName(roleName);
-        role.setDescription(description);
+    public CommonResult<Object> roleAdd(@RequestBody Role role) {
         // 修改
         return roleService.save(role) ? CommonResult.success(null) : CommonResult.failed();
     }
 
-    @DeleteMapping(value = "/system/role/delete/{roleId}")
+    @DeleteMapping(value = "/system/role/delete")
     @LogAnnotation(content = "根据roleId删除对应的角色")
     @RequiresPermissions({"role:delete"})
     @ApiOperation(value = "根据roleId删除该对应的角色")
     @ApiImplicitParams({@ApiImplicitParam(name = "roleId", value = "角色id", required = true)})
-    public CommonResult<Object> roleDelete(@PathVariable("roleId") String roleId) {
+    public CommonResult<Object> roleDelete(@RequestBody String roleId) {
+        String id = JSONUtil.parseObj(roleId).get("roleId", String.class);
         // 删除对应的角色;
-        return roleService.removeById(roleId) ? CommonResult.success(null) : CommonResult.failed();
+        return roleService.removeById(id) ? CommonResult.success(null) : CommonResult.failed();
     }
 
     @GetMapping(value = "/system/role/hasFunction/{roleId}")
@@ -102,20 +98,15 @@ public class RoleController {
         return CommonResult.success(result);
     }
 
-    @GetMapping(value = "/system/role/change/{roleId}/{functionId}/{type}")
+    @PatchMapping(value = "/system/role/change")
     @LogAnnotation(content = "修改角色对应的菜单")
     @RequiresPermissions({"role:change"})
     @ApiOperation(value = "修改角色对应的菜单")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "roleId", value = "角色id", required = true),
-            @ApiImplicitParam(name = "functionId", value = "菜单id", required = true),
-            @ApiImplicitParam(name = "type", value = "1新增, 0删除", required = true)
-    })
-    public CommonResult<Object> roleFunctionModify(
-            @PathVariable("roleId") Integer roleId,
-            @PathVariable("functionId") Integer functionId,
-            @PathVariable("type") String type) {
-
+    public CommonResult<Object> roleFunctionModify(@RequestBody RoleFunctionDto dto) {
+        Integer functionId = dto.getFunctionId();
+        Integer roleId = dto.getRoleId();
+        // 1新增, 0删除
+        String type = dto.getType();
         boolean flag = false;
         // 新增
         if (ONE.equals(type)) {

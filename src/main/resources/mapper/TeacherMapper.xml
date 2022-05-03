@@ -70,7 +70,7 @@
     <select id="teacherRoles" resultType="java.lang.Integer">
         select distinct teacher_role.role_id
         from teacher_role
-        where teacher_id = #{teacherId}
+        where teacher_id = #{teacherId} and status = 1
     </select>
 
     <select id="teacherLimitByQuery" resultMap="teacherLimitMap">
@@ -93,11 +93,11 @@
         teacher.sex as sex,
         teacher.email as email,
         teacher.can_use as can_use,
-        major.name as majorName
+        major.name as majorName,
+        tr.role_id as roleId
         from teacher
-        inner join
-        major
-        on teacher.major_id = major.id
+        inner join major on teacher.major_id = major.id
+        inner join teacher_role tr on teacher.id = tr.teacher_id and tr.status = 1
         where teacher.status = 1
         and teacher.major_id = #{majorId}
         <if test="userName != null and userName != ''">
@@ -228,7 +228,7 @@
             role.status = 1
             <if test="roleIds != null and roleIds.size() != 0">
                 and role.id in
-                <foreach collection="list" open="(" separator="," close=")" item="element">
+                <foreach collection="roleIds" open="(" separator="," close=")" item="element">
                     #{element}
                 </foreach>
             </if>

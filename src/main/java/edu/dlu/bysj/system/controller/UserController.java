@@ -25,6 +25,7 @@ import edu.dlu.bysj.log.annotation.LogAnnotation;
 import edu.dlu.bysj.system.model.dto.UserStateDto;
 import edu.dlu.bysj.system.service.CollegeService;
 import edu.dlu.bysj.system.service.TeacherRoleService;
+import io.jsonwebtoken.Jwt;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -242,10 +243,11 @@ public class UserController {
     @ApiOperation(value = "管理员列表")
     public CommonResult<Map<String, Object>> managerList(HttpServletRequest request) {
         String token = request.getHeader("jwt");
+        Map<String, Object> result = new HashMap<>(16);
         Integer collegeId = collegeService.getCollegeIdByMajorId(JwtUtil.getMajorId(token));
         List<Integer> roleIds = JwtUtil.getRoleIds(token);
-        // 判断和三种主要的交集; 专业管理员()，学院管理员,校级管理员
 
+        // 判断和三种主要的交集; 专业管理员()，学院管理员,校级管理员
         int integer = 0;
         if (roleIds != null && !roleIds.isEmpty()) {
             integer = roleIds.stream().max((a, b) -> a - b).get();
@@ -255,18 +257,22 @@ public class UserController {
         for (int i = 3; i < integer; i++) {
             param.add(i);
         }
-
-        Map<String, Object> result = new HashMap<>(16);
-
-        // 查询拥有参数中权限的所有人;
-        for (Integer value : param) {
-            String key = ManagerEnum.mangerRoleName(value);
-            if(value == 3){
-                List<AdminVo> adminVos3 = teacherRoleService.getMajorAdmin(collegeId);
+        // 校or管理员
+        if (integer == 6){
+            result = teacherRoleService.getAllAdmin();
+        } else {
+            for (Integer value : param) {
+                String key = ManagerEnum.mangerRoleName(value);
+                // 3: 本院专业管理员
+                List<AdminVo> adminVos3;
+                if(value == 3){
+                    adminVos3 = teacherRoleService.getMajorAdmin(collegeId);
+                } else {
+                    adminVos3 = teacherRoleService.getAllAdminByRoleId(value);
+                }
                 result.put(key, adminVos3);
             }
         }
-
         return CommonResult.success(result);
     }
 

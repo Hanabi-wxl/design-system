@@ -5,6 +5,7 @@ import edu.dlu.bysj.base.model.entity.TeacherRole;
 import edu.dlu.bysj.base.model.vo.AdminVo;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -58,4 +59,22 @@ public interface TeacherRoleService extends IService<TeacherRole> {
      * @return boolean
      **/
     boolean removeRole(TeacherRole teacherRole);
+
+    /*
+     * @Description: 获取所有管理员
+     * @Author: sinre
+     * @Date: 2022/5/3 15:01
+     * @param
+     * @return java.util.Map<java.lang.String,java.lang.Object>
+     **/
+    Map<String, Object> getAllAdmin();
+
+    /*
+     * @Description: 根据角色id获取对应管理员信息
+     * @Author: sinre
+     * @Date: 2022/5/3 15:29
+     * @param
+     * @return java.util.List<edu.dlu.bysj.base.model.vo.AdminVo>
+     **/
+    List<AdminVo> getAllAdminByRoleId(Integer roleId);
 }

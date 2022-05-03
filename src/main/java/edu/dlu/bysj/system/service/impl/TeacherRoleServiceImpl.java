@@ -1,18 +1,23 @@
 package edu.dlu.bysj.system.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.dlu.bysj.base.model.entity.TeacherRole;
 import edu.dlu.bysj.base.model.vo.AdminVo;
+import edu.dlu.bysj.base.model.vo.MajorVo;
+import edu.dlu.bysj.base.model.vo.TeacherSimplyVo;
+import edu.dlu.bysj.common.mapper.TeacherMapper;
+import edu.dlu.bysj.system.mapper.MajorMapper;
 import edu.dlu.bysj.system.mapper.TeacherRoleMapper;
 import edu.dlu.bysj.system.service.TeacherRoleService;
+import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -23,6 +28,10 @@ import java.util.concurrent.TimeUnit;
 public class TeacherRoleServiceImpl extends ServiceImpl<TeacherRoleMapper, TeacherRole> implements TeacherRoleService {
     @Autowired
     private TeacherRoleMapper teacherRoleMapper;
+    @Autowired
+    private MajorMapper majorMapper;
+    @Autowired
+    private TeacherMapper teacherMapper;
     @Autowired
     private RedisTemplate redisTemplate;
 
@@ -66,29 +75,84 @@ public class TeacherRoleServiceImpl extends ServiceImpl<TeacherRoleMapper, Teach
         String key = this.getClass().getName() + ":getMajorAdmin:" + collegeId;
         List<AdminVo> adminVos = null;
         if(redisTemplate.hasKey(key)){
-            adminVos = redisTemplate.opsForList().range(key,0, -1);
+            adminVos = (List<AdminVo>) redisTemplate.opsForSet().members(key);
         } else {
-            adminVos = teacherRoleMapper.getMajorAdminByCollegeId(collegeId);
+            List<MajorVo> majorVos = majorMapper.selectMajorList(String.valueOf(collegeId));
+            List<Integer> majorIds = new LinkedList<>();
+            List<Integer> ids1 = new LinkedList<>();
+            for (MajorVo majorVo : majorVos) {
+                majorIds.add(majorVo.getMajorId());
+            }
+            List<TeacherSimplyVo> teacherSimplyVos = teacherMapper.pluralMajorTeacherInfoByMajorId(majorIds);
+            for (TeacherSimplyVo teacherSimplyVo : teacherSimplyVos) {
+                // 专业教师id
+                ids1.add(teacherSimplyVo.getTeacherId());
+            }
+            // 所有专业管理员教师id
+            List<Integer> ids2 = teacherRoleMapper.getAllIdByRole(3);
+            // 取本专业管理员教师id
+            List<Integer> majorAminIds = (List<Integer>) CollectionUtil.intersection(ids1, ids2);
+            adminVos = teacherRoleMapper.getMajorAdminList(majorAminIds);
+            redisTemplate.opsForSet().add(key,adminVos);
         }
-        return null;
+        return adminVos;
     }
 
     @Override
     public boolean saveRole(TeacherRole teacherRole) {
-        int insert = baseMapper.insert(teacherRole);
-        String key = this.getClass().getName() + ":teacherRoleName:" + teacherRole.getTeacherId();
-        Set members = redisTemplate.opsForSet().members(key);
-        redisTemplate.delete(key);
-        return insert==1;
+        int flag = baseMapper.insert(teacherRole);
+        return removeRedisRoleCache(teacherRole, flag);
     }
 
     @Override
     public boolean removeRole(TeacherRole teacherRole) {
-        int delete = baseMapper.delete(new QueryWrapper<TeacherRole>()
+        int flag = baseMapper.delete(new QueryWrapper<TeacherRole>()
                 .eq("teacher_id", teacherRole.getTeacherId())
                 .eq("role_id", teacherRole.getRoleId()));
-        String key = this.getClass().getName() + ":teacherRoleName:" + teacherRole.getTeacherId();
-        redisTemplate.delete(key);
-        return delete==1;
+        return removeRedisRoleCache(teacherRole, flag);
     }
+
+    private boolean removeRedisRoleCache(TeacherRole teacherRole, int flag) {
+        String key1 = this.getClass().getName() + ":getAllAdmin";
+        String key2 = this.getClass().getName() + ":teacherRoleName:" + teacherRole.getTeacherId();
+        String key3 = this.getClass().getName() + ":getMajorAdmin:*";
+        redisTemplate.delete(key1);
+        redisTemplate.delete(key2);
+        redisTemplate.delete(key3);
+        return flag==1;
+    }
+
+    @Override
+    public List<AdminVo> getAllAdminByRoleId(Integer roleId) {
+        List<AdminVo> adminList = null;
+        String key = this.getClass().getName() + ":teacherRoleName:" + roleId;
+        if(redisTemplate.hasKey(key)){
+            redisTemplate.opsForSet().members(key);
+        } else {
+            List<Integer> ids = teacherRoleMapper.getAllIdByRole(roleId);
+            adminList = teacherRoleMapper.getMajorAdminList(ids);
+            redisTemplate.opsForSet().add(key,adminList);
+        }
+        return adminList;
+    }
+
+    @Override
+    public Map<String, Object> getAllAdmin() {
+        String key = this.getClass().getName() + ":getAllAdmin";
+        Map<String, Object> res = new HashMap<>();
+        if (redisTemplate.hasKey(key)){
+            res = (Map<String, Object>) redisTemplate.opsForValue().get(key);
+        } else {
+            String key1 = "majorManager";
+            String key2 = "collegeManager";
+            String key3 = "schoolManager";
+            res.put(key1,teacherRoleMapper.getMajorAdminList(teacherRoleMapper.getAllIdByRole(3)));
+            res.put(key2,teacherRoleMapper.getMajorAdminList(teacherRoleMapper.getAllIdByRole(4)));
+            res.put(key3,teacherRoleMapper.getMajorAdminList(teacherRoleMapper.getAllIdByRole(5)));
+            redisTemplate.opsForValue().set(key,res);
+        }
+        return res;
+    }
+
+
 }
