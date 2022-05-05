@@ -53,14 +53,12 @@ public class NotifyController {
 
     private final FileInformationService fileInformationService;
 
-    private final NoticeMapper noticeMapper;
-
+    private  final  NoticeMapper noticeMapper;
 
     public NotifyController(NoticeService noticeService,
                             NoticeFileService noticeFileService,
                             FileInformationService fileInformationService,
-                            MajorService majorService,
-                            NoticeMapper noticeMapper) {
+                            MajorService majorService, NoticeMapper noticeMapper) {
         this.noticeService = noticeService;
         this.majorService = majorService;
         this.noticeFileService = noticeFileService;
@@ -84,6 +82,7 @@ public class NotifyController {
         TotalPackageVo<NoticeVo> noticeVoTotalPackageVo = new TotalPackageVo<>();
         noticeVoTotalPackageVo.setTotal(allNoticeList.size());
         noticeVoTotalPackageVo.setArrays(allNoticeList);
+
 
         return CommonResult.success(noticeVoTotalPackageVo);
     }
@@ -138,12 +137,16 @@ public class NotifyController {
     @ApiOperation(value = "获取已增消息用于修改")
     public CommonResult<Object> getNoticeById(@PathVariable("noticeId") @NotNull Integer noticeId){
 
-    QueryWrapper<Notice> queryWrapper = new QueryWrapper<>();
-    queryWrapper.eq("id",noticeId);
+//        System.out.println(noticeId);
 
-    List<Notice> list = noticeMapper.selectList(queryWrapper);
+        QueryWrapper<Notice> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("id",noticeId);
 
-    return CommonResult.success(list);
+        List<Notice> list = noticeMapper.selectList(queryWrapper);
+
+//        System.out.println(list.toString());
+        return CommonResult.success(list);
+
     }
 
     @GetMapping(value = "/notice/detail/{noticeId}")

@@ -40,8 +40,14 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
         for (NoticeVo noticeVo : noticeVos) {
             String type = NoticeStatusEnum.noticeStatus(Integer.valueOf(noticeVo.getImportance()));
             String union = NoticeTypeEnum.noticeMessage(noticeVo.getType());
+            String content = noticeVo.getContent();
+            Integer college = noticeVo.getCollegeId();
+            Integer major = noticeVo.getMajorId();
             noticeVo.setTypeName(type);
             noticeVo.setImportance(union);
+            noticeVo.setContent(content);
+            noticeVo.setCollegeId(college);
+            noticeVo.setMajorId(major);
         }
 
         return noticeVos;
