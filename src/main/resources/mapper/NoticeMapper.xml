@@ -8,7 +8,10 @@
             notice.date as time,
             notice.sender_id as unit,
             notice.importance as importance,
-            notice.type as type
+            notice.type as type,
+            notice.content as content,
+            notice.college_id as collegeId,
+            notice.major_id as majorId
         FROM notice
         WHERE TYPE = 0
                 OR (TYPE = 2 AND major_id = #{majorId})
