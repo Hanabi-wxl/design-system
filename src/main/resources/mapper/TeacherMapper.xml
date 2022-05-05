@@ -302,7 +302,10 @@
     </select>
 
     <select id="TeacherInfoByTeacherId" resultType="java.util.Map">
-        select t.id, t.name as teacherName, t.phone_number, title.name as TitleName
+        select t.id,
+               t.name as teacherName,
+               t.phone_number as phoneNumber,
+               title.name as titleName
         from (select teacher.name, teacher.phone_number, teacher.title_id, teacher.id
         from teacher
         where teacher.status = 1

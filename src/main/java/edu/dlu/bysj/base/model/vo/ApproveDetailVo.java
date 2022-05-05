@@ -13,22 +13,24 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)
 @ApiModel(description = "题目审批列表内容返回类")
 public class ApproveDetailVo {
+    @ApiModelProperty(value = "题目编号")
+    private Integer id;
     @ApiModelProperty(value = "题目名称")
     private String subjectName;
     @ApiModelProperty(value = "题目id")
-    private Integer subjectId;
+    private String subjectId;
     @ApiModelProperty(value = "第一指导教师姓名")
-    private String firstName;
+    private String firstTeacherName;
     @ApiModelProperty(value = "第一指导教师手机号")
-    private String firstPhone;
+    private String firstTeacherPhone;
     @ApiModelProperty(value = "第一指导老师职称")
-    private String firstTitle;
+    private String firstTeacherTitle;
     @ApiModelProperty(value = "第二指导老师姓名")
-    private String secondName;
+    private String secondTeacherName;
     @ApiModelProperty(value = "第二指导老师手机号")
-    private String secondPhone;
+    private String secondTeacherPhone;
     @ApiModelProperty(value = "第二指导老师职称")
-    private String secodTitle;
+    private String secondTeacherTitle;
     @ApiModelProperty(value = "学生名称")
     private String studentName;
     @ApiModelProperty(value = "学生手机号")

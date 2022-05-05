@@ -25,10 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -56,9 +53,9 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher>
     @Override
     public List<Integer> getTeacherRoles(Integer teacherId) {
         List<Integer> integers = teacherMapper.teacherRoles(teacherId);
-        Integer integer = integers.get(0);
-        while (integer-- > 2){
-            integers.add(integer);
+        Integer max = Collections.max(integers);
+        while (max-- > 2){
+            integers.add(max);
         }
         return integers;
     }

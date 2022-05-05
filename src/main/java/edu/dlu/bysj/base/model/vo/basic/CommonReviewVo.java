@@ -29,5 +29,5 @@ public class CommonReviewVo {
 
     @ApiModelProperty(value = "题目id")
     @NotNull
-    private Integer subjectId;
+    private String subjectId;
 }

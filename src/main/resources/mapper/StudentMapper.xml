@@ -452,6 +452,9 @@
                             on c.id = t.classId
 
     </select>
+    <select id="numberToId" resultType="java.lang.Integer">
+        select id from student where student_number = #{studentNumber}
+    </select>
 
 
 </mapper>

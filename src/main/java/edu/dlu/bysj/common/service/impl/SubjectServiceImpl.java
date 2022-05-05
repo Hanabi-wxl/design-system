@@ -373,11 +373,13 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
     @Override
     public boolean addedApprove(SubjectApprovalVo subjectApprovalVo, Integer majorId) {
         subjectApprovalVo.setSubjectId(String.valueOf(snowflakeConfig.snowflakeId()));
+        Integer studentNumber = subjectApprovalVo.getStudentNumber();
+        Integer integer = studentService.numberToId(studentNumber);
         Subject subject = new Subject();
+        subject.setStudentId(integer);
         subject.setMajorId(majorId);
-        subject = this.packageSubject(subjectApprovalVo, subject);
+        this.packageSubject(subjectApprovalVo, subject);
         subject.setProgressId(ProcessEnum.AND_OR_MODIFY_TOPIC_DECLARATION.getProcessCode());
-
         List<SubjectMajor> subjectMajorList =
             this.packageSubjectMajor(subjectApprovalVo.getMajorIds(), subjectApprovalVo.getSubjectId());
         /*设置题目提交日期*/
@@ -416,6 +418,86 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
     @Override
     public List<Subject> listBySubjectIds(String id1, String id2) {
         return subjectMapper.listBySubjectIds(id1, id2);
+    }
+
+    @Override
+    public TotalPackageVo<SubjectDetailVo> majorAdminSubjectList(SubjectListQuery query, Integer majorId) {
+
+        /*分页*/
+        List<SubjectDetailVo> subjectDetailVos =
+                subjectMapper.adminSubjectListByMajorIdAndGrade(
+                        majorId,
+                        query.getYear(),
+                        (query.getPageNumber() - 1) * query.getPageSize(),
+                        query.getPageSize());
+
+        /*总数*/
+        Integer total = subjectMapper.totalSubjectListByMajor(majorId, query.getYear());
+
+        /*查询学生信息*/
+//        List<Integer> studentIds = new ArrayList<>();
+//        for (SubjectDetailVo element : subjectDetailVos) {
+//            studentIds.add(element.getStudentId());
+//        }
+//
+//        Map<Integer, Map<String, Object>> studentMap = studentMapper.teacherSubjectListStudentInfo(studentIds);
+//
+//        Integer index;
+//        for (SubjectDetailVo element : subjectDetailVos) {
+//            index = element.getStudentId();
+//            if (studentMap.containsKey(index)) {
+//                element.setStudentName((String)studentMap.get(index).get("name"));
+//                element.setStudentNumber((String)studentMap.get(index).get("student_number"));
+//                element.setStudentPhone((String)studentMap.get(index).get("phone_number"));
+//                element.setClassName((String)studentMap.get(index).get("className"));
+//                element.setCollege((String)studentMap.get(index).get("collegeName"));
+//                element.setMajor((String)studentMap.get(index).get("majorName"));
+//            }
+//        }
+        TotalPackageVo<SubjectDetailVo> result = new TotalPackageVo<>();
+        result.setTotal(total);
+        result.setArrays(subjectDetailVos);
+        return result;
+    }
+
+    @Override
+    public Subject getBySubjectId(String subjectId) {
+        return baseMapper.selectOne(new QueryWrapper<Subject>().eq("subject_id", subjectId));
+    }
+
+    @Override
+    public List<Subject> getBySubjectIds(String[] subjectIds) {
+        return baseMapper.selectList(new QueryWrapper<Subject>().in("subject_id", Arrays.asList(subjectIds)));
+    }
+
+    @Override
+    public TotalPackageVo<SubjectDetailVo> studentSubjectList(SubjectListQuery query, Integer userId) {
+
+        /*分页*/
+        SubjectDetailVo subjectDetailVo = subjectMapper.studentSubjectListByStudentIdAndGrade(userId,
+                query.getYear(), (query.getPageNumber() - 1) * query.getPageSize(), query.getPageSize());
+
+        /*总数*/
+        Integer total = subjectMapper.totalSubjectListByTeacher(userId, query.getYear());
+
+//        Map<Integer, Map<String, Object>> studentMap = studentMapper.teacherSubjectListStudentInfo(studentIds);
+//
+//        Integer index;
+//        for (SubjectDetailVo element : subjectDetailVo) {
+//            index = element.getStudentId();
+//            if (studentMap.containsKey(index)) {
+//                element.setStudentName((String)studentMap.get(index).get("name"));
+//                element.setStudentNumber((String)studentMap.get(index).get("student_number"));
+//                element.setStudentPhone((String)studentMap.get(index).get("phone_number"));
+//                element.setClassName((String)studentMap.get(index).get("className"));
+//                element.setCollege((String)studentMap.get(index).get("collegeName"));
+//                element.setMajor((String)studentMap.get(index).get("majorName"));
+//            }
+//        }
+        TotalPackageVo<SubjectDetailVo> result = new TotalPackageVo<>();
+//        result.setTotal(total);
+//        result.setArrays(subjectDetailVos);
+        return result;
     }
 
     private Subject packageSubject(SubjectApprovalVo score, Subject target) {
@@ -459,21 +541,22 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
             /*题目基干信息*/
             value.setSubjectName(element.getSubjectName());
             value.setSubjectId(element.getSubjectId());
+            value.setId(element.getId());
             value.setProgress(element.getProgress());
 
             /*教师信息, 封装成Map<Integer,Map<String,Object>>  第一层map 以teacherId 为key, 第二层map以字段的名称为key*/
             Integer firstTeacherId = element.getFirstTeacherId();
             Integer secondTeacherId = element.getSecondTeacherId();
             if (teacherMap.containsKey(firstTeacherId)) {
-                value.setFirstName(((String)teacherMap.get(firstTeacherId).get("teacherName")));
-                value.setFirstPhone(((String)teacherMap.get(firstTeacherId).get("phone_number")));
-                value.setFirstTitle(((String)teacherMap.get(firstTeacherId).get("TitleName")));
+                value.setFirstTeacherName(((String)teacherMap.get(firstTeacherId).get("teacherName")));
+                value.setFirstTeacherPhone(((String)teacherMap.get(firstTeacherId).get("phoneNumber")));
+                value.setFirstTeacherTitle(((String)teacherMap.get(firstTeacherId).get("titleName")));
             }
 
             if (teacherMap.containsKey(secondTeacherId)) {
-                value.setFirstName(((String)teacherMap.get(secondTeacherId).get("teacherName")));
-                value.setFirstPhone(((String)teacherMap.get(secondTeacherId).get("phone_number")));
-                value.setFirstTitle(((String)teacherMap.get(secondTeacherId).get("TitleName")));
+                value.setSecondTeacherName(((String)teacherMap.get(secondTeacherId).get("teacherName")));
+                value.setSecondTeacherPhone(((String)teacherMap.get(secondTeacherId).get("phoneNumber")));
+                value.setSecondTeacherTitle(((String)teacherMap.get(secondTeacherId).get("titleName")));
             }
             Integer studentId = element.getStudentId();
 
@@ -496,6 +579,7 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
         for (ApproveConditionConvey element : approveCondition) {
             ApproveDetailVo value = new ApproveDetailVo();
             value.setSubjectName(element.getSubjectName());
+            value.setId(element.getId());
             value.setSubjectId(element.getSubjectId());
             value.setFillingNumber(element.getFillingNumber());
             value.setProgress(element.getProgress());
@@ -507,15 +591,15 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
             Integer firstTeacherId = element.getFirstTeacherId();
             Integer secondTeacherId = element.getSecondTeacherId();
             if (teacherMap.containsKey(firstTeacherId)) {
-                value.setFirstName(((String)teacherMap.get(firstTeacherId).get("teacherName")));
-                value.setFirstPhone(((String)teacherMap.get(firstTeacherId).get("phone_number")));
-                value.setFirstTitle(((String)teacherMap.get(firstTeacherId).get("TitleName")));
+                value.setFirstTeacherName(((String)teacherMap.get(firstTeacherId).get("teacherName")));
+                value.setFirstTeacherName(((String)teacherMap.get(firstTeacherId).get("phoneNumber")));
+                value.setFirstTeacherTitle(((String)teacherMap.get(firstTeacherId).get("titleName")));
             }
 
             if (teacherMap.containsKey(secondTeacherId)) {
-                value.setFirstName(((String)teacherMap.get(secondTeacherId).get("teacherName")));
-                value.setFirstPhone(((String)teacherMap.get(secondTeacherId).get("phone_number")));
-                value.setFirstTitle(((String)teacherMap.get(secondTeacherId).get("TitleName")));
+                value.setFirstTeacherName(((String)teacherMap.get(secondTeacherId).get("teacherName")));
+                value.setFirstTeacherPhone(((String)teacherMap.get(secondTeacherId).get("phoneNumber")));
+                value.setFirstTeacherTitle(((String)teacherMap.get(secondTeacherId).get("titleName")));
             }
             result.add(value);
         }

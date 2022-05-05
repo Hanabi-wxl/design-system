@@ -1,6 +1,7 @@
 package edu.dlu.bysj.paper.controller;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.dlu.bysj.base.exception.GlobalException;
@@ -12,6 +13,7 @@ import edu.dlu.bysj.base.model.query.SubjectApproveListQuery;
 import edu.dlu.bysj.base.model.query.SubjectListQuery;
 import edu.dlu.bysj.base.model.vo.*;
 import edu.dlu.bysj.base.model.vo.basic.CommonReviewVo;
+import edu.dlu.bysj.base.model.vo.basic.CommonReviewsVo;
 import edu.dlu.bysj.base.result.CommonResult;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.SubjectService;
@@ -21,6 +23,7 @@ import edu.dlu.bysj.paper.service.SourceService;
 import edu.dlu.bysj.paper.service.SubjectTypeService;
 import edu.dlu.bysj.system.service.CollegeService;
 import edu.dlu.bysj.system.service.MajorService;
+import io.jsonwebtoken.Jwt;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -39,6 +42,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -183,24 +187,28 @@ public class SubjectApprovalController {
      * @return ...
      **/
     @GetMapping(value = "/approve/subjectList")
-    @LogAnnotation(content = "查看教师自带的题目类别")
+    @LogAnnotation(content = "查看教师/学生自带的题目")
     @RequiresPermissions({"approve:teacherSubject"})
     @ApiOperation(value = "查看教师自带题目列表")
     public CommonResult<TotalPackageVo<SubjectDetailVo>> teacherSubjectList(HttpServletRequest request, @Valid SubjectListQuery query) {
         String jwt = request.getHeader("jwt");
+        Integer roleId = Collections.max(JwtUtil.getRoleIds(jwt));
         Integer userId = JwtUtil.getUserId(jwt);
-
-        TotalPackageVo<SubjectDetailVo> subjectDetailVoTotalPackageVo
-                = subjectService.teacherSubjectList(query, userId);
-
-        return CommonResult.success(subjectDetailVoTotalPackageVo);
+        TotalPackageVo<SubjectDetailVo> subjectVo;
+        if (roleId > 1)
+            subjectVo = subjectService.teacherSubjectList(query, userId);
+        else
+            subjectVo = subjectService.studentSubjectList(query,userId);
+        return CommonResult.success(subjectVo);
     }
 
-    @GetMapping(value = "/approve/getListByTeacherId")
+    @GetMapping(value = "/approve/getListByTeacher")
     @LogAnnotation(content = "获取该教师的题目审批列表")
     @RequiresPermissions({"approve:subjectAudit"})
     @ApiOperation(value = "获取该教师的题目审批列表")
-    public CommonResult<TotalPackageVo<ApproveDetailVo>> teacherApproveList(@Valid SubjectApproveListQuery query) {
+    public CommonResult<TotalPackageVo<ApproveDetailVo>> teacherApproveList(@Valid SubjectApproveListQuery query, HttpServletRequest request) {
+        String jwt = request.getHeader("jwt");
+        query.setMajorId(JwtUtil.getMajorId(jwt));
         TotalPackageVo<ApproveDetailVo> result = this.subjectService.administratorApproveSubjectPagination(query);
         return CommonResult.success(result);
     }
@@ -275,18 +283,15 @@ public class SubjectApprovalController {
         return CommonResult.success(result);
     }
 
-    @GetMapping(value = "/approve/submitResult/")
+    @PostMapping(value = "/approve/submitAuditResult")
     @LogAnnotation(content = "提专业/校级题目审阅结果")
     @RequiresPermissions({"approve:submitAudit"})
     @ApiOperation(value = "提交专业审阅/校级审阅题目结果")
-    public CommonResult<Object> submitApproveResult(@Valid CommonReviewVo source, HttpServletRequest request) {
-        String requestUri = request.getRequestURI();
+    public CommonResult<Object> submitApproveResult(@Valid @RequestBody CommonReviewVo source, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
+
         /*获取题目进展状况*/
-        Subject value = subjectService.getById(source.getSubjectId());
-
-        Integer code = value.getProgressId();
-
+        Subject value = subjectService.getBySubjectId(source.getSubjectId());
         boolean flag = false;
         /*专业级(当前阶段*/
         if (ZERO.equals(source.getType())) {
@@ -294,7 +299,10 @@ public class SubjectApprovalController {
             if (currentCode != null) {
                 if (currentCode.equals(value.getProgressId()) || currentCode.equals(value.getProgressId() + 1)) {
                     value.setMajorAgree(source.getAgree());
-                    value.setProgressId(currentCode);
+                    if (source.getAgree() == 1)
+                        value.setProgressId(currentCode);
+                    else
+                        value.setProgressId(1);
                     value.setMajorLeadingId(JwtUtil.getUserId(jwt));
                     value.setMajorDate(LocalDate.now());
                     flag = subjectService.updateById(value);
@@ -303,11 +311,13 @@ public class SubjectApprovalController {
         } else if (ONE.equals(source.getType())) {
             /*学院级*/
             Integer currentCode = ProcessEnum.TOPIC_COLLEGE_AUDIT.getProcessCode();
-
             if (currentCode != null) {
                 if (currentCode.equals(value.getProgressId()) || currentCode.equals(value.getProgressId() + 1)) {
-                    value.setProgressId(currentCode);
                     value.setCollegeAgree(source.getAgree());
+                    if (source.getAgree() == 1)
+                        value.setProgressId(currentCode);
+                    else
+                        value.setProgressId(2);
                     value.setCollegeLeadingId(JwtUtil.getUserId(jwt));
                     value.setCollegeDate(LocalDate.now());
                     flag = subjectService.updateById(value);
@@ -317,13 +327,55 @@ public class SubjectApprovalController {
         return flag ? CommonResult.success(null) : CommonResult.failed();
     }
 
-    @DeleteMapping(value = "/approve/deleteSubject/{subjectId}")
+    @PostMapping(value = "/approve/submitAuditResults")
+    @LogAnnotation(content = "批量提专业/校级题目审阅结果")
+    @RequiresPermissions({"approve:submitAudit"})
+    @ApiOperation(value = "批量提交专业审阅/校级审阅题目结果")
+    public CommonResult<Object> submitApproveResults(@Valid @RequestBody CommonReviewsVo source, HttpServletRequest request) {
+        String jwt = request.getHeader("jwt");
+        List<Integer> roleIds = JwtUtil.getRoleIds(jwt);
+        assert roleIds != null;
+        Integer max = Collections.max(roleIds);
+        int type = max == 3 ? 0 : 1;
+        /*获取题目进展状况*/
+        List<Subject> subjects = subjectService.getBySubjectIds(source.getSubjectIds());
+        boolean flag = true;
+        for (Subject value : subjects) {
+            /*专业级(当前阶段*/
+            if (ZERO.equals(type)) {
+                Integer currentCode = ProcessEnum.TOPIC_MAJOR_AUDIT.getProcessCode();
+                if (currentCode != null) {
+                    if (currentCode.equals(value.getProgressId()) || currentCode.equals(value.getProgressId() + 1)) {
+                        value.setMajorAgree(1);
+                        value.setProgressId(currentCode);
+                        value.setMajorLeadingId(JwtUtil.getUserId(jwt));
+                        value.setMajorDate(LocalDate.now());
+                    }
+                }
+            } else if (ONE.equals(type)) {
+                /*学院级*/
+                Integer currentCode = ProcessEnum.TOPIC_COLLEGE_AUDIT.getProcessCode();
+                if (currentCode != null) {
+                    if (currentCode.equals(value.getProgressId()) || currentCode.equals(value.getProgressId() + 1)) {
+                        value.setCollegeAgree(1);
+                        value.setProgressId(currentCode);
+                        value.setCollegeLeadingId(JwtUtil.getUserId(jwt));
+                        value.setCollegeDate(LocalDate.now());
+                    }
+                }
+            }
+        }
+        flag = subjectService.updateBatchById(subjects);
+        return flag ? CommonResult.success(null) : CommonResult.failed();
+    }
+
+    @DeleteMapping(value = "/approve/deleteSubject")
     @LogAnnotation(content = "删除题目")
     @RequiresPermissions({"approve:deleteSubject"})
     @ApiOperation(value = "删除题目")
     @ApiImplicitParam(name = "subjectId", value = "题目id")
-    public CommonResult<Object> deleteSubject(@PathVariable("subjectId") String subjectId, HttpServletRequest request) {
-
+    public CommonResult<Object> deleteSubject(@RequestBody String json) {
+        String subjectId = JSONUtil.parseObj(json).get("id", String.class);
         return subjectService.removeSubjectById(subjectId) ? CommonResult.success(null) : CommonResult.failed();
     }
 }

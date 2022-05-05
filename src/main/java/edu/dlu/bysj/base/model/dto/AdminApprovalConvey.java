@@ -8,7 +8,8 @@ import lombok.Data;
  */
 @Data
 public class AdminApprovalConvey {
-    private Integer subjectId;
+    private Integer id;
+    private String subjectId;
     private String subjectName;
     private Integer firstTeacherId;
     private Integer secondTeacherId;

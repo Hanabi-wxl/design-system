@@ -89,6 +89,14 @@ public class InformationController {
         return CommonResult.success(result);
     }
 
+    @GetMapping(value = "/teacherInfoByMajorId")
+    @LogAnnotation(content = "获取教师信息")
+    @RequiresPermissions({"common:teacherInformation"})
+    @ApiOperation(value = "根据专业id获取教师信息")
+    public CommonResult<List<TeacherDetailVo>> teacherInformation(Integer majorId) {
+        return CommonResult.success(teacherService.getTeacherInfo(majorId));
+    }
+
     @GetMapping(value = "/collegeTeacher")
     @LogAnnotation(content = "获取教师信息")
     @RequiresPermissions({"common:teacherInformation"})

@@ -76,4 +76,6 @@ public interface StudentService extends IService<Student> {
      * @return edu.dlu.bysj.base.model.vo.StudentDetailVo
      **/
     StudentDetailVo checkStudentInfoByNumber(Integer number);
+
+    Integer numberToId(Integer studentNumber);
 }

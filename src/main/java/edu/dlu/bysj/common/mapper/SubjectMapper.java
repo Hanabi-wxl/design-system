@@ -215,4 +215,12 @@ public interface SubjectMapper extends BaseMapper<Subject> {
 
     List<Subject> listBySubjectIds(String id1, String id2);
 
+    List<SubjectDetailVo> adminSubjectListByMajorIdAndGrade(@Param("majorId") Integer majorId,
+                @Param("grade") Integer grade, @Param("start") Integer start, @Param("pageSize") Integer pageSize);
+
+    Integer totalSubjectListByMajor(@Param("majorId") Integer majorId, @Param("grade") Integer grade);
+
+    SubjectDetailVo studentSubjectListByStudentIdAndGrade(@Param("studentId") Integer studentId,
+                @Param("grade") Integer grade, @Param("start") Integer start, @Param("pageSize") Integer pageSize);
+
 }

@@ -19,7 +19,10 @@ public class SubjectApprovalVo {
     @ApiModelProperty(value = "教师id")
     private Integer teacherId;
 
-    @ApiModelProperty(value = "学生id")
+    @ApiModelProperty(value = "学生账号")
+    private Integer studentNumber;
+
+    @ApiModelProperty(value = "学生账号")
     private Integer studentId;
 
     @ApiModelProperty(value = "是否是第一次指导 0 不是, 1 是")

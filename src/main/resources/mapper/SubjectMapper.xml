@@ -3,8 +3,9 @@
 <mapper namespace="edu.dlu.bysj.common.mapper.SubjectMapper">
     <!-- adminApprovalListPagination该查询结果集映射   -->
     <resultMap id="adminApprovalMap" type="edu.dlu.bysj.base.model.dto.AdminApprovalConvey">
-        <id column="id" property="subjectId"/>
+        <id column="id" property="id"/>
         <result column="subject_name" property="subjectName"/>
+        <result column="subject_id" property="subjectId"/>
         <result column="first_teacher_id" property="firstTeacherId"/>
         <result column="second_teacher_id" property="secondTeacherId"/>
         <result column="student_id" property="studentId"/>
@@ -218,8 +219,8 @@
                progress.content as progress,
                grade,
                s.student_id     as studentId,
-               t.name as teacherName,
-               t.phone_number as teacherPhone
+               t.name as firstTeacherName,
+               t.phone_number as firstTeacherPhone
 
         from (select subject.id,subject.subject_id as subjectId, subject.subject_name, subject.grade, subject.progress_id, subject.student_id
               from subject
@@ -248,7 +249,10 @@
 
 
     <select id="adminApprovalListPagination" resultMap="adminApprovalMap">
-        select s.id,
+        select
+        s.id,
+        s.student_id,
+        s.subject_id,
         s.subject_name,
         s.first_teacher_id,
         s.second_teacher_id,
@@ -256,7 +260,10 @@
         s.filing_number,
         progress.content
 
-        from (select subject.id,
+        from (
+        select
+        subject.id,
+        subject.subject_id,
         subject.subject_name,
         subject.first_teacher_id,
         subject.second_teacher_id,
@@ -270,7 +277,7 @@
         </if>
         and grade = #{grade}
 
-        and subject.id in
+        and subject.subject_id in
 
         (select subject_major.subject_id
         from subject_major
@@ -295,7 +302,7 @@
         </if>
         and grade = #{grade}
 
-        and subject.id in
+        and subject.subject_id in
 
         (select subject_major.subject_id
         from subject_major
@@ -557,6 +564,86 @@
     </select>
     <select id="listBySubjectIds" resultType="edu.dlu.bysj.base.model.entity.Subject">
         select * from subject where subject_id = #{id1} or subject_id = #{id2}
+    </select>
+
+    <select id="adminSubjectListByMajorIdAndGrade" resultType="edu.dlu.bysj.base.model.vo.SubjectDetailVo">
+
+        select s.id,
+               s.subjectId,
+               s.subject_name   as subjectName,
+               progress.content as progress,
+               grade,
+               s.student_id     as studentId,
+               t1.name as firstTeacherName,
+               t1.phone_number as firstTeacherPhone,
+               t2.name as secondTeacherName,
+               t2.phone_number as secondTeacherPhone
+        from (
+              select subject.id,
+                     subject.first_teacher_id as firstTeacherId,
+                     subject.second_teacher_id as secondTeacherId,
+                     subject.subject_id as subjectId,
+                     subject.subject_name,
+                     subject.grade,
+                     subject.progress_id,
+                     subject.student_id
+              from subject
+              where subject.status = 1
+                and subject.major_id = #{majorId}
+                and grade = #{grade}) as s
+
+                 left join progress
+                           on progress.id = s.progress_id
+                 left join teacher as t1
+                           on t1.id = s.firstTeacherId
+                 left join teacher as t2
+                           on t2.id = s.secondTeacherId
+
+
+        limit #{start} ,#{pageSize}
+
+    </select>
+    <select id="totalSubjectListByMajor" resultType="java.lang.Integer">
+        select count(s.id) as total
+        from (select subject.id, subject.subject_name, subject.grade, subject.progress_id
+              from subject
+              where subject.status = 1
+                and subject.major_id = #{majorId}
+                and grade = #{grade}) as s
+
+                 left join progress
+                           on progress.id = s.progress_id
+    </select>
+    <select id="studentSubjectListByStudentIdAndGrade" resultType="edu.dlu.bysj.base.model.vo.SubjectDetailVo">
+        select s.id,
+               s.subjectId,
+               s.subject_name   as subjectName,
+               progress.content as progress,
+               grade,
+               s.student_id     as studentId,
+               t.id as firstTeacherId,
+               t.name as firstTeacherName,
+               t.phone_number as firstTeacherPhone
+
+        from (select subject.id,
+                     subject.subject_id as subjectId,
+                     subject.subject_name,
+                     subject.grade,
+                     subject.first_teacher_id,
+                     subject.progress_id,
+                     subject.student_id
+              from subject
+              where subject.status = 1
+                and subject.student_id = #{studentId}
+                and grade = #{grade}) as s
+
+                 left join progress
+                           on progress.id = s.progress_id
+                 left join teacher as t
+                           on t.id = s.first_teacher_id
+
+        limit #{start} ,#{pageSize}
+
     </select>
 
 

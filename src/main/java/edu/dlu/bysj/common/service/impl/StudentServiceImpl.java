@@ -111,4 +111,9 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student>
         return studentMapper.checkStudentInfoByNumber(number);
     }
 
+    @Override
+    public Integer numberToId(Integer studentNumber) {
+        return studentMapper.numberToId(studentNumber);
+    }
+
 }

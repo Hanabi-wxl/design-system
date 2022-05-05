@@ -38,7 +38,7 @@ public class SubjectDetailVo {
     @ApiModelProperty(value = "年级")
     private String grade;
     @ApiModelProperty(value = "教师姓名")
-    private String teacherName;
+    private String firstTeacherName;
     @ApiModelProperty(value = "教师手机号")
-    private String teacherPhone;
+    private String firstTeacherPhone;
 }

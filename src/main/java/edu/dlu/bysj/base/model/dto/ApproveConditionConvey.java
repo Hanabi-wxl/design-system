@@ -8,7 +8,8 @@ import lombok.Data;
  */
 @Data
 public class ApproveConditionConvey {
-    private Integer subjectId;
+    private Integer id;
+    private String subjectId;
     private String subjectName;
 
     private String studentName;

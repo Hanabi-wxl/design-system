@@ -144,4 +144,5 @@ public interface StudentMapper extends BaseMapper<Student> {
 
     StudentDetailVo checkStudentInfoByNumber(Integer number);
 
+    Integer numberToId(Integer studentNumber);
 }

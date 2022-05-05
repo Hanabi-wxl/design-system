@@ -117,4 +117,27 @@ public interface SubjectService extends IService<Subject> {
 
     List<Subject> listBySubjectIds(String id1, String id2);
 
+    /*
+     * @Description: 专业管理员获取本专业所有课题
+     * @Author: sinre
+     * @Date: 2022/5/4 13:48
+     * @param query
+     * @param majorId
+     * @return edu.dlu.bysj.base.model.vo.TotalPackageVo<edu.dlu.bysj.base.model.vo.SubjectDetailVo>
+     **/
+    TotalPackageVo<SubjectDetailVo> majorAdminSubjectList(SubjectListQuery query, Integer majorId);
+
+    Subject getBySubjectId(String subjectId);
+
+    List<Subject> getBySubjectIds(String[] subjectIds);
+
+    /*
+     * @Description: 学生获取个人报题列表
+     * @Author: sinre
+     * @Date: 2022/5/5 23:01
+     * @param userId
+     * @return edu.dlu.bysj.base.model.vo.TotalPackageVo<edu.dlu.bysj.base.model.vo.SubjectDetailVo>
+     **/
+    TotalPackageVo<SubjectDetailVo> studentSubjectList(SubjectListQuery query, Integer userId);
+
 }
