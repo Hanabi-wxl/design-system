@@ -223,4 +223,7 @@ public interface SubjectMapper extends BaseMapper<Subject> {
     SubjectDetailVo studentSubjectListByStudentIdAndGrade(@Param("studentId") Integer studentId,
                 @Param("grade") Integer grade, @Param("start") Integer start, @Param("pageSize") Integer pageSize);
 
+    Integer totalSubjectListByStudent(Integer userId, Integer year);
+
+    List<AdminApprovalConvey> collegeApprovalListPagination(Integer collegeId, Integer teacherId, Integer start, Integer pageSize, Integer year);
 }

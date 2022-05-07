@@ -29,6 +29,7 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -124,6 +125,7 @@ public class SubjectApprovalController {
     }
 
 
+    // TODO: 2022/5/6 学生或教师报题
     @PostMapping(value = "/approve/teacherCommitSubject")
     @LogAnnotation(content = "教师提交/修改题目审批表")
     @RequiresPermissions({"approve:subjectApprove"})
@@ -133,13 +135,13 @@ public class SubjectApprovalController {
         Integer majorId = JwtUtil.getMajorId(jwt);
         boolean flag = false;
         /*新增*/
-        if (ObjectUtil.isNull(subjectApprovalVo.getSubjectId())) {
+        if (subjectApprovalVo.getSubjectId().equals("")) {
             flag = subjectService.addedApprove(subjectApprovalVo, majorId);
         } else {
             /*修改*/
             flag = subjectService.modifyApprove(subjectApprovalVo);
         }
-        return flag ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
+        return flag ? CommonResult.success("操作成功") : CommonResult.failed("报题超过限制!");
     }
 
 
@@ -178,18 +180,11 @@ public class SubjectApprovalController {
 
     }
 
-
-    /*
-     * @Description: 通过jwt获取userId 取代通过前端传入userId
-     * @Author: sinre
-     * @Date: 2022/4/25 14:21
-     * @param query
-     * @return ...
-     **/
+    // TODO: 2022/5/6 查看题目列表
     @GetMapping(value = "/approve/subjectList")
     @LogAnnotation(content = "查看教师/学生自带的题目")
-    @RequiresPermissions({"approve:teacherSubject"})
-    @ApiOperation(value = "查看教师自带题目列表")
+    @RequiresPermissions({"approve:subjectList"})
+    @ApiOperation(value = "查看个人题目列表")
     public CommonResult<TotalPackageVo<SubjectDetailVo>> teacherSubjectList(HttpServletRequest request, @Valid SubjectListQuery query) {
         String jwt = request.getHeader("jwt");
         Integer roleId = Collections.max(JwtUtil.getRoleIds(jwt));
@@ -202,14 +197,23 @@ public class SubjectApprovalController {
         return CommonResult.success(subjectVo);
     }
 
+    // TODO: 2022/5/7 获取教师审批列表
     @GetMapping(value = "/approve/getListByTeacher")
     @LogAnnotation(content = "获取该教师的题目审批列表")
     @RequiresPermissions({"approve:subjectAudit"})
     @ApiOperation(value = "获取该教师的题目审批列表")
     public CommonResult<TotalPackageVo<ApproveDetailVo>> teacherApproveList(@Valid SubjectApproveListQuery query, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
-        query.setMajorId(JwtUtil.getMajorId(jwt));
-        TotalPackageVo<ApproveDetailVo> result = this.subjectService.administratorApproveSubjectPagination(query);
+        Integer majorId = JwtUtil.getMajorId(jwt);
+        query.setMajorId(majorId);
+        query.setCollegeId(collegeService.getCollegeIdByMajorId(majorId));
+        List<Integer> roleIds = JwtUtil.getRoleIds(jwt);
+        Integer max = Collections.max(roleIds);
+        TotalPackageVo<ApproveDetailVo> result = null;
+        if (max == 3)
+            result = subjectService.administratorApproveSubjectPagination(query);
+        else if (max > 3)
+            result = subjectService.collegeAdminiApproveSubjectPagination(query);
         return CommonResult.success(result);
     }
 

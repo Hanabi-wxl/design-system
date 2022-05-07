@@ -106,7 +106,7 @@ public class InformationController {
         Integer majorId = JwtUtil.getMajorId(jwt);
         Major major = majorService.getOne(new QueryWrapper<Major>().eq("id", majorId));
         Integer collegeId = major.getCollegeId();
-
+        
         List<UserVo> list = majorService.obtainCollegeTeacher(collegeId);
 
         return CommonResult.success(list);

@@ -240,6 +240,7 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
         return result;
     }
 
+    // TODO: 2022/5/7  专业管理员获取审核列表
     @Override
     public TotalPackageVo<ApproveDetailVo> administratorApproveSubjectPagination(SubjectApproveListQuery query) {
         Integer start = (query.getPageNumber() - 1) * query.getPageSize();
@@ -369,34 +370,39 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
         return result;
     }
 
+    // TODO: 2022/5/6 报题
     @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean addedApprove(SubjectApprovalVo subjectApprovalVo, Integer majorId) {
         subjectApprovalVo.setSubjectId(String.valueOf(snowflakeConfig.snowflakeId()));
         Integer studentNumber = subjectApprovalVo.getStudentNumber();
-        Integer integer = studentService.numberToId(studentNumber);
-        Subject subject = new Subject();
-        subject.setStudentId(integer);
-        subject.setMajorId(majorId);
-        this.packageSubject(subjectApprovalVo, subject);
-        subject.setProgressId(ProcessEnum.AND_OR_MODIFY_TOPIC_DECLARATION.getProcessCode());
-        List<SubjectMajor> subjectMajorList =
-            this.packageSubjectMajor(subjectApprovalVo.getMajorIds(), subjectApprovalVo.getSubjectId());
-        /*设置题目提交日期*/
-        subject.setSubmitDate(LocalDate.now());
-        subject.setGrade(LocalDate.now().getYear());
+        Integer total = subjectMapper.totalSubjectListByStudent(studentService.numberToId(studentNumber),LocalDate.now().getYear());
+        if (total < 1) {
+            subjectApprovalVo.setStudentId(studentService.numberToId(studentNumber));
+            Subject subject = new Subject();
+            subject.setMajorId(majorId);
+            this.packageSubject(subjectApprovalVo, subject);
+            subject.setProgressId(ProcessEnum.AND_OR_MODIFY_TOPIC_DECLARATION.getProcessCode());
+            List<SubjectMajor> subjectMajorList =
+                    this.packageSubjectMajor(subjectApprovalVo.getMajorIds(), subjectApprovalVo.getSubjectId());
+            /*设置题目提交日期*/
+            subject.setSubmitDate(LocalDate.now());
+            subject.setGrade(LocalDate.now().getYear());
 
-        boolean save = this.save(subject);
-        boolean saveBatch = subjectMajorService.saveBatch(subjectMajorList);
+            boolean save = this.save(subject);
+            boolean saveBatch = subjectMajorService.saveBatch(subjectMajorList);
 
-        return save && saveBatch;
-
+            return save && saveBatch;
+        } else {
+            return false;
+        }
     }
 
+    // TODO: 2022/5/6 修改题目
     @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean modifyApprove(SubjectApprovalVo subjectApprovalVo) {
-        Subject subjectValue = this.getById(subjectApprovalVo.getSubjectId());
+        Subject subjectValue = this.getBySubjectId(subjectApprovalVo.getSubjectId());
         /*修改值*/
         subjectValue = this.packageSubject(subjectApprovalVo, subjectValue);
         /*打包新的subjectMajor*/
@@ -470,33 +476,62 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
         return baseMapper.selectList(new QueryWrapper<Subject>().in("subject_id", Arrays.asList(subjectIds)));
     }
 
+    // TODO: 2022/5/6 获取题目列表
     @Override
     public TotalPackageVo<SubjectDetailVo> studentSubjectList(SubjectListQuery query, Integer userId) {
 
         /*分页*/
         SubjectDetailVo subjectDetailVo = subjectMapper.studentSubjectListByStudentIdAndGrade(userId,
                 query.getYear(), (query.getPageNumber() - 1) * query.getPageSize(), query.getPageSize());
+        /*总数*/
+        Integer total = subjectMapper.totalSubjectListByStudent(userId, query.getYear());
+        Student student = studentService.getById(userId);
+        if (total != 0){
+            subjectDetailVo.setStudentName(student.getName());
+            subjectDetailVo.setStudentNumber(student.getStudentNumber());
+            subjectDetailVo.setStudentPhone(student.getPhoneNumber());
+        }
+        TotalPackageVo<SubjectDetailVo> result = new TotalPackageVo<>();
+        result.setTotal(total);
+        boolean notNUll = Objects.nonNull(subjectDetailVo);
+        if (notNUll)
+            result.setArrays(Arrays.asList(subjectDetailVo));
+        else
+            result.setArrays(null);
+        return result;
+    }
+
+    // TODO: 2022/5/7 获取院管理员审批列表
+    @Override
+    public TotalPackageVo<ApproveDetailVo> collegeAdminiApproveSubjectPagination(SubjectApproveListQuery query) {
+        Integer start = (query.getPageNumber() - 1) * query.getPageSize();
+
+        /*由collegeId,teacherId 查询该专业下的题目基干信息列表*/
+        List<AdminApprovalConvey> adminApprovalConveys = subjectMapper.collegeApprovalListPagination(query.getCollegeId(),
+                query.getTeacherId(), start, query.getPageSize(), query.getYear());
 
         /*总数*/
-        Integer total = subjectMapper.totalSubjectListByTeacher(userId, query.getYear());
+        Integer total = subjectMapper.totalAdminApprovalList(query.getCollegeId(), query.getTeacherId(), query.getYear());
 
-//        Map<Integer, Map<String, Object>> studentMap = studentMapper.teacherSubjectListStudentInfo(studentIds);
-//
-//        Integer index;
-//        for (SubjectDetailVo element : subjectDetailVo) {
-//            index = element.getStudentId();
-//            if (studentMap.containsKey(index)) {
-//                element.setStudentName((String)studentMap.get(index).get("name"));
-//                element.setStudentNumber((String)studentMap.get(index).get("student_number"));
-//                element.setStudentPhone((String)studentMap.get(index).get("phone_number"));
-//                element.setClassName((String)studentMap.get(index).get("className"));
-//                element.setCollege((String)studentMap.get(index).get("collegeName"));
-//                element.setMajor((String)studentMap.get(index).get("majorName"));
-//            }
-//        }
-        TotalPackageVo<SubjectDetailVo> result = new TotalPackageVo<>();
-//        result.setTotal(total);
-//        result.setArrays(subjectDetailVos);
+        Set<Integer> teacherIds = new HashSet<>();
+        for (AdminApprovalConvey convey : adminApprovalConveys) {
+            teacherIds.add(convey.getFirstTeacherId());
+            teacherIds.add(convey.getSecondTeacherId());
+        }
+        /*查询第一第二指导教师信息*/
+        Map<Integer, Map<String, Object>> teacherMap = teacherMapper.TeacherInfoByTeacherId(teacherIds);
+
+        List<Integer> studentIds = new ArrayList<>();
+        for (AdminApprovalConvey convey : adminApprovalConveys) {
+            studentIds.add(convey.getStudentId());
+        }
+        /*查询学生信息*/
+        Map<Integer, Map<String, Object>> studentMap = studentMapper.adminApproveStudentInfoById(studentIds);
+
+        /*参数拼接*/
+        TotalPackageVo<ApproveDetailVo> result =
+                this.packageParameterOfAdminApproveList(adminApprovalConveys, teacherMap, studentMap, total);
+
         return result;
     }
 

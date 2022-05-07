@@ -22,9 +22,11 @@ public class SubjectApproveListQuery extends CommonPage {
         this.year = year;
     }
 
-
     @ApiModelProperty(value = "专业id")
     private Integer majorId;
+
+    @ApiModelProperty(value = "专业id")
+    private Integer collegeId;
 
     @ApiModelProperty(value = "教师id")
     private Integer teacherId;

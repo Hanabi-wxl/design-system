@@ -140,4 +140,12 @@ public interface SubjectService extends IService<Subject> {
      **/
     TotalPackageVo<SubjectDetailVo> studentSubjectList(SubjectListQuery query, Integer userId);
 
+    /*
+     * @Description: 院管理员获取本院所有课题
+     * @Author: sinre
+     * @Date: 2022/5/7 22:45
+     * @param query
+     * @return edu.dlu.bysj.base.model.vo.TotalPackageVo<edu.dlu.bysj.base.model.vo.ApproveDetailVo>
+     **/
+    TotalPackageVo<ApproveDetailVo> collegeAdminiApproveSubjectPagination(SubjectApproveListQuery query);
 }

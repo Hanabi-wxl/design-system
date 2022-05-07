@@ -643,6 +643,61 @@
                            on t.id = s.first_teacher_id
 
         limit #{start} ,#{pageSize}
+    </select>
+    <select id="totalSubjectListByStudent" resultType="java.lang.Integer">
+        select count(s.id) as total
+        from (select subject.id, subject.subject_name, subject.grade, subject.progress_id
+              from subject
+              where subject.status = 1
+                and subject.student_id = #{userId}
+                and grade = #{year}) as s
+                 left join progress
+                           on progress.id = s.progress_id
+    </select>
+    <select id="collegeApprovalListPagination" resultType="edu.dlu.bysj.base.model.dto.AdminApprovalConvey">
+        select
+        s.id,
+        s.student_id,
+        s.subject_id,
+        s.subject_name,
+        s.first_teacher_id,
+        s.second_teacher_id,
+        s.student_id,
+        s.filing_number,
+        progress.content
+
+        from (
+            select
+            subject.id,
+            subject.subject_id,
+            subject.subject_name,
+            subject.first_teacher_id,
+            subject.second_teacher_id,
+            subject.progress_id,
+            subject.student_id,
+            subject.filing_number
+            from subject
+            where subject.status = 1
+            <if test="teacherId != null">
+                and subject.first_teacher_id = #{teacherId}
+            </if>
+            and grade = #{year}
+
+            and subject.subject_id in (
+                select subject_major.subject_id
+                from subject_major
+                where subject_major.major_id in (
+                    select id from major where college_id = #{collegeId}
+                )
+            )
+        ) as s
+
+        left join progress
+
+        on progress.id = s.progress_id
+
+        limit #{start} , #{pageSize}
+
 
     </select>
 
