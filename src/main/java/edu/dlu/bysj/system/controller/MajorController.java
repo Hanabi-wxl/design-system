@@ -6,8 +6,10 @@ import edu.dlu.bysj.base.model.entity.Major;
 import edu.dlu.bysj.base.model.vo.MajorVo;
 import edu.dlu.bysj.base.model.vo.TotalPackageVo;
 import edu.dlu.bysj.base.result.CommonResult;
+import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
 import edu.dlu.bysj.system.model.query.MajorQueryDto;
+import edu.dlu.bysj.system.service.CollegeService;
 import edu.dlu.bysj.system.service.MajorService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -16,6 +18,8 @@ import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author XiangXinGang
@@ -27,34 +31,28 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 public class MajorController {
     private final MajorService majorService;
+    private final CollegeService collegeService;
 
 
-    public MajorController(MajorService majorService) {
+    public MajorController(MajorService majorService,CollegeService collegeService) {
         this.majorService = majorService;
+        this.collegeService = collegeService;
     }
 
     @GetMapping(value = "/system/major/list")
     @LogAnnotation(content = "获取专业列表")
     @RequiresPermissions({"major:list"})
     @ApiOperation(value = "获取专业列表")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "collegeId", value = "学院id"),
-            @ApiImplicitParam(name = "pageSize", value = "每页记录数"),
-            @ApiImplicitParam(name = "pageNumber", value = "当前页码")
-    })
     public CommonResult<TotalPackageVo<MajorVo>> majorList(
-            MajorQueryDto majorQueryDto
-//            @RequestParam(value = "collegeId") String collegeId,
-//            @RequestParam(value = "pageSize")
-//            @Min(value = 1, message = "每页记录数的长度必须不小于1") String pageSize,
-//            @RequestParam(value = "pageNumber")
-//            @Min(value = 1, message = "当前页码的长度必须不小于等于1") String pageNumber
+            MajorQueryDto majorQueryDto, HttpServletRequest request
     ) {
-        String collegeId = majorQueryDto.getCollegeId().equals("") ? "1" : majorQueryDto.getCollegeId();
+        String jwt = request.getHeader("jwt");
+        String collegeId = String.valueOf(collegeService.getCollegeIdByMajorId(JwtUtil.getMajorId(jwt)));
+        String myCollegeId = majorQueryDto.getCollegeId().equals("") ? collegeId : majorQueryDto.getCollegeId();
         int pageNumber = majorQueryDto.getPageNumber() == null ? 1 : majorQueryDto.getPageNumber();
         int pageSize = majorQueryDto.getPageSize() == null ? 12 : majorQueryDto.getPageSize();
         TotalPackageVo<MajorVo> totalPackageVo =
-                majorService.majorPagination(collegeId, pageNumber, pageSize);
+                majorService.majorPagination(myCollegeId, pageNumber, pageSize);
         return CommonResult.success(totalPackageVo);
     }
 
