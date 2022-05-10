@@ -226,4 +226,6 @@ public interface SubjectMapper extends BaseMapper<Subject> {
     Integer totalSubjectListByStudent(Integer userId, Integer year);
 
     List<AdminApprovalConvey> collegeApprovalListPagination(Integer collegeId, Integer teacherId, Integer start, Integer pageSize, Integer year);
+
+    List<Subject> listSubjectByIds(String id1, String id2);
 }

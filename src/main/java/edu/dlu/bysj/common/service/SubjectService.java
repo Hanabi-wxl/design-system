@@ -148,4 +148,14 @@ public interface SubjectService extends IService<Subject> {
      * @return edu.dlu.bysj.base.model.vo.TotalPackageVo<edu.dlu.bysj.base.model.vo.ApproveDetailVo>
      **/
     TotalPackageVo<ApproveDetailVo> collegeAdminiApproveSubjectPagination(SubjectApproveListQuery query);
+
+    /*
+     * @Description: 根据id查询课题
+     * @Author: sinre
+     * @Date: 2022/5/8 14:21
+     * @param firstSubjectId
+     * @param secondSubjectId
+     * @return java.util.List<edu.dlu.bysj.base.model.entity.Subject>
+     **/
+    List<Subject> listSubjectByIds(String firstSubjectId, String secondSubjectId);
 }

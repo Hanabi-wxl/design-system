@@ -1,10 +1,12 @@
 package edu.dlu.bysj.paper.controller;
 
+import edu.dlu.bysj.base.model.dto.EntrustDto;
 import edu.dlu.bysj.base.model.entity.Entrust;
 import edu.dlu.bysj.base.model.vo.EntrustInfoVo;
 import edu.dlu.bysj.base.model.vo.TotalPackageVo;
 import edu.dlu.bysj.base.result.CommonResult;
 import edu.dlu.bysj.base.util.JwtUtil;
+import edu.dlu.bysj.common.service.TeacherService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
 import edu.dlu.bysj.paper.service.EntrustService;
 import io.swagger.annotations.Api;
@@ -13,10 +15,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Min;
@@ -34,23 +33,23 @@ import java.time.LocalDateTime;
 @Validated
 public class EntrustController {
     private final EntrustService entrustService;
+    private final TeacherService teacherService;
 
     @Autowired
-    public EntrustController(EntrustService entrustService) {
+    public EntrustController(EntrustService entrustService,TeacherService teacherService) {
         this.entrustService = entrustService;
+        this.teacherService = teacherService;
     }
 
 
-    @GetMapping(value = "/entrust/setEntrust/{subjectId}/{consigneeId}")
+    @PostMapping(value = "/entrust/setEntrust")
     @LogAnnotation(content = "设置题目委托")
     @RequiresPermissions({"entrust:subjectEntrust"})
     @ApiOperation(value = "设置题目委托")
-    public CommonResult<Object> setUpSubjectEntrust(@PathVariable("subjectId")
-                                                    @NotNull Integer subjectId,
-                                                    @PathVariable("consigneeId")
-                                                    @NotNull Integer consigneeId,
-                                                    HttpServletRequest request) {
+    public CommonResult<Object> setUpSubjectEntrust(@RequestBody EntrustDto dto, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
+        Integer subjectId = dto.getSubjectId();
+        Integer consigneeId = dto.getConsigneeId();
         boolean save = false;
         if (!StringUtils.isEmpty(jwt)) {
             /*委托人id*/
@@ -66,21 +65,21 @@ public class EntrustController {
     }
 
 
-    @GetMapping(value = "/entrust/myList/{pageSize}/{pageNumber}/{year}")
+    @GetMapping(value = "/entrust/myList")
     @LogAnnotation(content = "获取我的委托列表")
     @RequiresPermissions({"entrust:list"})
     @ApiOperation(value = "获取我的委托列表")
-    public CommonResult<TotalPackageVo<EntrustInfoVo>> selfSubjectEntrust(@PathVariable("pageSize")
-                                                                          @Min(value = 1, message = "每页记录数必须不小于1") Integer pageSize,
-                                                                          @PathVariable("pageNumber")
-                                                                          @Min(value = 1, message = "当前页码不得小于1") Integer pageNumber,
-                                                                          @PathVariable("year")
-                                                                          @NotBlank String year,
-                                                                          HttpServletRequest request) {
+    public CommonResult<TotalPackageVo<EntrustInfoVo>> selfSubjectEntrust(
+              Integer pageSize,
+              Integer pageNumber,
+              String year,
+              HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
         TotalPackageVo<EntrustInfoVo> result = null;
+        Integer userId = JwtUtil.getUserId(jwt);
+        String userNumber = teacherService.idToNumber(userId);
         if (!StringUtils.isEmpty(jwt)) {
-            result = entrustService.selfEntrusts(JwtUtil.getUserId(jwt), year, pageNumber, pageSize);
+            result = entrustService.selfEntrusts(Integer.valueOf(userNumber), year, pageNumber, pageSize);
         }
         return CommonResult.success(result);
     }

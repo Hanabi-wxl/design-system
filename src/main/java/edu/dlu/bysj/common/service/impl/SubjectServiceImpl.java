@@ -535,6 +535,11 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
         return result;
     }
 
+    @Override
+    public List<Subject> listSubjectByIds(String firstSubjectId, String secondSubjectId) {
+        return subjectMapper.listSubjectByIds(firstSubjectId,secondSubjectId);
+    }
+
     private Subject packageSubject(SubjectApprovalVo score, Subject target) {
         target.setSubjectId(score.getSubjectId());
         target.setSubjectName(score.getSubjectName());

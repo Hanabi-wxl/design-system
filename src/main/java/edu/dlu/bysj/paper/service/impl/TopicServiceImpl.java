@@ -42,9 +42,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topics> implement
         if (selectedVos != null && !selectedVos.isEmpty()) {
 
             for (SelectedVo selectedVo : selectedVos) {
-                if (selectedVo.getSubjectId().equals(studentTopic.getFirstSubjectId())) {
+                if (String.valueOf(selectedVo.getSubjectId()).equals(studentTopic.getFirstSubjectId())) {
                     selectedVo.setChangeNumber(studentTopic.getFirstChange());
-                } else if (selectedVo.getSubjectId().equals(studentTopic.getSecondSubjectId())) {
+                } else if (String.valueOf(selectedVo.getSubjectId()).equals(studentTopic.getSecondSubjectId())) {
                     selectedVo.setChangeNumber(studentTopic.getSecondChange());
                 }
             }

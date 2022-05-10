@@ -3,6 +3,8 @@ package edu.dlu.bysj.paper.controller;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import edu.dlu.bysj.base.model.dto.SelectStudentDto;
+import edu.dlu.bysj.base.model.dto.SubjectTopicDto;
 import edu.dlu.bysj.base.model.entity.Student;
 import edu.dlu.bysj.base.model.entity.Subject;
 import edu.dlu.bysj.base.model.entity.Topics;
@@ -19,6 +21,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.models.auth.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +68,7 @@ public class SubjectSelectionController {
         this.studentService = studentService;
     }
 
+    // TODO: 2022/5/8 学生选题列表
     @GetMapping(value = "/topics/studentList")
     @LogAnnotation(content = "获取学生选题列表")
     @RequiresPermissions({"topics:studentList"})
@@ -81,22 +85,15 @@ public class SubjectSelectionController {
         return CommonResult.success(result);
     }
 
-
-    @GetMapping(value = "/topics/studentSubmit/{firstSubjectId}/{secondSubjectId}")
+    // TODO: 2022/5/8 学生选题提交
+    @PatchMapping(value = "/topics/studentSubmit")
     @LogAnnotation(content = "学生提交选题结果")
     @RequiresPermissions({"topics:studentSubmit"})
     @ApiOperation(value = "学生提交选题结果")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "firstSubjectId", value = "第一志愿题目id"),
-            @ApiImplicitParam(name = "secondSubjectId", value = "第二志愿题目id")
-    })
-    public CommonResult<Object> submitChoseTopic(@PathVariable("firstSubjectId")
-                                                 @NotNull String firstSubjectId,
-                                                 @PathVariable("secondSubjectId")
-                                                 @NotNull String secondSubjectId,
-                                                 HttpServletRequest request) {
+    public CommonResult<Object> submitChoseTopic(@RequestBody SubjectTopicDto topicDto, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
-
+        String firstSubjectId = topicDto.getFirstSubjectId();
+        String secondSubjectId = topicDto.getSecondSubjectId();
         boolean flag = false;
         /*选题阶段操作码*/
         Integer currentCode = ProcessEnum.CHOOSE_TOPIC.getProcessCode();
@@ -104,7 +101,7 @@ public class SubjectSelectionController {
         if (!StringUtils.isEmpty(jwt)) {
             Integer studentId = JwtUtil.getUserId(jwt);
             /*判断当前题目是否在可进行操作的阶段*/
-            List<Subject> subjects = subjectService.listBySubjectIds(firstSubjectId, secondSubjectId);
+            List<Subject> subjects = subjectService.listSubjectByIds(firstSubjectId, secondSubjectId);
             for (Subject element : subjects) {
                 /*阶段为选题阶段和院审核阶段都可执行该操作*/
                 if (!currentCode.equals(element.getProgressId() + 1) && !currentCode.equals(element.getProgressId())) {
@@ -146,10 +143,10 @@ public class SubjectSelectionController {
             }
         }
 
-
         return flag ? CommonResult.success("操作成功该题目") : CommonResult.failed("操作失败，请再次尝试");
     }
 
+    // TODO: 2022/5/8 已选列表
     @GetMapping(value = "/topics/selectedList")
     @LogAnnotation(content = "学生获取已选题目列表")
     @RequiresPermissions({"topic:selectedList"})
@@ -163,7 +160,7 @@ public class SubjectSelectionController {
         return CommonResult.success(selectedVos);
     }
 
-    @GetMapping(value = "/topics/teacherSelectedList/{year}/{pageSize}/{pageNumber}")
+    @GetMapping(value = "/topics/teacherSelectedList")
     @LogAnnotation(content = "教师以确定题目列表")
     @RequiresPermissions({"topic:teacherList"})
     @ApiOperation(value = "教师以确定的题目列表")
@@ -172,13 +169,11 @@ public class SubjectSelectionController {
             @ApiImplicitParam(name = "pageSize", value = "每页记录数"),
             @ApiImplicitParam(name = "pageNumber", value = "当前页码")
     })
-    public CommonResult<TotalPackageVo<DetermineStudentVo>> teacherDetermineTopic(@PathVariable("year")
-                                                                                  @NotNull Integer year,
-                                                                                  @PathVariable("pageSize")
-                                                                                  @Min(value = 1, message = "每页记录数不得少于1") Integer pageSize,
-                                                                                  @PathVariable("pageNumber")
-                                                                                  @Min(value = 1, message = "每页记录数不得少于1") Integer pageNumber,
-                                                                                  HttpServletRequest request) {
+    public CommonResult<TotalPackageVo<DetermineStudentVo>> teacherDetermineTopic(
+            @NotNull Integer year,
+            @Min(value = 1, message = "每页记录数不得少于1") Integer pageSize,
+            @Min(value = 1, message = "每页记录数不得少于1") Integer pageNumber,
+            HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
         TotalPackageVo<DetermineStudentVo> result = new TotalPackageVo<>();
         if (!StringUtils.isEmpty(jwt)) {
@@ -187,23 +182,15 @@ public class SubjectSelectionController {
         return CommonResult.success(result);
     }
 
-
-    @GetMapping(value = "/topics/teacherUnselectedList/{pageSize}/{pageNumber}/{year}")
+    @GetMapping(value = "/topics/teacherUnselectedList")
     @LogAnnotation(content = "教师查看他自己报题被学生选择情况")
     @RequiresPermissions({"topic:teacherUnselects"})
     @ApiOperation(value = "教师查看他自己报题被学生选择情况")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "pageSize", value = "每页记录数"),
-            @ApiImplicitParam(name = "pageNumber", value = "当前页码"),
-            @ApiImplicitParam(name = "year", value = "年级")
-    })
-    public CommonResult<TotalPackageVo<TotalVolunteerPackage<UnselectStudentVo>>> teacherSelectStudentList(@PathVariable("pageSize")
-                                                                                                           @Min(value = 1, message = "每页记录数不得少于1") Integer pageSize,
-                                                                                                           @PathVariable("pageNumber")
-                                                                                                           @Min(value = 1, message = "每页记录数不得少于1") Integer pageNumber,
-                                                                                                           @PathVariable("year")
-                                                                                                           @NotNull Integer year,
-                                                                                                           HttpServletRequest request) {
+    public CommonResult<TotalPackageVo<TotalVolunteerPackage<UnselectStudentVo>>> teacherSelectStudentList(
+            @Min(value = 1, message = "每页记录数不得少于1") Integer pageSize,
+            @Min(value = 1, message = "每页记录数不得少于1") Integer pageNumber,
+            @NotNull Integer year,
+            HttpServletRequest request) {
         TotalPackageVo<TotalVolunteerPackage<UnselectStudentVo>> result = null;
         String jwt = request.getHeader("jwt");
         /* 当jwt合格并且为老师才能进行该操作*/
@@ -215,7 +202,7 @@ public class SubjectSelectionController {
 
 
     @Transactional(rollbackFor = Exception.class)
-    @PostMapping(value = "/topics/submit")
+    @PatchMapping(value = "/topics/submit")
     @LogAnnotation(content = "教师从学生报题志愿中选取学生")
     @RequiresPermissions({"topic:submit"})
     @ApiOperation(value = "教师从学生报题志愿中选取学生")
@@ -223,27 +210,25 @@ public class SubjectSelectionController {
             @ApiImplicitParam(name = "subjectId", value = "题目id"),
             @ApiImplicitParam(name = "studentId", value = "学生id")
     })
-    public CommonResult<Object> teacherSelectStudent(@RequestParam("subjectId")
-                                                     @NotNull Integer subjectId,
-                                                     @RequestParam("studentId")
-                                                     @NotNull Integer studentId) {
+    public CommonResult<Object> teacherSelectStudent(@RequestBody SelectStudentDto dto) {
+        Integer studentId = dto.getStudentId();
+        String subjectId = dto.getSubjectId();
         boolean flag = false;
         boolean subjectFlag = false;
         String errorMessage = "";
         /*该题目必须到达4阶段(学生选题)，即学生选完题后才能进行该阶段操作*/
         /*当前subjectId 要为空否则该题目被其他专业占有*/
         Subject value = subjectService.getById(subjectId);
-        if (ObjectUtil.isNotNull(value) && ObjectUtil.isNull(value.getSubjectId())) {
+        if (ObjectUtil.isNotNull(value) && ObjectUtil.isNotNull(value.getSubjectId())) {
             //修改subject中该题的student.id, 和该学生表中的subjectId
-            Student studentValue = studentService.getById(subjectId);
+            Student studentValue = studentService.getById(studentId);
             value.setStudentId(studentId);
-            studentValue.setSubjectId(studentId);
+            studentValue.setSubjectId(Integer.parseInt(subjectId));
             /*同时跟新题目中的学生id,和学生中的最终确定题目id*/
             subjectFlag = subjectService.updateById(value);
             flag = studentService.updateById(studentValue);
         } else {
             errorMessage = "操作错误";
-            errorMessage = "操作失败";
             if (ObjectUtil.isNull(value)) {
                 errorMessage = "题目Id为空";
             } else {
@@ -252,7 +237,7 @@ public class SubjectSelectionController {
                 }
             }
         }
-        return (flag && subjectFlag) ? CommonResult.success("选题成功") : CommonResult.failed();
+        return (flag && subjectFlag) ? CommonResult.success("选题成功") : CommonResult.failed(errorMessage);
     }
 }
 

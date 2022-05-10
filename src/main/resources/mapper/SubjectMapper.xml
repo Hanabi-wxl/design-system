@@ -15,9 +15,9 @@
 
     <resultMap id="entrustSubjectMap" type="edu.dlu.bysj.base.model.vo.EntrustInfoVo">
         <id column="id" property="subjectId"/>
-        <result column="subject_name" property="subjectNames"/>
-        <result column="teacherName" property="firstName"/>
-        <result column="titleName" property="firstTitle"/>
+        <result column="subject_name" property="subjectName"/>
+        <result column="teacherName" property="firstTeacherName"/>
+        <result column="titleName" property="firstTeacherTitle"/>
         <result column="studentName" property="studentName"/>
         <result column="student_number" property="studentNumber"/>
         <result column="phone_number" property="studentPhone"/>
@@ -29,7 +29,7 @@
     <resultMap id="studentSelectSubjectMap" type="edu.dlu.bysj.base.model.vo.TopicsVo">
         <id column="id" property="subjectId"/>
         <result column="subject_name" property="subjectName"/>
-        <result column="teacherName" property="teacherName"/>
+        <result column="teacherName" property="firstTeacherName"/>
         <result column="titleName" property="title"/>
     </resultMap>
 
@@ -395,12 +395,21 @@
             </when>
         </choose>
 
-        select s.id, s.subject_name, teacher.name as teacherName, t.name as titleName
-        from (select subject.id, subject.subject_name, subject.first_teacher_id
-        from subject
-        where subject.status = 1
-        and subject.major_id = #{majorId}
-        and subject.grade = #{grade}
+        select
+               s.id,
+               s.subject_name,
+               teacher.name as teacherName,
+               t.name as titleName
+        from (
+            select
+                   subject.id,
+                   subject.subject_name,
+                   subject.first_teacher_id
+            from subject
+            where subject.status = 1
+            and subject.major_id = #{majorId}
+            and subject.grade = #{grade}
+            and subject.progress_id = 3
         ) as s
 
         left join teacher
@@ -439,6 +448,7 @@
         (select subject.id, subject.first_teacher_id,subject.subject_name
         from subject
         where subject.status = 1
+        and subject.progress_id = 3
         and subject.major_id = #{majorId}
         and subject.grade = #{grade}) as s
 
@@ -559,11 +569,17 @@
 
 
     </select>
+
     <select id="selectBySubjectId" resultType="edu.dlu.bysj.base.model.entity.Subject">
         select * from subject where subject_id = #{subjectId}
     </select>
+
     <select id="listBySubjectIds" resultType="edu.dlu.bysj.base.model.entity.Subject">
         select * from subject where subject_id = #{id1} or subject_id = #{id2}
+    </select>
+
+    <select id="listSubjectByIds" resultType="edu.dlu.bysj.base.model.entity.Subject">
+        select * from subject where id = #{id1} or id = #{id2}
     </select>
 
     <select id="adminSubjectListByMajorIdAndGrade" resultType="edu.dlu.bysj.base.model.vo.SubjectDetailVo">
@@ -615,15 +631,17 @@
                            on progress.id = s.progress_id
     </select>
     <select id="studentSubjectListByStudentIdAndGrade" resultType="edu.dlu.bysj.base.model.vo.SubjectDetailVo">
-        select s.id,
-               s.subjectId,
-               s.subject_name   as subjectName,
-               progress.content as progress,
-               grade,
-               s.student_id     as studentId,
-               t.id as firstTeacherId,
-               t.name as firstTeacherName,
-               t.phone_number as firstTeacherPhone
+        select
+        s.id,
+        s.subjectId,
+        s.subject_name   as subjectName,
+        progress.content as progress,
+        grade,
+        s.student_id     as studentId,
+        t.id             as firstTeacherId,
+        t.name           as firstTeacherName,
+        t.phone_number   as firstTeacherPhone
+
 
         from (select subject.id,
                      subject.subject_id as subjectId,
@@ -656,16 +674,15 @@
     </select>
     <select id="collegeApprovalListPagination" resultType="edu.dlu.bysj.base.model.dto.AdminApprovalConvey">
         select
-        s.id,
-        s.student_id,
-        s.subject_id,
-        s.subject_name,
-        s.first_teacher_id,
-        s.second_teacher_id,
-        s.student_id,
-        s.filing_number,
-        progress.content
-
+        s.id                as id,
+        s.student_id        as studentId,
+        s.subject_id        as subjectId,
+        s.subject_name      as subjectName,
+        s.first_teacher_id  as firstTeacherId,
+        s.second_teacher_id as secondTeacherId,
+        s.student_id        as studentId,
+        s.filing_number     as fillingNumber,
+        progress.content    as progress
         from (
             select
             subject.id,

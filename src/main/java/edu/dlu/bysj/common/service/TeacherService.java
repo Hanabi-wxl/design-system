@@ -111,4 +111,6 @@ public interface TeacherService extends IService<Teacher> {
      * @return boolean
      **/
     boolean addTeacher(ModifyUserVo userVo);
+
+    String idToNumber(Integer userId);
 }

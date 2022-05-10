@@ -138,7 +138,7 @@
         t.name as teacherName,
         m.name as majorName
 
-        from (select subject.id, subject.subject_name, subject.first_teacher_id
+        from (select subject.id, subject.subject_name, subject.first_teacher_id, subject.student_id
         from subject
         where subject.status = 1
         and subject.grade = #{grade}
@@ -150,7 +150,7 @@
         on t.id = s.first_teacher_id
         left join major m
         on t.major_id = m.id
-        where student.subject_id is null
+        where s.student_id is NULL
 
         <if test="teacherName != null and teacherName != ''">
             and t.name like #{name_pattern}

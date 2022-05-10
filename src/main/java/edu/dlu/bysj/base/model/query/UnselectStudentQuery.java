@@ -24,6 +24,5 @@ public class UnselectStudentQuery {
     private Integer year;
 
     @ApiModelProperty(value = "专业id")
-    @NotNull
     private Integer majorId;
 }

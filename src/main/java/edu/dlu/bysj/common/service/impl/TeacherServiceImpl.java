@@ -248,4 +248,9 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher>
         int insert1 = teacherRoleMapper.insert(teacherRole);
         return insert == 1 && insert1 == 1;
     }
+
+    @Override
+    public String idToNumber(Integer userId) {
+        return baseMapper.selectById(userId).getTeacherNumber();
+    }
 }

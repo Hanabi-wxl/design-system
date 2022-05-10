@@ -15,6 +15,7 @@ public class AdminApprovalConvey {
     private Integer secondTeacherId;
     private Integer studentId;
     private String progress;
+
     /**
      * 归档序号
      */

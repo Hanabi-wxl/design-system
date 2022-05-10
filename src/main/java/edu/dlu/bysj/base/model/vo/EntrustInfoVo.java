@@ -15,13 +15,13 @@ public class EntrustInfoVo {
     private Integer subjectId;
 
     @ApiModelProperty(value = "题目名称")
-    private String subjectNames;
+    private String subjectName;
 
     @ApiModelProperty(value = "第一指导教师姓名")
-    private String firstName;
+    private String firstTeacherName;
 
     @ApiModelProperty(value = "第一指导教师职称")
-    private String firstTitle;
+    private String firstTeacherTitle;
 
     @ApiModelProperty(value = "学生姓名")
     private String studentName;
