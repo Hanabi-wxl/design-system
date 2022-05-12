@@ -1,6 +1,6 @@
 package edu.dlu.bysj.paper.controller;
 
-import edu.dlu.bysj.base.model.dto.EntrustDto;
+import edu.dlu.bysj.paper.model.dto.EntrustDto;
 import edu.dlu.bysj.base.model.entity.Entrust;
 import edu.dlu.bysj.base.model.vo.EntrustInfoVo;
 import edu.dlu.bysj.base.model.vo.TotalPackageVo;
@@ -18,9 +18,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 /**

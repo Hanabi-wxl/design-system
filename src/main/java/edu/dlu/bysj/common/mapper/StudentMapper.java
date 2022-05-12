@@ -136,7 +136,9 @@ public interface StudentMapper extends BaseMapper<Student> {
      * @param userNumber 用户的学号/工号
      * @return
      */
-    List<StudentInfoVo> definiteSubjectStudentList(@Param("majorId") Integer majorId,
+    List<StudentInfoVo> definiteSubjectStudentList(@Param("start") Integer start,
+                                                   @Param("size") Integer size,
+                                                   @Param("majorId") Integer majorId,
                                                    @Param("grade") Integer grade,
                                                    @Param("type") Integer type,
                                                    @Param("userName") String userName,
@@ -145,4 +147,11 @@ public interface StudentMapper extends BaseMapper<Student> {
     StudentDetailVo checkStudentInfoByNumber(Integer number);
 
     Integer numberToId(Integer studentNumber);
+
+    Integer totalDefiniteSubjectStudentList(@Param("majorId") Integer majorId,
+                                            @Param("grade") Integer grade,
+                                            @Param("type") Integer type,
+                                            @Param("userName") String userName,
+                                            @Param("userNumber") String userNumber);
+
 }

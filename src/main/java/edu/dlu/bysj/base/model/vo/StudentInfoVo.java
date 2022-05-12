@@ -17,6 +17,9 @@ public class StudentInfoVo {
     @ApiModelProperty(value = "题目编号")
     private Integer subjectId;
 
+    @ApiModelProperty(value = "第一指导教师id")
+    private Integer firstTeacherId;
+
     @ApiModelProperty(value = "学生名称")
     private String studentName;
 

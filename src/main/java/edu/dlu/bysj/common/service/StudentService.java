@@ -5,7 +5,6 @@ import edu.dlu.bysj.base.model.entity.Student;
 import edu.dlu.bysj.base.model.query.UserListQuery;
 import edu.dlu.bysj.base.model.vo.*;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -64,7 +63,7 @@ public interface StudentService extends IService<Student> {
      * @param useNumber 学号\教工号
      * @return
      */
-    List<StudentInfoVo> checkAdjustedSubjectMentor(Integer majorId, Integer year, Integer type, String userName, String useNumber);
+    TotalPackageVo<StudentInfoVo> checkAdjustedSubjectMentor(Integer pageNumber, Integer pageSize, Integer majorId, Integer year, Integer type, String userName, String useNumber);
 
     boolean addStudent(ModifyUserVo userVo);
 

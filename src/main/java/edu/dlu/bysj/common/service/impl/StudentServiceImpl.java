@@ -86,8 +86,16 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student>
     }
 
     @Override
-    public List<StudentInfoVo> checkAdjustedSubjectMentor(Integer majorId, Integer year, Integer type, String userName, String useNumber) {
-        return studentMapper.definiteSubjectStudentList(majorId, year, type, userName, useNumber);
+    public TotalPackageVo<StudentInfoVo> checkAdjustedSubjectMentor(
+            Integer pageNumber, Integer pageSize, Integer majorId, Integer year, Integer type, String userName, String useNumber
+    ) {
+        Integer start = (pageNumber-1) * pageSize;
+        TotalPackageVo<StudentInfoVo> packageVo = new TotalPackageVo<>();
+        List<StudentInfoVo> studentInfoVos = studentMapper.definiteSubjectStudentList(start, pageSize, majorId, year, type, userName, useNumber);
+        Integer total = studentMapper.totalDefiniteSubjectStudentList(majorId, year, type, userName, useNumber);
+        packageVo.setArrays(studentInfoVos);
+        packageVo.setTotal(total);
+        return packageVo;
     }
 
     @Override

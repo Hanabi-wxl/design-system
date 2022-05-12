@@ -2,7 +2,8 @@ package edu.dlu.bysj.paper.controller;
 
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
-import edu.dlu.bysj.base.model.dto.SelectStudentDto;
+import edu.dlu.bysj.base.model.vo.TotalPackageVo;
+import edu.dlu.bysj.paper.model.dto.SelectStudentDto;
 import edu.dlu.bysj.base.model.entity.Student;
 import edu.dlu.bysj.base.model.entity.Subject;
 import edu.dlu.bysj.base.model.enums.ProcessEnum;
@@ -16,6 +17,7 @@ import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.StudentService;
 import edu.dlu.bysj.common.service.SubjectService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
+import edu.dlu.bysj.paper.model.dto.SubjectAdjustDto;
 import edu.dlu.bysj.paper.service.TopicService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -30,7 +32,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -125,26 +126,28 @@ public class SelectApproveController {
             @ApiImplicitParam(name = "userName", value = "用户名"),
             @ApiImplicitParam(name = "userNumber", value = "学号/教工号")
     })
-    public CommonResult<List<StudentInfoVo>> adjustFirstTeacherAboutSubject(
-            @NotNull Integer year,
-            @NotNull Integer majorId,
-            String type,
-            String userName,
-            String userNumber) {
-        List<StudentInfoVo> studentInfoVos;
-
+    public CommonResult<TotalPackageVo<StudentInfoVo>> adjustFirstTeacherAboutSubject(SubjectAdjustDto dto, HttpServletRequest request) {
+        Integer majorId = dto.getMajorId();
+        String type = dto.getType();
+        Integer year = dto.getYear();
+        String userName = dto.getUserName();
+        String userNumber = dto.getUserNumber();
+        Integer pageNumber = dto.getPageNumber();
+        Integer pageSize = dto.getPageSize();
+        majorId = ObjectUtil.isNull(majorId) ? JwtUtil.getMajorId(request.getHeader("jwt")) : majorId;
+        TotalPackageVo<StudentInfoVo> studentInfoVos;
         /*sql 中 type 1:学生, 0 教师*/
         /*解决由于type String 为 "" 直接转换会出现异常*/
         if (NumberUtil.isNumber(type)) {
-            studentInfoVos = studentService.checkAdjustedSubjectMentor(majorId, year, Integer.valueOf(type), userName, userNumber);
+            studentInfoVos = studentService.checkAdjustedSubjectMentor(pageNumber, pageSize, majorId, year, Integer.valueOf(type), userName, userNumber);
         } else {
             /*当不为数字时，使用数字 3代码不进行模糊查询*/
-            studentInfoVos = studentService.checkAdjustedSubjectMentor(majorId, year, 3, userName, userNumber);
+            studentInfoVos = studentService.checkAdjustedSubjectMentor(pageNumber, pageSize, majorId, year, 3, userName, userNumber);
         }
         return CommonResult.success(studentInfoVos);
     }
 
-    @GetMapping(value = "/topics/majorSubmitAdjust")
+    @PatchMapping(value = "/topics/majorSubmitAdjust")
     @LogAnnotation(content = "专业管理修改题目的第一指导教师")
     @RequiresPermissions({"topic:AdjustTeacher"})
     @ApiOperation(value = "专业管理员修改题目的第一指导教师")
@@ -152,8 +155,9 @@ public class SelectApproveController {
             @ApiImplicitParam(name = "subjectId", value = "题目id"),
             @ApiImplicitParam(name = "firstTeacherId", value = "第一指导教师id")
     })
-    public CommonResult<Object> modifySubjectMentor(@NotNull Integer subjectId,
-                                                    @NotNull Integer firstTeacherId) {
+    public CommonResult<Object> modifySubjectMentor(@RequestBody SubjectAdjustDto dto) {
+        String subjectId = dto.getSubjectId();
+        Integer firstTeacherId = dto.getFirstTeacherId();
         Subject value = subjectService.getById(subjectId);
         boolean flag = false;
         if (ObjectUtil.isNotNull(value)) {
