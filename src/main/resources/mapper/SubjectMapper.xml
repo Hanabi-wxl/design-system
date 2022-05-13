@@ -292,25 +292,39 @@
 
     <select id="totalAdminApprovalList" resultType="java.lang.Integer">
 
-        select count(s.id) as total
+        select count(ss.id) as total
+        from(
+            select
+            s.id as id from (
+                select
+                subject.id,
+                subject.subject_id,
+                subject.subject_name,
+                subject.first_teacher_id,
+                subject.second_teacher_id,
+                subject.progress_id,
+                subject.student_id,
+                subject.filing_number
+                from subject
+                where subject.status = 1
+                <if test="teacherId != null">
+                    and subject.first_teacher_id = #{teacherId}
+                </if>
+                and grade = #{grade}
 
-        from (select subject.id,subject.progress_id
-        from subject
-        where subject.status = 1
-        <if test="teacherId != null">
-            and subject.first_teacher_id = 1
-        </if>
-        and grade = #{grade}
+                and subject.subject_id in (
+                    select subject_major.subject_id
+                    from subject_major
+                    where subject_major.major_id in (
+                        select id from major where college_id = #{collegeId}
+                    )
+                )
+            ) as s
 
-        and subject.subject_id in
+            left join progress
 
-        (select subject_major.subject_id
-        from subject_major
-        where subject_major.major_id = #{majorId})) as s
-
-        left join progress
-
-        on progress.id = s.progress_id
+            on progress.id = s.progress_id
+        ) as ss
 
     </select>
 

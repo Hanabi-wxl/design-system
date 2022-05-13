@@ -94,7 +94,6 @@ public class FileDownLoadController {
                 e.printStackTrace();
                 throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "论文封皮下载失败");
             } finally {
-
                 try {
                     if (source != null) {
                         source.close();

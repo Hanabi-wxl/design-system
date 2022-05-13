@@ -96,15 +96,15 @@ public interface SubjectMapper extends BaseMapper<Subject> {
     /**
      * 查 adminApprovalListPagination条件下的总页数;
      *
-     * @param majorId
-     *            专业id
+     * @param collegeId
+     *            院id
      * @param teacherId
      *            教师id
      * @param grade
      *            年级
      * @return
      */
-    Integer totalAdminApprovalList(@Param("majorId") Integer majorId, @Param("teacherId") Integer teacherId,
+    Integer totalAdminApprovalList(@Param("collegeId") Integer collegeId, @Param("teacherId") Integer teacherId,
         @Param("grade") Integer grade);
 
     /**
