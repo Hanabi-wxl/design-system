@@ -1,22 +1,28 @@
 package edu.dlu.bysj.document.service.impl;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.URLEncoder;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.servlet.http.HttpServletResponse;
 
+import cn.afterturn.easypoi.excel.entity.TemplateExportParams;
+import cn.afterturn.easypoi.word.WordExportUtil;
+import cn.afterturn.easypoi.word.entity.MyXWPFDocument;
+import edu.dlu.bysj.base.exception.GlobalException;
+import edu.dlu.bysj.base.result.ResultCodeEnum;
+import lombok.SneakyThrows;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
 import cn.hutool.core.date.DateUtil;
@@ -34,6 +40,8 @@ import edu.dlu.bysj.paper.mapper.SubjectTypeMapper;
 import edu.dlu.bysj.system.mapper.ClassMapper;
 import edu.dlu.bysj.system.mapper.CollegeMapper;
 import edu.dlu.bysj.system.mapper.MajorMapper;
+import org.springframework.util.FileCopyUtils;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
 
 /**
  * @author XiangXinGang
@@ -53,6 +61,8 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
     private final CollegeMapper collegeMapper;
 
     private final SubjectTypeMapper subjectTypeMapper;
+
+    private static String baseUrl = "src"+File.separator+"main"+File.separator+"resources"+File.separator;
 
     private final ClassMapper classMapper;
 
@@ -195,6 +205,38 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         /*将内容导出到outPutStream*/
         workbook.write(response.getOutputStream());
 
+    }
+
+    private void fileDownload(String url, String fileName, HttpServletResponse response) {
+        if (Objects.isNull(url)) {
+            // 如果接收参数为空则抛出异常，由全局异常处理类去处理。
+            throw new NullPointerException("下载地址为空");
+        }
+        // 重置response
+        response.reset();
+        // ContentType，即告诉客户端所发送的数据属于什么类型
+        response.setContentType("application/octet-stream; charset=UTF-8");
+        response.addHeader("Access-Control-Expose-Headers", "Content-Disposition");
+        response.addHeader("Access-control-Allow-Origin","*");
+        // 设置编码格式
+        try {
+            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+            // 发送给客户端的数据
+            OutputStream outputStream = null;
+            outputStream = response.getOutputStream();
+            byte[] bytes = FileCopyUtils.copyToByteArray(new ClassPathResource(url).getInputStream());
+            outputStream.write(bytes);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void subjectOpenReportForm(HttpServletResponse response) {
+        // 获取文件
+        String url = "template/file/openReportForm.doc";
+        String fileName = "开题报告模板_" + (DateUtil.year(new Date()) - 3) + ".doc";
+        fileDownload(url, fileName, response);
     }
 
     /**

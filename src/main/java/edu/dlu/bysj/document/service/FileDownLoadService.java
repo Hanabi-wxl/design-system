@@ -1,6 +1,7 @@
 package edu.dlu.bysj.document.service;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
@@ -38,4 +39,6 @@ public interface FileDownLoadService {
      *            返回结果
      */
     void staticsSubjectTable(Integer majorId, HttpServletResponse response) throws IOException;
+
+    void subjectOpenReportForm(HttpServletResponse response) throws UnsupportedEncodingException;
 }

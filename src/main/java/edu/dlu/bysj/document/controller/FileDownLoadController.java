@@ -2,6 +2,7 @@ package edu.dlu.bysj.document.controller;
 
 import cn.afterturn.easypoi.excel.ExcelExportUtil;
 import cn.afterturn.easypoi.excel.entity.TemplateExportParams;
+import cn.afterturn.easypoi.word.WordExportUtil;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -34,8 +35,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URLEncoder;
 import java.util.Date;
 import java.util.HashMap;
@@ -159,8 +159,7 @@ public class FileDownLoadController {
         }
     }
 
-    @RequestMapping(value = "fileDownload/statistics/topics", method = RequestMethod.GET)
-
+    @RequestMapping(value = "/paperManagement/fileDownload/reportTable", method = RequestMethod.GET)
     public void subjectSelectStaticsTable(HttpServletRequest request, HttpServletResponse response) {
         String jwt = request.getHeader("jwt");
         if (!StringUtils.isEmpty(jwt)) {
@@ -169,8 +168,17 @@ public class FileDownLoadController {
                 fileDownLoadService.staticsSubjectTable(majorId, response);
             } catch (IOException e) {
                 e.printStackTrace();
-                throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载选题统计表失败");
+                throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载报题统计表失败");
             }
+        }
+    }
+
+    @RequestMapping(value = "/paperManagement/fileDownload/openReportForm", method = RequestMethod.GET)
+    public void subjectOpenReportForm(HttpServletResponse response) {
+        try {
+            fileDownLoadService.subjectOpenReportForm(response);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
         }
     }
 }
