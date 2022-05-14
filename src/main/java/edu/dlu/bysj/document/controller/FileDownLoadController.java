@@ -17,6 +17,7 @@ import edu.dlu.bysj.document.entity.PaperCoverTemplate;
 import edu.dlu.bysj.document.entity.SubjectApproveFormTemplate;
 import edu.dlu.bysj.document.service.FileDownLoadService;
 import edu.dlu.bysj.system.service.MajorService;
+import io.jsonwebtoken.Jwt;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperRunManager;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
@@ -73,7 +74,7 @@ public class FileDownLoadController {
             Integer majorId = JwtUtil.getMajorId(jwt);
             List<PaperCoverTemplate> result = fileDownLoadService.packPaperCoverData(majorId);
             Major major = majorService.getById(1);
-            String fileName = DateUtil.year(new Date()) + "_DADFP_" + major.getCode() + ".pdf";
+            String fileName = "论文封面_" + (DateUtil.year(new Date())-3) + "_DADFP" + ".pdf";
             ClassPathResource classPathResource = new ClassPathResource("template/pdf/PaperCover.jasper");
 
             InputStream source = null;
@@ -83,8 +84,9 @@ public class FileDownLoadController {
                 target = response.getOutputStream();
                 source = classPathResource.getInputStream();
                 /*填充报表并转换到outPutStream流中*/
-                response.setContentLength(source.available());
+//                response.setContentLength(source.available());
                 response.setContentType("application/octet-stream");
+                response.addHeader("Access-Control-Expose-Headers", "Content-Disposition");
                 response.addHeader("Content-Disposition",
                     "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
 
@@ -107,11 +109,13 @@ public class FileDownLoadController {
     }
 
     @RequestMapping(value = "/paperManagement/fileDownload/subjectAuditTable", method = RequestMethod.GET)
-    public void subjectApproveFormDownLoad(@RequestParam("subjectId") @NotNull String subjectId,
+    public void subjectApproveFormDownLoad(@RequestParam("subjectId") @NotNull String subjectId, HttpServletRequest request,
         HttpServletResponse response) {
-
+        String jwt = request.getHeader("jwt");
+        List<Integer> roleIds = JwtUtil.getRoleIds(jwt);
+        boolean isStudent = roleIds.contains(1);
         SubjectApproveFormTemplate result = fileDownLoadService.packPageSubjectApproveFormData(subjectId);
-        Subject subject = subjectService.getById(subjectId);
+        Subject subject = subjectService.getBySubjectId(subjectId);
         String studentNumber = null;
         String studentName = "";
         if (ObjectUtil.isNotNull(subject)) {
@@ -131,16 +135,22 @@ public class FileDownLoadController {
          image.setColspan(1);
          objectMap.put("qrCode", image);
          */
+        ClassPathResource resource = null;
 
         /*加载模板填充数据*/
-        ClassPathResource resource = new ClassPathResource("template/excel/SubjectApprovalForm.xls");
-        String fileName = DateUtil.year(new Date()) + "_TMSPB_" + studentNumber + ".xls";
+        if (isStudent)
+            resource = new ClassPathResource("template/excel/SubjectApproveFormStudent.xls");
+        else
+            resource = new ClassPathResource("template/excel/SubjectApproveFormTeacher.xls");
+
+        String fileName = "题目审批表_" + (DateUtil.year(new Date()) - 3) + "_TMSPB_" + studentNumber + ".xls";
         TemplateExportParams params = new TemplateExportParams(resource.getPath(), true);
 
         Workbook workbook = ExcelExportUtil.exportExcel(params, objectMap);
         workbook.setSheetName(0, studentName + "的审题统计表");
         try {
             response.setContentType("application/vnd.ms-excel");
+            response.addHeader("Access-Control-Expose-Headers", "Content-Disposition");
             response.addHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
             workbook.write(response.getOutputStream());
         } catch (IOException e) {

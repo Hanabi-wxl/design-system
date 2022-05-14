@@ -250,7 +250,7 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
             query.getTeacherId(), start, query.getPageSize(), query.getYear());
 
         /*总数*/
-        Integer total = subjectMapper.totalAdminApprovalList(query.getMajorId(), query.getTeacherId(), query.getYear());
+        Integer total = subjectMapper.totalAdminMajorApprovalList(query.getMajorId(), query.getTeacherId(), query.getYear());
 
         Set<Integer> teacherIds = new HashSet<>();
         for (AdminApprovalConvey convey : adminApprovalConveys) {
@@ -511,7 +511,7 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
                 query.getTeacherId(), start, query.getPageSize(), query.getYear());
 
         /*总数*/
-        Integer total = subjectMapper.totalAdminApprovalList(query.getCollegeId(), query.getTeacherId(), query.getYear());
+        Integer total = subjectMapper.totalAdminCollegeApprovalList(query.getCollegeId(), query.getTeacherId(), query.getYear());
 
         Set<Integer> teacherIds = new HashSet<>();
         for (AdminApprovalConvey convey : adminApprovalConveys) {

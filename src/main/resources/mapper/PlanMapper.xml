@@ -3,7 +3,7 @@
 <mapper namespace="edu.dlu.bysj.paper.mapper.PlanMapper">
 
     <select id="selectContentBySubejctId" resultType="edu.dlu.bysj.base.model.vo.ContentVo">
-        select plan.week, plan.content as weekContent
+        select plan.week, plan.content
         from plan
         where plan.status = 1
           and plan.subject_id = #{subjectId}

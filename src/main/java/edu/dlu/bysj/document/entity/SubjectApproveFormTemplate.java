@@ -18,6 +18,12 @@ public class SubjectApproveFormTemplate {
      * 学院名称
      */
     private String college;
+
+    /**
+     *  课题名称
+     */
+    private String subjectName;
+
     /**
      * 指导教师名称
      */
@@ -32,6 +38,11 @@ public class SubjectApproveFormTemplate {
      * 指导教师专业
      */
     private String guideTeacherMajor;
+
+    /**
+     * 指导教师专业
+     */
+    private String studentMajor;
 
     /**
      * 学生姓名

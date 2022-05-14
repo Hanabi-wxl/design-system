@@ -104,7 +104,7 @@ public interface SubjectMapper extends BaseMapper<Subject> {
      *            年级
      * @return
      */
-    Integer totalAdminApprovalList(@Param("collegeId") Integer collegeId, @Param("teacherId") Integer teacherId,
+    Integer totalAdminCollegeApprovalList(@Param("collegeId") Integer collegeId, @Param("teacherId") Integer teacherId,
         @Param("grade") Integer grade);
 
     /**
@@ -228,4 +228,7 @@ public interface SubjectMapper extends BaseMapper<Subject> {
     List<AdminApprovalConvey> collegeApprovalListPagination(Integer collegeId, Integer teacherId, Integer start, Integer pageSize, Integer year);
 
     List<Subject> listSubjectByIds(String id1, String id2);
+
+    Integer totalAdminMajorApprovalList(Integer majorId, Integer teacherId, Integer grade);
+
 }

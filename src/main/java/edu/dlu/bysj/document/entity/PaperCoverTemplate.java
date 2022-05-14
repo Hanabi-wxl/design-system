@@ -15,6 +15,16 @@ public class PaperCoverTemplate {
     private String subjectTitle;
 
     /**
+     *  学院名称
+     */
+    private String collegeName;
+
+    /**
+     * 年级
+     */
+    private String grade;
+
+    /**
      * 学生姓名
      */
     private String studentName;

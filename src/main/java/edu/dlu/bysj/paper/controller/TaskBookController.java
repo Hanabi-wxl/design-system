@@ -68,7 +68,7 @@ public class TaskBookController {
     @LogAnnotation(content = "教师提交任务书")
     @RequiresPermissions({"taskBook:teacherSubmit"})
     @ApiOperation(value = "教师提交任务书")
-    public CommonResult<Object> teacherSubmitTaskBook(@Valid TaskBookVo taskBookVo) {
+    public CommonResult<Object> teacherSubmitTaskBook(@RequestBody @Valid TaskBookVo taskBookVo) {
 
         long between = ChronoUnit.DAYS.between(taskBookVo.getStartTime(), taskBookVo.getEndTime());
         if (between < 0) {
@@ -91,6 +91,11 @@ public class TaskBookController {
                 taskBook.setReference(taskBookVo.getReference());
                 taskBook.setStartDate(taskBookVo.getStartTime());
                 taskBook.setEndDate(taskBookVo.getEndTime());
+                taskBook.setMajorLeadingId(subjectValue.getMajorLeadingId());
+                taskBook.setMajorDate(subjectValue.getMajorDate());
+                taskBook.setCollegeLeadingId(subjectValue.getCollegeLeadingId());
+                taskBook.setCollegeDate(subjectValue.getCollegeDate());
+
                 taskBookService.save(taskBook);
                 subjectService.updateById(subjectValue);
             }
@@ -98,11 +103,11 @@ public class TaskBookController {
         return CommonResult.success("提交成功");
     }
 
-    @GetMapping(value = "/taskbook/detail/{subjectId}")
+    @GetMapping(value = "/taskbook/detail")
     @LogAnnotation(content = "查看任务书详情")
     @RequiresPermissions({"taskBook:detail"})
     @ApiOperation(value = "查看任务书详情")
-    public CommonResult<TaskBookDetailVo> checkTaskBookDetail(@PathVariable("subjectId") @NotNull Integer subjectId) {
+    public CommonResult<TaskBookDetailVo> checkTaskBookDetail(@NotNull Integer subjectId) {
         /*查看该题目的taskBook 和 周计划信息*/
         Subject subject = subjectService.getById(subjectId);
         TaskBook taskbook = taskBookService.getOne(new QueryWrapper<TaskBook>().eq("subject_id", subjectId));
@@ -124,11 +129,11 @@ public class TaskBookController {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    @GetMapping(value = "/taskbook/submitResult")
+    @PostMapping(value = "/taskbook/submitResult")
     @LogAnnotation(content = "提交任务书审阅结果")
     @RequiresPermissions({"taskBook:submitResult"})
     @ApiOperation(value = "提交任务书审阅结果")
-    public CommonResult<Object> submitReviewResult(@Valid CommonReviewVo agree, HttpServletRequest request) {
+    public CommonResult<Object> submitReviewResult(@RequestBody @Valid CommonReviewVo agree, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
         boolean taskFlag = false, subjectFlag = false;
         if (!StringUtils.isEmpty(jwt)) {

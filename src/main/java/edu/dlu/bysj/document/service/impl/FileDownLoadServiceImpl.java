@@ -70,18 +70,25 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
 
     @Override
     public List<PaperCoverTemplate> packPaperCoverData(Integer majorId) {
-        return subjectMapper.selectPaperCoverInfo(majorId);
+        List<PaperCoverTemplate> paperCoverTemplates = subjectMapper.selectPaperCoverInfo(majorId);
+        for (PaperCoverTemplate paperCoverTemplate : paperCoverTemplates) {
+            paperCoverTemplate.setGrade(String.valueOf(Integer.parseInt(paperCoverTemplate.getGrade())-3));
+        }
+        return paperCoverTemplates;
     }
 
     @Override
     public SubjectApproveFormTemplate packPageSubjectApproveFormData(String subjectId) {
         Subject subject = subjectMapper.selectBySubjectId(subjectId);
+        if (ObjectUtil.isNull(subject))
+            subject = subjectMapper.selectById(subjectId);
         College college = null;
         Class aClass = null;
         Major major = null;
         Student student = null;
         Map<Integer, Map<String, Object>> teacherInfo = null;
         SubjectType subjectType = null;
+        String studentMajor = null;
         if (ObjectUtil.isNotNull(subject)) {
             teacherInfo = teacherMapper.ApprovelFormTeacherInfo(
                 Arrays.asList(subject.getFirstTeacherId(), subject.getMajorLeadingId(), subject.getCollegeLeadingId()));
@@ -90,10 +97,11 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
                 college = collegeMapper.selectById(major.getCollegeId());
             }
             student = studentMapper.selectById(subject.getStudentId());
+            studentMajor = majorMapper.selectById(student.getMajorId()).getName();
             subjectType = subjectTypeMapper.selectById(subject.getSubjectTypeId());
             aClass = classMapper.selectById(student.getClassId());
         }
-        return packageSubjectApproveForm(subject, teacherInfo, college.getName(), student.getName(), aClass.getName(),
+        return packageSubjectApproveForm(subject, teacherInfo, college.getName(), student.getName(), studentMajor, aClass.getName(),
             subjectType.getName());
     }
 
@@ -326,8 +334,9 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
     }
 
     private SubjectApproveFormTemplate packageSubjectApproveForm(Subject subject,
-        Map<Integer, Map<String, Object>> teacherInfo, String collegeName, String studentName, String className,
-        String paperType) {
+                                                                 Map<Integer, Map<String, Object>> teacherInfo,
+                                                                 String collegeName, String studentName, String studentMajor, String className,
+                                                                 String paperType) {
 
         SubjectApproveFormTemplate result = new SubjectApproveFormTemplate();
 
@@ -354,12 +363,13 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
             }
         }
         result.setStudentName(studentName + "(" + className + ")");
+        result.setStudentMajor(studentMajor);
         result.setPaperType(paperType);
         if (ObjectUtil.isNotNull(subject)) {
             result.setFirst(subject.getIsFirstTeach());
             result.setNeedNumber(subject.getStudentNeeded());
             result.setSimilar(subject.getIsSimilar());
-
+            result.setSubjectName(subject.getSubjectName());
             result.setContent(subject.getTitleAbstract());
             result.setNecessity(subject.getNecessity());
             result.setFeasibility(subject.getFeasibility());

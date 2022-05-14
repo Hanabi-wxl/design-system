@@ -48,7 +48,7 @@ public class PlanController {
                 Plan plan = new Plan();
                 plan.setSubjectId(weekPlans.getSubjectId());
                 plan.setWeek(element.getWeek());
-                plan.setContent(element.getWeekContent());
+                plan.setContent(element.getContent());
                 plansValue.add(plan);
             }
         }
@@ -56,11 +56,11 @@ public class PlanController {
         return planService.saveBatch(plansValue) ? CommonResult.success("执行成功") : CommonResult.failed("执行失败");
     }
 
-    @GetMapping(value = "/plan/detail/{subjectId}")
+    @GetMapping(value = "/plan/detail")
     @LogAnnotation(content = "查看题目计划表详情")
     @RequiresPermissions({"plan:detail"})
     @ApiOperation(value = "根据题目id查看计划表详情")
-    public CommonResult<List<ContentVo>> checkStudentPlans(@PathVariable("subjectId") @NotNull Integer subjectId) {
+    public CommonResult<List<ContentVo>> checkStudentPlans(Integer subjectId) {
         List<ContentVo> contents = planService.checkPlans(subjectId);
         return CommonResult.success(contents);
     }

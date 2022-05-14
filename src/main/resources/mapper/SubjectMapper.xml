@@ -62,7 +62,9 @@
         <result column="studentName" property="studentName"/>
         <result column="student_number" property="studentNumber"/>
         <result column="name" property="className"/>
+        <result column="grade" property="grade"/>
         <result column="guideName" property="guideTeacherName"/>
+        <result column="collegeName" property="collegeName"/>
     </resultMap>
     <update id="removeSubjectById">
         UPDATE subject SET status=0 WHERE subject_id=#{subjectId} AND status=1
@@ -290,7 +292,7 @@
         limit #{start} , #{pageSize}
     </select>
 
-    <select id="totalAdminApprovalList" resultType="java.lang.Integer">
+    <select id="totalAdminCollegeApprovalList" resultType="java.lang.Integer">
 
         select count(ss.id) as total
         from(
@@ -321,9 +323,7 @@
                 )
             ) as s
 
-            left join progress
-
-            on progress.id = s.progress_id
+            left join progress on progress.id = s.progress_id
         ) as ss
 
     </select>
@@ -522,10 +522,12 @@
 
     <select id="selectPaperCoverInfo" resultMap="paperCoverMap">
         select subject.subject_name,
+               subject.grade,
                student.name as studentName,
                student.student_number,
                class.name,
-               teacher.name as guideName
+               teacher.name as guideName,
+               college.name as collegeName
 
         from subject
                  inner join student
@@ -534,6 +536,10 @@
                             on subject.first_teacher_id = teacher.id
                  inner join class
                             on student.class_id = class.id
+                 inner join major
+                            on student.major_id = major.id
+                 inner join college
+                            on major.college_id = college.id
         where subject.status = 1
           and student.status = 1
           and teacher.status = 1
@@ -730,6 +736,30 @@
         limit #{start} , #{pageSize}
 
 
+    </select>
+    <select id="totalAdminMajorApprovalList" resultType="java.lang.Integer">
+        select count(ss.id) as total
+        from(
+            select s.id
+            from (
+                select subject.id, subject.subject_id, subject.subject_name,
+                subject.first_teacher_id, subject.second_teacher_id, subject.progress_id,
+                subject.student_id, subject.filing_number
+                from subject
+                where
+                subject.status = 1
+                <if test="teacherId != null">
+                    and subject.first_teacher_id = #{teacherId}
+                </if>
+                and grade = #{grade}
+                and subject.subject_id in (
+                    select subject_major.subject_id
+                    from subject_major
+                    where subject_major.major_id = #{majorId}
+                )
+            ) as s
+            left join progress on progress.id = s.progress_id
+        ) as ss
     </select>
 
 

@@ -14,5 +14,5 @@ public class ContentVo {
     @ApiModelProperty(name = "第几周")
     private Integer week;
     @ApiModelProperty(name = "该周的内容")
-    private String weekContent;
+    private String content;
 }
