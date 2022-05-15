@@ -29,6 +29,8 @@ public class MiddleCheckDetailVo {
     private Integer hasTaskbook;
     @ApiModelProperty(value = "是否有开题报告")
     private Integer hasOpenreport;
+    @ApiModelProperty(value = "是否有开题报告")
+    private Integer workingProgress;
     @ApiModelProperty(value = "中期工作结论")
     private Integer conclude;
     @ApiModelProperty(value = "调整情况")

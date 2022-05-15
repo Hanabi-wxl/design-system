@@ -154,4 +154,6 @@ public interface StudentMapper extends BaseMapper<Student> {
                                             @Param("userName") String userName,
                                             @Param("userNumber") String userNumber);
 
+    Integer idToNumber(Integer id);
+
 }

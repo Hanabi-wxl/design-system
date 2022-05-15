@@ -124,4 +124,9 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student>
         return studentMapper.numberToId(studentNumber);
     }
 
+    @Override
+    public Integer idToNumber(Integer id) {
+        return studentMapper.idToNumber(id);
+    }
+
 }

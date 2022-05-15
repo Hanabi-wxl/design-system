@@ -540,6 +540,27 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
         return subjectMapper.listSubjectByIds(firstSubjectId,secondSubjectId);
     }
 
+    @Override
+    public Map<String,String> obtainsSubjectInfoById(Integer subjectId) {
+        Subject subject = baseMapper.selectOne(new QueryWrapper<Subject>().eq("id", subjectId));
+        Map<String,String> result = new HashMap<>();
+        if (ObjectUtil.isNotNull(subject)) {
+            result.put("subjectName",subject.getSubjectName());
+
+            /*获取学生名称,学号，班级*/
+            Map<Integer, Map<String, Object>> studentMap = studentMapper.studentInfoById(subject.getStudentId());
+            if (studentMap != null && !studentMap.isEmpty()) {
+                if (studentMap.containsKey(subject.getStudentId())) {
+                    String studentName = (String)studentMap.get(subject.getStudentId()).get(STUDENT_NAME);
+                    String studentNumber = (String)studentMap.get(subject.getStudentId()).get(STUDENT_NUMBER);
+                    result.put("studentName",studentName);
+                    result.put("studentNumber",studentNumber);
+                }
+            }
+        }
+        return result;
+    }
+
     private Subject packageSubject(SubjectApprovalVo score, Subject target) {
         target.setSubjectId(score.getSubjectId());
         target.setSubjectName(score.getSubjectName());

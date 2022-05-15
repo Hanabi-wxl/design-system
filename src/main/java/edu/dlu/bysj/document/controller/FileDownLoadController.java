@@ -17,16 +17,20 @@ import edu.dlu.bysj.common.service.SubjectService;
 import edu.dlu.bysj.document.entity.PaperCoverTemplate;
 import edu.dlu.bysj.document.entity.SubjectApproveFormTemplate;
 import edu.dlu.bysj.document.service.FileDownLoadService;
+import edu.dlu.bysj.log.annotation.LogAnnotation;
 import edu.dlu.bysj.system.service.MajorService;
 import io.jsonwebtoken.Jwt;
+import io.swagger.annotations.ApiParam;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperRunManager;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -66,6 +70,8 @@ public class FileDownLoadController {
         this.studentService = studentService;
     }
 
+    @LogAnnotation(content = "下载论文封面")
+    @RequiresPermissions({"paper:download"})
     @RequestMapping(value = "/paperManagement/fileDownload/paperCover", method = RequestMethod.GET)
     public void paperCoverDownLoad(HttpServletRequest request, HttpServletResponse response) {
         String jwt = request.getHeader("jwt");
@@ -108,6 +114,8 @@ public class FileDownLoadController {
 
     }
 
+    @LogAnnotation(content = "下载题目审批表")
+    @RequiresPermissions({"approve:download"})
     @RequestMapping(value = "/paperManagement/fileDownload/subjectAuditTable", method = RequestMethod.GET)
     public void subjectApproveFormDownLoad(@RequestParam("subjectId") @NotNull String subjectId, HttpServletRequest request,
         HttpServletResponse response) {
@@ -159,6 +167,8 @@ public class FileDownLoadController {
         }
     }
 
+    @LogAnnotation(content = "下载报题统计表")
+    @RequiresPermissions({"approve:downloadAll"})
     @RequestMapping(value = "/paperManagement/fileDownload/reportTable", method = RequestMethod.GET)
     public void subjectSelectStaticsTable(HttpServletRequest request, HttpServletResponse response) {
         String jwt = request.getHeader("jwt");
@@ -173,6 +183,8 @@ public class FileDownLoadController {
         }
     }
 
+    @LogAnnotation(content = "下载开题报告模板")
+    @RequiresPermissions({"openReport:download"})
     @RequestMapping(value = "/paperManagement/fileDownload/openReportForm", method = RequestMethod.GET)
     public void subjectOpenReportForm(HttpServletResponse response) {
         try {
@@ -180,5 +192,13 @@ public class FileDownLoadController {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
+    }
+
+    @LogAnnotation(content = "下载开题报告")
+    @RequiresPermissions({"openReport:download"})
+    @GetMapping("/paperManagement/fileDownload/openReport")
+    public void downloadReport(String subjectId, HttpServletResponse response){
+        Student subject = studentService.getById(subjectId);
+        fileDownLoadService.openReport(subjectId, response);
     }
 }

@@ -66,7 +66,7 @@ public class MiddleCheckController {
     @LogAnnotation(content = "提交修改中期检查表")
     @RequiresPermissions({"middleCheck:content"})
     @ApiOperation(value = "提交/修改中期检查表")
-    public CommonResult<Object> modifyMiddleCheckTable(ModifyMiddleCheckVo checkVo) {
+    public CommonResult<Object> modifyMiddleCheckTable(@RequestBody ModifyMiddleCheckVo checkVo) {
 
         Integer processCode = ProcessEnum.SUBMIT_MIDDLE_CHECK.getProcessCode();
 
@@ -93,6 +93,7 @@ public class MiddleCheckController {
                 middleCheckValue.setWorkingSpeed(checkVo.getWorkingProgress());
                 middleCheckValue.setConclude(checkVo.getConclude());
                 middleCheckValue.setArrange(checkVo.getArrange());
+                middleCheckValue.setArrangeDate(LocalDate.now());
                 middleCheckService.saveOrUpdate(middleCheckValue);
                 /*修改subject所处的阶段*/
                 subjectValue.setProgressId(processCode);
@@ -105,11 +106,11 @@ public class MiddleCheckController {
 
 
     @Transactional(rollbackFor = Exception.class)
-    @GetMapping(value = "/middleCheck/submitResult ")
+    @PatchMapping(value = "/middleCheck/submitResult")
     @LogAnnotation(content = "审核中期检查表")
     @RequiresPermissions({"middleCheck:submitResult"})
     @ApiOperation(value = "审核中期检查表")
-    public CommonResult<Object> middleCheckAudit(@Valid CommonReviewVo reviewVo, HttpServletRequest request) {
+    public CommonResult<Object> middleCheckAudit(@Valid @RequestBody CommonReviewVo reviewVo, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
 
         Subject subjectValue = subjectService.getById(reviewVo.getSubjectId());
@@ -165,12 +166,12 @@ public class MiddleCheckController {
     }
 
 
-    @GetMapping(value = "/middleCheck/detail/{subjectId}")
+    @GetMapping(value = "/middleCheck/detail")
     @LogAnnotation(content = "查看中期检查表详情")
     @RequiresPermissions({"middleCheck:detail"})
     @ApiOperation(value = "查看中期检查表详情")
     @ApiImplicitParam(name = "subjectId", value = "题目Id")
-    public CommonResult<MiddleCheckDetailVo> middleCheckDetailInfo(@PathVariable("subjectId") Integer subjectId) {
+    public CommonResult<MiddleCheckDetailVo> middleCheckDetailInfo(Integer subjectId) {
 
         MiddleCheck middleCheckValue = middleCheckService.getOne(new QueryWrapper<MiddleCheck>().eq("subject_id", subjectId));
         MiddleCheckDetailVo result = new MiddleCheckDetailVo();
@@ -182,10 +183,10 @@ public class MiddleCheckController {
             result.setAttitude(middleCheckValue.getAttitude());
             result.setHasTaskbook(middleCheckValue.getHasTaskbook());
             result.setHasOpenreport(middleCheckValue.getHasOpenreport());
+            result.setWorkingProgress(middleCheckValue.getWorkingSpeed());
             result.setConclude(middleCheckValue.getConclude());
             result.setArrange(middleCheckValue.getArrange());
         }
-
         return CommonResult.success(result);
     }
 }

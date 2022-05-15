@@ -41,4 +41,6 @@ public interface FileDownLoadService {
     void staticsSubjectTable(Integer majorId, HttpServletResponse response) throws IOException;
 
     void subjectOpenReportForm(HttpServletResponse response) throws UnsupportedEncodingException;
+
+    void openReport(String subjectId, HttpServletResponse response);
 }

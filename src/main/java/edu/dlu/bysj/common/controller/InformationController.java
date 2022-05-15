@@ -166,6 +166,14 @@ public class InformationController {
         return CommonResult.success(subjectSimplifyVo);
     }
 
+    @GetMapping(value = "/subjectInfoById")
+    @LogAnnotation(content = "查看学生题目信息")
+    @RequiresPermissions({"common:studentSubject"})
+    @ApiOperation(value = "获取学生题目信息")
+    public CommonResult<Map<String,String>> subjectInfoById(Integer subjectId) {
+        return CommonResult.success(subjectService.obtainsSubjectInfoById(subjectId));
+    }
+
     @GetMapping(value = "/taskbook/keyAndMajorList")
     @LogAnnotation(content = "获取任务书审批表")
     @RequiresPermissions({"common:subjectAudits"})
@@ -206,14 +214,7 @@ public class InformationController {
         return CommonResult.success(officeSimplifyVos);
     }
 
-    /*
-     * @Description: 根据传入id获取专业班级
-     * @Author: sinre
-     * @Date: 2022/4/26 12:33
-     * @param majorId
-     * @param request
-     * @return edu.dlu.bysj.base.result.CommonResult<java.util.List<edu.dlu.bysj.base.model.vo.ClassSimplifyVo>>
-     **/
+
     @GetMapping(value = "/majorClass")
     @LogAnnotation(content = "获取本专业的所有班级")
     @RequiresPermissions({"common:majorClass"})

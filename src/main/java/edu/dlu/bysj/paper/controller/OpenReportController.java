@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import edu.dlu.bysj.base.exception.GlobalException;
 import edu.dlu.bysj.base.model.entity.OpenReport;
 import edu.dlu.bysj.base.model.entity.Subject;
+import edu.dlu.bysj.base.model.entity.Teacher;
 import edu.dlu.bysj.base.model.enums.ProcessEnum;
 import edu.dlu.bysj.base.model.vo.OpenReportReviewVo;
 import edu.dlu.bysj.base.model.vo.OpenReportVo;
@@ -14,6 +15,7 @@ import edu.dlu.bysj.base.result.ResultCodeEnum;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.SubjectService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
+import edu.dlu.bysj.paper.model.dto.TeacherReportComment;
 import edu.dlu.bysj.paper.service.MessageService;
 import edu.dlu.bysj.paper.service.OpenReportService;
 import io.swagger.annotations.Api;
@@ -64,12 +66,12 @@ public class OpenReportController {
         this.messageService = messageService;
     }
 
-    @GetMapping(value = "/openReport/teacherComment/{subjectId}")
+    @GetMapping(value = "/openReport/teacherComment")
     @LogAnnotation(content = "查看开题报告教师评语")
     @RequiresPermissions({"openReport:teacherComment"})
     @ApiOperation(value = "查看开题报告教师评语")
     @ApiImplicitParam(name = "subjectId", value = "题目id")
-    public CommonResult<String> checkOpenReportComments(@PathVariable("subjectId") @NotNull Integer subjectId) {
+    public CommonResult<String> checkOpenReportComments(@NotNull Integer subjectId) {
         OpenReport opeReport = openReportService.getOne(new QueryWrapper<OpenReport>().eq("subject_id", subjectId));
         String message = "没有内容";
         if (ObjectUtil.isNotNull(opeReport)) {
@@ -110,7 +112,6 @@ public class OpenReportController {
     public CommonResult<BasicOpenReportVo> openReportContent(@PathVariable("subjectId")
                                                              @NotNull Integer subjectId) {
         OpenReport opeReport = openReportService.getOne(new QueryWrapper<OpenReport>().eq("subject_id", subjectId));
-
         BasicOpenReportVo basicOpenReportVo = new BasicOpenReportVo();
         basicOpenReportVo.setAccording(opeReport.getAccording());
         basicOpenReportVo.setContent(opeReport.getSearchContent());
@@ -125,22 +126,17 @@ public class OpenReportController {
     @LogAnnotation(content = "提交开题报告评语(开题报告自查阶段)")
     @RequiresPermissions({"openReport:content"})
     @ApiOperation(value = "教师提交开题报告评语")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "subjectId", value = "题目名称"),
-            @ApiImplicitParam(name = "teacherComment", value = "教师评语"),
-            @ApiImplicitParam(name = "modifyOpinion", value = "修改意见")
-    })
-    public CommonResult<Object> teacherSubmitOpenReportComments(@RequestParam(name = "subjectId") @NotNull Integer subjectId,
-                                                                @RequestParam(name = "teacherComment") @NotBlank(message = "教师评语不能为空") String teacherComment,
-                                                                @RequestParam(name = "modifyOpinion") String modifyOpinion,
-                                                                HttpServletRequest request) {
+    public CommonResult<Object> teacherSubmitOpenReportComments(@RequestBody TeacherReportComment comment, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
+        String teacherComment = comment.getComment();
+        String subjectId = comment.getSubjectId();
+        String modifyOpinion = comment.getModifyOpinion();
 
         /*判断是否为该阶段*/
         Integer processCode = ProcessEnum.OPEN_REPORT_SELF_CHECK.getProcessCode();
 
         Subject subjectValue = subjectService.getById(subjectId);
-        boolean openFlag = false, messageFlag = false;
+        boolean openFlag = false, messageFlag = true;
         String message = "操作失败";
         OpenReport opeReport = openReportService.getOne(new QueryWrapper<OpenReport>().eq("subject_id", subjectId));
         /*当openReport, subject, 不为空并且处于(当前阶段和前一阶段)该阶段才能成功操作*/
@@ -148,6 +144,7 @@ public class OpenReportController {
             if (processCode.equals(subjectValue.getProgressId()) || processCode.equals(subjectValue.getProgressId() + 1)) {
                 /*跟新openReport*/
                 opeReport.setTeacherComment(teacherComment);
+                opeReport.setTeacherDate(LocalDate.now());
                 openFlag = openReportService.updateById(opeReport);
                 /*跟新subject 所处的阶段*/
                 subjectValue.setProgressId(processCode);
@@ -168,14 +165,14 @@ public class OpenReportController {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    @PostMapping(value = "/openReport/submitResult")
+    @PatchMapping(value = "/openReport/submitResult")
     @LogAnnotation(content = "提交开题报告审阅(专业级/院级)结果")
     @RequiresPermissions({"openReport:submitResult"})
     @ApiOperation(value = "提交开题报告审阅结果")
-    public CommonResult<Object> submitOpenReportReview(@Valid OpenReportReviewVo commonReviewVo, HttpServletRequest request) {
+    public CommonResult<Object> submitOpenReportReview(@Valid @RequestBody OpenReportReviewVo commonReviewVo,
+                                                       HttpServletRequest request) {
 
         String jwt = request.getHeader("jwt");
-
 
         Subject subject = subjectService.getById(commonReviewVo.getSubjectId());
         OpenReport opeReport = openReportService.getOne(new QueryWrapper<OpenReport>().eq("subject_id", commonReviewVo.getSubjectId()));
@@ -184,7 +181,6 @@ public class OpenReportController {
         if (!StringUtils.isEmpty(jwt)) {
             if (MAJOR_TYPE.equals(commonReviewVo.getType())) {
                 Integer processCode = ProcessEnum.OPEN_REPORT_MAJOR_AUDIT.getProcessCode();
-
                 /*open report 和 subject都存在*/
                 if (ObjectUtil.isNotNull(subject) && ObjectUtil.isNotNull(opeReport)) {
                     /*题目处于该阶段*/

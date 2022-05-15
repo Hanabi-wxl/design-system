@@ -10,8 +10,11 @@ import javax.servlet.http.HttpServletResponse;
 import cn.afterturn.easypoi.excel.entity.TemplateExportParams;
 import cn.afterturn.easypoi.word.WordExportUtil;
 import cn.afterturn.easypoi.word.entity.MyXWPFDocument;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import edu.dlu.bysj.base.exception.GlobalException;
 import edu.dlu.bysj.base.result.ResultCodeEnum;
+import edu.dlu.bysj.document.entity.dto.OpenReportBaseInfo;
+import edu.dlu.bysj.paper.mapper.OpenReportMapper;
 import lombok.SneakyThrows;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -62,13 +65,14 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
 
     private final SubjectTypeMapper subjectTypeMapper;
 
-    private static String baseUrl = "src"+File.separator+"main"+File.separator+"resources"+File.separator;
+    private final OpenReportMapper openReportMapper;
 
     private final ClassMapper classMapper;
 
     public FileDownLoadServiceImpl(SubjectMapper subjectMapper, TeacherMapper teacherMapper,
         StudentMapper studentMapper, MajorMapper majorMapper, CollegeMapper collegeMapper, ClassMapper classMapper,
-        SubjectTypeMapper subjectTypeMapper) {
+        SubjectTypeMapper subjectTypeMapper,OpenReportMapper openReportMapper) {
+        this.openReportMapper = openReportMapper;
         this.subjectMapper = subjectMapper;
         this.teacherMapper = teacherMapper;
         this.studentMapper = studentMapper;
@@ -207,8 +211,8 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
 
     }
 
-    private void fileDownload(String url, String fileName, HttpServletResponse response) {
-        if (Objects.isNull(url)) {
+    private void fileDownload(String dir, String fileName, HttpServletResponse response) {
+        if (Objects.isNull(dir)) {
             // 如果接收参数为空则抛出异常，由全局异常处理类去处理。
             throw new NullPointerException("下载地址为空");
         }
@@ -224,7 +228,7 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
             // 发送给客户端的数据
             OutputStream outputStream = null;
             outputStream = response.getOutputStream();
-            byte[] bytes = FileCopyUtils.copyToByteArray(new ClassPathResource(url).getInputStream());
+            byte[] bytes = FileCopyUtils.copyToByteArray(new ClassPathResource(dir).getInputStream());
             outputStream.write(bytes);
         } catch (Exception e) {
             e.printStackTrace();
@@ -234,9 +238,17 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
     @Override
     public void subjectOpenReportForm(HttpServletResponse response) {
         // 获取文件
-        String url = "template/file/openReportForm.doc";
+        String dir = "template/file/openReportForm.doc";
         String fileName = "开题报告模板_" + (DateUtil.year(new Date()) - 3) + ".doc";
-        fileDownload(url, fileName, response);
+        fileDownload(dir, fileName, response);
+    }
+
+    @Override
+    public void openReport(String subjectId, HttpServletResponse response) {
+        OpenReportBaseInfo baseInfo = openReportMapper.getFileBaseInfoById(subjectId);
+        String fileName = baseInfo.getTitle() + ".pdf";
+        String dir = baseInfo.getDir();
+        fileDownload(dir, fileName, response);
     }
 
     /**

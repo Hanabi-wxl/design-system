@@ -6,6 +6,7 @@ import edu.dlu.bysj.base.model.query.*;
 import edu.dlu.bysj.base.model.vo.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author XiangXinGang
@@ -158,4 +159,7 @@ public interface SubjectService extends IService<Subject> {
      * @return java.util.List<edu.dlu.bysj.base.model.entity.Subject>
      **/
     List<Subject> listSubjectByIds(String firstSubjectId, String secondSubjectId);
+
+    Map<String,String> obtainsSubjectInfoById(Integer subjectId);
+
 }

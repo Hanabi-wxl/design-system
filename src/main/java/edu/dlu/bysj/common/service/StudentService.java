@@ -77,4 +77,6 @@ public interface StudentService extends IService<Student> {
     StudentDetailVo checkStudentInfoByNumber(Integer number);
 
     Integer numberToId(Integer studentNumber);
+
+    Integer idToNumber(Integer jwt);
 }

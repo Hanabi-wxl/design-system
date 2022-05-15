@@ -507,6 +507,9 @@
                 </choose>
         ) as sspt
     </select>
+    <select id="idToNumber" resultType="java.lang.Integer">
+        select student_number from student where id = #{id}
+    </select>
 
 
 </mapper>
