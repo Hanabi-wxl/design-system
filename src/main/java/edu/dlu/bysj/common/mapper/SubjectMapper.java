@@ -2,6 +2,7 @@ package edu.dlu.bysj.common.mapper;
 
 import java.util.List;
 
+import io.swagger.models.auth.In;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
@@ -96,16 +97,13 @@ public interface SubjectMapper extends BaseMapper<Subject> {
     /**
      * 查 adminApprovalListPagination条件下的总页数;
      *
-     * @param collegeId
-     *            院id
      * @param teacherId
      *            教师id
-     * @param grade
-     *            年级
+     * @param year
+     *            年份
      * @return
      */
-    Integer totalAdminCollegeApprovalList(@Param("collegeId") Integer collegeId, @Param("teacherId") Integer teacherId,
-        @Param("grade") Integer grade);
+    Integer totalAdminCollegeApprovalList(Integer majorId, Integer teacherId, String searchContent, Integer year);
 
     /**
      * 查询该subjectIds(被委托人题目列表) 集合下的subject信息并封装与 EntrustInfoVo
@@ -225,10 +223,13 @@ public interface SubjectMapper extends BaseMapper<Subject> {
 
     Integer totalSubjectListByStudent(Integer userId, Integer year);
 
-    List<AdminApprovalConvey> collegeApprovalListPagination(Integer collegeId, Integer teacherId, Integer start, Integer pageSize, Integer year);
+    List<AdminApprovalConvey> approvalListPagination(Integer majorId, Integer teacherId, String searchContent,
+                                                     Integer start, Integer pageSize, Integer year);
 
     List<Subject> listSubjectByIds(String id1, String id2);
 
     Integer totalAdminMajorApprovalList(Integer majorId, Integer teacherId, Integer grade);
+
+    List<Integer> getIdsByMajor(Integer majorId);
 
 }

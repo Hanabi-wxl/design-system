@@ -68,4 +68,7 @@ public interface MajorMapper extends BaseMapper<Major> {
     Map<Integer, Map<String, Object>> selectAllMajorOfCollege(Integer majorId);
 
     List<UserVo> obtainCollegeTeacher(Integer collegeId);
+
+    List<String> selectMajorNameByIds(List<Integer> majorIds);
+
 }

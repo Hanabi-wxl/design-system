@@ -174,6 +174,14 @@ public class InformationController {
         return CommonResult.success(subjectService.obtainsSubjectInfoById(subjectId));
     }
 
+    @GetMapping(value = "/subjectDetailById")
+    @LogAnnotation(content = "查看学生题目信息")
+    @RequiresPermissions({"common:studentSubject"})
+    @ApiOperation(value = "获取学生题目信息")
+    public CommonResult<SubjectTableVo> subjectDetailById(String subjectId) {
+        return CommonResult.success(subjectService.obtainsSubjectTableInfo(subjectId));
+    }
+
     @GetMapping(value = "/taskbook/keyAndMajorList")
     @LogAnnotation(content = "获取任务书审批表")
     @RequiresPermissions({"common:subjectAudits"})

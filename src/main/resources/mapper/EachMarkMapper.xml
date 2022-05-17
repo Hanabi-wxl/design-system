@@ -4,28 +4,29 @@
     <resultMap id="eachMarkInfoMap" type="edu.dlu.bysj.base.model.vo.MutualEvaluationVo">
         <id column="subjectId" property="subjectId"/>
         <result column="subject_name" property="subjectName"/>
-        <result column="teacherName" property="teacherName"/>
-        <result column="titleName" property="title"/>
+        <result column="teacherName" property="firstTeacherName"/>
+        <result column="titleName" property="firstTeacherTitle"/>
         <result column="studentName" property="studentName"/>
         <result column="className" property="className"/>
         <result column="content" property="progress"/>
-        <result column="phone_number" property="teacherPhone"/>
-        <result column="majorName" property="teacherMajor"/>
+        <result column="phone_number" property="firstTeacherPhone"/>
+        <result column="majorName" property="firstTeacherMajor"/>
     </resultMap>
+
+    <update id="removeBySubjectIds">
+        update each_mark set status = 0 where subject_id in
+        <foreach collection="subjectIds" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </update>
 
 
     <select id="selectEachMarkInfoByQuery" resultMap="eachMarkInfoMap">
-        <choose>
-            <when test="query.userName != null and query.userName != ''">
-                <bind name="name_pattern" value="'%'+query.userName+'%'"/>
-            </when>
-        </choose>
 
-        <choose>
-            <when test="query.userNumber != null and query.userNumber != ''">
-                <bind name="number_pattern" value="'%'+query.userNumber+'%'"/>
-            </when>
-        </choose>
+        <if test="query.searchContent != null and query.searchContent != ''">
+            <bind name="name_pattern" value="'%'+query.searchContent+'%'"/>
+            <bind name="umber_pattern" value="'%'+query.searchContent+'%'"/>
+        </if>
 
         select s.id as subjectId ,
         s.subject_name,
@@ -42,7 +43,7 @@
         from subject
         where subject.status = 1
         <if test="query.teacherId != null">
-            and subject.first_teacher_id = 1
+            and subject.first_teacher_id = #{query.teacherId}
         </if>
         and subject.grade = #{query.year}
         and subject.major_id = #{query.majorId}) as s
@@ -64,43 +65,21 @@
         left join class
         on student.class_id = class.id
 
-        <if test="query.type == 1">
-            <where>
-                <if test="query.userName != null and query.userName != ''">
-                    and teacher.name like #{name_pattern}
-                </if>
-                <if test="query.userNumber != null and query.userNumber != ''">
-                    and teacher.teacher_number like #{number_pattern}
-                </if>
-            </where>
-        </if>
+        <where>
+            <if test="query.searchContent != null and query.searchContent != ''">
+                and teacher.name like #{name_pattern} or teacher.teacher_number like #{umber_pattern}
+            </if>
+        </where>
 
-
-        <if test="query.type == 0">
-            <where>
-                <if test="query.userName != null and query.userName != ''">
-                    and student.name like #{name_pattern}
-                </if>
-                <if test="query.userNumber != null and query.userNumber != ''">
-                    and student.student_number like #{number_pattern}
-                </if>
-            </where>
-        </if>
         limit #{start}, #{pageSize}
 
     </select>
     <select id="totalEachMarkInfoByQuery" resultType="java.lang.Integer">
-        <choose>
-            <when test="query.userName != null and query.userName != ''">
-                <bind name="name_pattern" value="'%'+query.userName+'%'"/>
-            </when>
-        </choose>
 
-        <choose>
-            <when test="query.userNumber != null and query.userNumber != ''">
-                <bind name="number_pattern" value="'%'+query.userNumber+'%'"/>
-            </when>
-        </choose>
+        <if test="query.searchContent != null and query.searchContent != ''">
+            <bind name="name_pattern" value="'%'+query.searchContent+'%'"/>
+            <bind name="umber_pattern" value="'%'+query.searchContent+'%'"/>
+        </if>
 
         select count(s.id) as total
         from
@@ -109,7 +88,7 @@
         from subject
         where subject.status = 1
         <if test="query.teacherId != null">
-            and subject.first_teacher_id = 1
+            and subject.first_teacher_id = #{query.teacherId}
         </if>
         and subject.grade = #{query.year}
         and subject.major_id = #{query.majorId}) as s
@@ -131,33 +110,16 @@
         left join class
         on student.class_id = class.id
 
-        <if test="query.type == 1">
-            <where>
-                <if test="query.userName != null and query.userName != ''">
-                    and teacher.name like #{name_pattern}
-                </if>
-                <if test="query.userNumber != null and query.userNumber != ''">
-                    and teacher.teacher_number like #{number_pattern}
-                </if>
-            </where>
-        </if>
-
-
-        <if test="query.type == 0">
-            <where>
-                <if test="query.userName != null and query.userName != ''">
-                    and student.name like #{name_pattern}
-                </if>
-                <if test="query.userNumber != null and query.userNumber != ''">
-                    and student.student_number like #{number_pattern}
-                </if>
-            </where>
-        </if>
+        <where>
+            <if test="query.searchContent != null and query.searchContent != ''">
+                and teacher.name like #{name_pattern} or teacher.teacher_number like #{umber_pattern}
+            </if>
+        </where>
 
     </select>
 
     <select id="selectEachMarkTeacherName" resultType="java.util.Map">
-        select e.id, teacher.name
+        select e.id, teacher.name, teacher.phone_number as phone, teacher.id as teacherId, m.name as majorName
         from (select each_mark.teacher_id, each_mark.subject_id as id
         from each_mark
         where each_mark.status = 1
@@ -174,6 +136,8 @@
         ) as e
         left join teacher
         on teacher.id = e.teacher_id
+        left join major m
+        on teacher.major_id = m.id
     </select>
 
     <select id="selectTeacherGuide" resultType="edu.dlu.bysj.base.model.dto.EachMarkConvey">

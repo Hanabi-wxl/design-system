@@ -43,4 +43,6 @@ public interface EachMarkService extends IService<EachMark> {
      * @return map集合以subjectId 作为第一层key
      */
     Map<Integer, Map<String, Object>> selectEachMarkTeacherBySubject(Integer subjectId);
+
+    void removeOldDate(Integer majorId);
 }

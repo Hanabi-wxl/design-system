@@ -70,4 +70,6 @@ public interface EachMarkMapper extends BaseMapper<EachMark> {
     @MapKey("id")
     Map<Integer, Map<String, Object>> selectEachMarkTeacherBySubject(Integer subjectId);
 
+    void removeBySubjectIds(List<Integer> subjectIds);
+
 }

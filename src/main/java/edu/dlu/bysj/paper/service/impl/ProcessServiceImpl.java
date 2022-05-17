@@ -36,15 +36,15 @@ public class ProcessServiceImpl extends ServiceImpl<ProcessMapper, Process> impl
         for (Process element : processList) {
             Map<String, Object> map = new HashMap<>(16);
             /*根据教师评语和学生评语,日期是否完成判断*/
-            if (!StringUtils.isEmpty(element.getTeacherComment()) && !StringUtils.isEmpty(element.getTeacherComment())
+            if (!StringUtils.isEmpty(element.getTeacherContent()) && !StringUtils.isEmpty(element.getTeacherContent())
                     && ObjectUtil.isNotNull(element.getStudentDate()) && ObjectUtil.isNotNull(element.getTeacherDate())) {
                 map.put("week", element.getWeek());
                 map.put("status", 2);
-            } else if (!StringUtils.isEmpty(element.getStudentComment()) && ObjectUtil.isNotNull(element.getStudentDate())) {
+            } else if (!StringUtils.isEmpty(element.getStudentContent()) && ObjectUtil.isNotNull(element.getStudentDate())) {
                 /*学生填写了但是老师没填写该周就为进行中*/
                 map.put("week", element.getWeek());
                 map.put("status", 1);
-            } else if (StringUtils.isEmpty(element.getStudentComment())) {
+            } else if (StringUtils.isEmpty(element.getStudentContent())) {
                 /*学生都没填写该周就为未开始*/
                 map.put("week", element.getWeek());
                 map.put("status", 0);

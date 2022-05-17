@@ -222,4 +222,8 @@ public interface TeacherMapper extends BaseMapper<Teacher> {
      */
     @MapKey("id")
     Map<Integer, Map<String, Object>> ApprovelFormTeacherInfo(List<Integer> integers);
+
+    @MapKey("id")
+    Map<Integer, Map<String, Object>> AllRelativeTeacherInfo(Integer firstTeacherId, Integer secondTeacherId, Integer otherTeacherId);
+
 }

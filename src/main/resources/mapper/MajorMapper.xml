@@ -49,6 +49,12 @@
             select id from major where college_id = #{collegeId}
         )
     </select>
+    <select id="selectMajorNameByIds" resultType="java.lang.String">
+        select name from major where id in
+        <foreach collection="majorIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
 
 
 </mapper>

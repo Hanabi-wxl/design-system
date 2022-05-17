@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="edu.dlu.bysj.common.mapper.SubjectMapper">
+
     <!-- adminApprovalListPagination该查询结果集映射   -->
     <resultMap id="adminApprovalMap" type="edu.dlu.bysj.base.model.dto.AdminApprovalConvey">
         <id column="id" property="id"/>
@@ -56,7 +57,6 @@
         <result column="feasibility" property="feasiblity"/>
     </resultMap>
 
-
     <resultMap id="paperCoverMap" type="edu.dlu.bysj.document.entity.PaperCoverTemplate">
         <result column="subject_name" property="subjectTitle"/>
         <result column="studentName" property="studentName"/>
@@ -66,9 +66,11 @@
         <result column="guideName" property="guideTeacherName"/>
         <result column="collegeName" property="collegeName"/>
     </resultMap>
+
     <update id="removeSubjectById">
         UPDATE subject SET status=0 WHERE subject_id=#{subjectId} AND status=1
     </update>
+
     <select id="subjectSimplifyInfo" resultType="edu.dlu.bysj.base.model.vo.SubjectSimplifyVo">
         select s.student_id as subjectId, s.subject_name as subjectName, p.content as progress
         from (select subject.student_id, subject.subject_name, subject.progress_id
@@ -149,7 +151,6 @@
         limit #{pageNumber}, #{pageSize}
     </select>
 
-    <!--    查询subjectListByMajorId 对应的 total  -->
     <select id="totalSubjectListByMajorId" resultType="java.lang.Integer">
         <choose>
             <when test="userNumber != null and userNumber != '' ">
@@ -213,7 +214,6 @@
         </choose>
     </select>
 
-
     <select id="teacherSubjectListByTeacherIdAndGrade" resultType="edu.dlu.bysj.base.model.vo.SubjectDetailVo">
         select s.id,
                s.subjectId,
@@ -237,6 +237,7 @@
 
         limit #{start} ,#{pageSize}
     </select>
+
     <select id="totalSubjectListByTeacher" resultType="java.lang.Integer">
         select count(s.id) as total
         from (select subject.id, subject.subject_name, subject.grade, subject.progress_id
@@ -248,7 +249,6 @@
                  left join progress
                            on progress.id = s.progress_id
     </select>
-
 
     <select id="adminApprovalListPagination" resultMap="adminApprovalMap">
         select
@@ -293,41 +293,50 @@
     </select>
 
     <select id="totalAdminCollegeApprovalList" resultType="java.lang.Integer">
-
         select count(ss.id) as total
         from(
             select
-            s.id as id from (
-                select
-                subject.id,
-                subject.subject_id,
-                subject.subject_name,
-                subject.first_teacher_id,
-                subject.second_teacher_id,
-                subject.progress_id,
-                subject.student_id,
-                subject.filing_number
-                from subject
-                where subject.status = 1
-                <if test="teacherId != null">
-                    and subject.first_teacher_id = #{teacherId}
-                </if>
-                and grade = #{grade}
-
-                and subject.subject_id in (
-                    select subject_major.subject_id
-                    from subject_major
-                    where subject_major.major_id in (
-                        select id from major where college_id = #{collegeId}
+            s.id
+            from (
+            select
+            subject.id,
+            subject.subject_id,
+            subject.subject_name,
+            subject.first_teacher_id,
+            subject.second_teacher_id,
+            subject.progress_id,
+            subject.student_id,
+            subject.filing_number
+            from subject
+            <choose>
+                <when test="searchContent != ''">
+                    where subject.first_teacher_id in (
+                    select id from teacher t
+                    where
+                    t.teacher_number like #{searchContent} or
+                    t.name like #{searchContent}
                     )
-                )
+                    and subject.status = 1
+                </when>
+                <when test="teacherId != null">
+                    where subject.first_teacher_id = #{teacherId}
+                    and subject.status = 1
+                </when>
+            </choose>
+            <if test="searchContent == '' and teacherId == null">
+                where subject.status = 1
+            </if>
+            and grade = #{year}
+            and subject.subject_id in (
+            select subject_major.subject_id
+            from subject_major
+            where subject_major.major_id = #{majorId}
+            )
             ) as s
-
-            left join progress on progress.id = s.progress_id
+            left join progress
+            on progress.id = s.progress_id
         ) as ss
-
     </select>
-
 
     <select id="entrustSubjectPagination" resultMap="entrustSubjectMap">
         select s.id,
@@ -377,6 +386,7 @@
         limit #{start} ,#{pageSize}
 
     </select>
+
     <select id="totalEntrustSubject" resultType="java.lang.Integer">
         select count( subject.id) as total
         from subject
@@ -394,7 +404,6 @@
         </if>
 
     </select>
-
 
     <select id="studentSelectSubject" resultMap="studentSelectSubjectMap">
         <choose>
@@ -509,7 +518,6 @@
                            on p.id = s.progress_id
         limit #{start}, #{pageSize}
     </select>
-
 
     <select id="totalDeterminestudentSubject" resultType="java.lang.Integer">
         select count(subject.id) as totoal
@@ -639,6 +647,7 @@
         limit #{start} ,#{pageSize}
 
     </select>
+
     <select id="totalSubjectListByMajor" resultType="java.lang.Integer">
         select count(s.id) as total
         from (select subject.id, subject.subject_name, subject.grade, subject.progress_id
@@ -650,6 +659,7 @@
                  left join progress
                            on progress.id = s.progress_id
     </select>
+
     <select id="studentSubjectListByStudentIdAndGrade" resultType="edu.dlu.bysj.base.model.vo.SubjectDetailVo">
         select
         s.id,
@@ -682,6 +692,7 @@
 
         limit #{start} ,#{pageSize}
     </select>
+
     <select id="totalSubjectListByStudent" resultType="java.lang.Integer">
         select count(s.id) as total
         from (select subject.id, subject.subject_name, subject.grade, subject.progress_id
@@ -692,7 +703,8 @@
                  left join progress
                            on progress.id = s.progress_id
     </select>
-    <select id="collegeApprovalListPagination" resultType="edu.dlu.bysj.base.model.dto.AdminApprovalConvey">
+
+    <select id="approvalListPagination" resultType="edu.dlu.bysj.base.model.dto.AdminApprovalConvey">
         select
         s.id                as id,
         s.student_id        as studentId,
@@ -714,29 +726,36 @@
             subject.student_id,
             subject.filing_number
             from subject
-            where subject.status = 1
-            <if test="teacherId != null">
-                and subject.first_teacher_id = #{teacherId}
+            <choose>
+                <when test="searchContent != ''">
+                  where subject.first_teacher_id in (
+                    select id from teacher t
+                    where
+                      t.teacher_number like #{searchContent} or
+                      t.name like #{searchContent}
+                    )
+                    and subject.status = 1
+                </when>
+                <when test="teacherId != null">
+                    where subject.first_teacher_id = #{teacherId}
+                    and subject.status = 1
+                </when>
+            </choose>
+            <if test="searchContent == '' and teacherId == null">
+                where subject.status = 1
             </if>
             and grade = #{year}
-
             and subject.subject_id in (
                 select subject_major.subject_id
                 from subject_major
-                where subject_major.major_id in (
-                    select id from major where college_id = #{collegeId}
-                )
+                where subject_major.major_id = #{majorId}
             )
         ) as s
-
         left join progress
-
         on progress.id = s.progress_id
-
         limit #{start} , #{pageSize}
-
-
     </select>
+
     <select id="totalAdminMajorApprovalList" resultType="java.lang.Integer">
         select count(ss.id) as total
         from(
@@ -762,5 +781,8 @@
         ) as ss
     </select>
 
+    <select id="getIdsByMajor" resultType="java.lang.Integer">
+        select id from subject where major_id = #{majorId}
+    </select>
 
 </mapper>

@@ -22,14 +22,8 @@ public class MutualEvaluationQuery extends CommonPage {
     @NotNull(message = "专业id不能为空")
     private Integer majorId;
 
-    @ApiModelProperty(value = "查询类型(1;老师,0学生)")
-    private Integer type;
-
-    @ApiModelProperty(value = "用户姓名")
-    private String userName;
-
-    @ApiModelProperty(value = "用户编号")
-    private String userNumber;
+    @ApiModelProperty(value = "姓名/工号")
+    private String searchContent;
 
     @ApiModelProperty(value = "教师id")
     private Integer teacherId;

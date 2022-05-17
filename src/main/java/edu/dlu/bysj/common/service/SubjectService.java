@@ -148,7 +148,7 @@ public interface SubjectService extends IService<Subject> {
      * @param query
      * @return edu.dlu.bysj.base.model.vo.TotalPackageVo<edu.dlu.bysj.base.model.vo.ApproveDetailVo>
      **/
-    TotalPackageVo<ApproveDetailVo> collegeAdminiApproveSubjectPagination(SubjectApproveListQuery query);
+    TotalPackageVo<ApproveDetailVo> adminApproveSubjectPagination(SubjectApproveListQuery query);
 
     /*
      * @Description: 根据id查询课题
@@ -162,4 +162,5 @@ public interface SubjectService extends IService<Subject> {
 
     Map<String,String> obtainsSubjectInfoById(Integer subjectId);
 
+    SubjectTableVo obtainsSubjectTableInfo(String subjectId);
 }

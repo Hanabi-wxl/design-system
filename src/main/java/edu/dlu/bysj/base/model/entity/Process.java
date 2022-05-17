@@ -36,13 +36,13 @@ public class Process implements Serializable {
     private Integer week;
 
     @ApiModelProperty(value = "教师评语")
-    private String teacherComment;
+    private String teacherContent;
 
     @ApiModelProperty(value = "教师评语日期")
     private LocalDate teacherDate;
 
-    @ApiModelProperty(value = "学生评语")
-    private String studentComment;
+    @ApiModelProperty(value = "学生过程内容")
+    private String studentContent;
 
     @ApiModelProperty(value = "学生评价日期")
     private LocalDate studentDate;

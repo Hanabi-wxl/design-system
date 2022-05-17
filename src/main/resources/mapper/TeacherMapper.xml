@@ -286,18 +286,24 @@
     </select>
 
     <select id="firstAndSecondTeacherInfo" resultType="java.util.Map">
-        select t.id, t.name as teacherName, major.name as majorName, title.name as titleName
-        from (select teacher.name, teacher.major_id, teacher.title_id, teacher.id
+        select
+        t.id,
+        t.name      as teacherName,
+        major.name  as majorName,
+        title.name  as titleName,
+        office.name as officeName
+        from (select teacher.name, teacher.major_id, teacher.title_id, teacher.id, teacher.office_id
               from teacher
               where teacher.status = 1
                 and teacher.id in (#{firstTeacherId}, #{secondTeacherId}))
                  as t
-
                  left join major
                            on major.id = t.major_id
 
                  left join title
                            on title.id = t.title_id
+                 left join office
+                           on office.id = t.office_id
 
     </select>
 
@@ -468,6 +474,27 @@
 
         left join title
         on t.title_id = title.id
+    </select>
+    <select id="AllRelativeTeacherInfo" resultType="java.util.Map">
+        select
+        t.id,
+        t.name         as teacherName,
+        t.phone_number as phone,
+        major.name     as majorName,
+        title.name     as titleName,
+        office.name    as officeName
+        from (select teacher.name, teacher.major_id, teacher.title_id, teacher.id, teacher.office_id, teacher.phone_number
+              from teacher
+              where teacher.status = 1
+                and teacher.id in (#{firstTeacherId}, #{secondTeacherId},#{otherTeacherId}))
+                 as t
+                 left join major
+                           on major.id = t.major_id
+
+                 left join title
+                           on title.id = t.title_id
+                 left join office
+                           on office.id = t.office_id
     </select>
 
 

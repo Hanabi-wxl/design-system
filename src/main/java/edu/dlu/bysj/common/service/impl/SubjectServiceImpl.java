@@ -6,6 +6,9 @@ import java.util.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.dlu.bysj.base.config.SnowflakeConfig;
 import edu.dlu.bysj.common.service.TeacherService;
+import edu.dlu.bysj.defense.mapper.EachMarkMapper;
+import edu.dlu.bysj.system.mapper.MajorMapper;
+import edu.dlu.bysj.system.service.MajorService;
 import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -43,6 +46,8 @@ import lombok.extern.slf4j.Slf4j;
 public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> implements SubjectService {
     private final SubjectMapper subjectMapper;
 
+    private final EachMarkMapper eachMarkMapper;
+
     private final BaseMapper<Subject> baseMapper;
 
     private final TeacherMapper teacherMapper;
@@ -58,6 +63,8 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
     private final TeacherService teacherService;
 
     private final TopicService topicService;
+
+    private final MajorMapper majorMapper;
 
     private final SubjectMajorService subjectMajorService;
 
@@ -76,13 +83,15 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
     private static final String TEACHER_NAME = "teacherName";
     private static final String MAJOR_NAME = "majorName";
     private static final String TITLE_NAME = "titleName";
+    private static final String OFFICE_NAME = "officeName";
+    private static final String PHONE_NAME = "phone";
 
     /**
      * studentMapper studentInfoById() 方法返回参数
      */
     private static final String STUDENT_NAME = "studentName";
     private static final String STUDENT_MAJOR_NAME = "studentMajorName";
-    private static final String CLASS_NAME = "ClassName";
+    private static final String CLASS_NAME = "className";
     private static final String STUDENT_NUMBER = "studentNumber";
 
     /*循环依赖的时候使用懒加载*/
@@ -92,8 +101,10 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
     public SubjectServiceImpl(BaseMapper<Subject> baseMapper, SubjectMapper subjectMapper, TeacherMapper teacherMapper,
         StudentMapper studentMapper, SourceMapper sourceMapper, SubjectTypeMapper subjectTypeMapper,
         StudentService studentService, TopicService topicService, SubjectMajorService subjectMajorService,SnowflakeConfig snowflakeConfig,
-                              TeacherService teacherService) {
+                              TeacherService teacherService, MajorMapper majorMapper,EachMarkMapper eachMarkMapper) {
+        this.eachMarkMapper = eachMarkMapper;
         this.baseMapper = baseMapper;
+        this.majorMapper = majorMapper;
         this.subjectMapper = subjectMapper;
         this.teacherMapper = teacherMapper;
         this.studentMapper = studentMapper;
@@ -130,6 +141,8 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
     @Override
     public SubjectDetailInfoVo obtainsSubjectRelationInfo(String subjectId) {
         Subject subject = baseMapper.selectOne(new QueryWrapper<Subject>().eq("subject_id", subjectId));
+        if (ObjectUtil.isNull(subject))
+            subject = baseMapper.selectOne(new QueryWrapper<Subject>().eq("id", subjectId));
         SubjectDetailInfoVo result = new SubjectDetailInfoVo();
         if (ObjectUtil.isNotNull(subject)) {
             result.setSubjectName(subject.getSubjectName());
@@ -503,15 +516,16 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
 
     // TODO: 2022/5/7 获取院管理员审批列表
     @Override
-    public TotalPackageVo<ApproveDetailVo> collegeAdminiApproveSubjectPagination(SubjectApproveListQuery query) {
+    public TotalPackageVo<ApproveDetailVo> adminApproveSubjectPagination(SubjectApproveListQuery query) {
         Integer start = (query.getPageNumber() - 1) * query.getPageSize();
 
         /*由collegeId,teacherId 查询该专业下的题目基干信息列表*/
-        List<AdminApprovalConvey> adminApprovalConveys = subjectMapper.collegeApprovalListPagination(query.getCollegeId(),
-                query.getTeacherId(), start, query.getPageSize(), query.getYear());
+        List<AdminApprovalConvey> adminApprovalConveys = subjectMapper.approvalListPagination(query.getMajorId(),
+                query.getTeacherId(), query.getSearchContent(), start, query.getPageSize(), query.getYear());
 
         /*总数*/
-        Integer total = subjectMapper.totalAdminCollegeApprovalList(query.getCollegeId(), query.getTeacherId(), query.getYear());
+        Integer total = subjectMapper.totalAdminCollegeApprovalList(query.getMajorId(), query.getTeacherId(),
+                query.getSearchContent(), query.getYear());
 
         Set<Integer> teacherIds = new HashSet<>();
         for (AdminApprovalConvey convey : adminApprovalConveys) {
@@ -558,6 +572,83 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
                 }
             }
         }
+        return result;
+    }
+
+    @Override
+    public SubjectTableVo obtainsSubjectTableInfo(String subjectId) {
+        Subject subject = baseMapper.selectOne(new QueryWrapper<Subject>().eq("id", subjectId));
+        SubjectTableVo result = new SubjectTableVo();
+        if (ObjectUtil.isNotNull(subject)) {
+            result.setSubjectName(subject.getSubjectName());
+            result.setIsFirst(subject.getIsFirstTeach() == 1 ? "是" : "否");
+            result.setIsSimilar(subject.getIsSimilar() == 1 ? "是" : "否");
+            result.setNeedStudentNumber(subject.getStudentNeeded());
+            result.setAbstractContent(subject.getTitleAbstract());
+            result.setNecessity(subject.getNecessity());
+            result.setFeasibility(subject.getFeasibility());
+            EachMark eachMark = eachMarkMapper.selectOne(new QueryWrapper<EachMark>().eq("subject_Id", subjectId));
+            /*获取第一第二互评指导教师名称，职称，专业*/
+            Map<Integer, Map<String, Object>> teacherMap =
+                    teacherMapper.AllRelativeTeacherInfo(subject.getFirstTeacherId(), subject.getSecondTeacherId(), eachMark.getTeacherId());
+            if (teacherMap != null && !teacherMap.isEmpty()) {
+                if (teacherMap.containsKey(subject.getFirstTeacherId())) {
+                    Object teacherName = teacherMap.get(subject.getFirstTeacherId()).get(TEACHER_NAME);
+                    Object teacherMajor = teacherMap.get(subject.getFirstTeacherId()).get(MAJOR_NAME);
+                    Object teacherTitle = teacherMap.get(subject.getFirstTeacherId()).get(TITLE_NAME);
+                    Object officeName = teacherMap.get(subject.getFirstTeacherId()).get(OFFICE_NAME);
+//                    Object otherTeacherName = teacherMap.get(eachMark.getTeacherId()).get(TEACHER_NAME);
+//                    Object otherTeacherMajor = teacherMap.get(eachMark.getTeacherId()).get(MAJOR_NAME);
+//                    Object otherTeacherPhone = teacherMap.get(eachMark.getTeacherId()).get(PHONE_NAME);
+//                    result.setOtherTeacherName((String) otherTeacherName);
+//                    result.setOtherTeacherName((String) otherTeacherMajor);
+//                    result.setOtherTeacherName((String) otherTeacherPhone);
+                    result.setFirstTeacherOffice((String) officeName);
+                    result.setFirstTeacherMajor((String)teacherMajor);
+                    result.setFirstTeacherName((String)teacherName);
+                    result.setFirstTeacherTitle((String)teacherTitle);
+                }
+                if (teacherMap.containsKey(subject.getSecondTeacherId())) {
+                    Object teacherName = teacherMap.get(subject.getSecondTeacherId()).get(TEACHER_NAME);
+                    result.setSecondTeacherName((String)teacherName);
+                }
+            }
+
+            /*获取学生名称,学号，班级*/
+            Map<Integer, Map<String, Object>> studentMap = studentMapper.studentInfoById(subject.getStudentId());
+            if (studentMap != null && !studentMap.isEmpty()) {
+                if (studentMap.containsKey(subject.getStudentId())) {
+                    Object majorName = studentMap.get(subject.getStudentId()).get(STUDENT_MAJOR_NAME);
+                    String studentName = (String)studentMap.get(subject.getStudentId()).get(STUDENT_NAME);
+                    String studentNumber = (String)studentMap.get(subject.getStudentId()).get(STUDENT_NUMBER);
+                    String className = (String)studentMap.get(subject.getStudentId()).get(CLASS_NAME);
+                    result.setStudentMajor((String)majorName);
+                    result.setStudentName(studentName);
+                    result.setStudentNumber(studentNumber);
+                    result.setClassName(className);
+                }
+            }
+
+            /*获取论文类型，题目来源*/
+            Source source = sourceMapper.selectById(subject.getSourceId());
+            SubjectType subjectType = subjectTypeMapper.selectById(subject.getSubjectTypeId());
+            if (ObjectUtil.isNotNull(source)) {
+                result.setSource(source.getName());
+            }
+            if (ObjectUtil.isNotNull(subjectType)) {
+                result.setPaperType(subjectType.getName());
+            }
+
+            //将要分配给的专业
+            List<SubjectMajor> subjectMajorList = subjectMajorService.list(new QueryWrapper<SubjectMajor>().eq("subject_id", subject.getSubjectId()));
+            List<Integer> majorIds = new ArrayList<>();
+            for (SubjectMajor subjectMajor : subjectMajorList) {
+                majorIds.add(subjectMajor.getMajorId());
+            }
+            List<String> majors = majorMapper.selectMajorNameByIds(majorIds);
+            result.setMajors(majors);
+        }
+
         return result;
     }
 

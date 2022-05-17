@@ -4,9 +4,11 @@ import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import edu.dlu.bysj.base.model.dto.EachMarkConvey;
 import edu.dlu.bysj.base.model.entity.EachMark;
+import edu.dlu.bysj.base.model.entity.SubjectMajor;
 import edu.dlu.bysj.base.model.query.MutualEvaluationQuery;
 import edu.dlu.bysj.base.model.vo.MutualEvaluationVo;
 import edu.dlu.bysj.base.model.vo.TotalPackageVo;
+import edu.dlu.bysj.common.mapper.SubjectMapper;
 import edu.dlu.bysj.defense.mapper.EachMarkMapper;
 import edu.dlu.bysj.defense.service.EachMarkService;
 import edu.dlu.bysj.paper.service.MessageService;
@@ -33,12 +35,15 @@ public class EachMarkServiceImpl extends ServiceImpl<EachMarkMapper, EachMark> i
 
     private final MessageService messageService;
 
+    private final SubjectMapper subjectMapper;
+
 
     @Autowired
-    public EachMarkServiceImpl(EachMarkMapper eachMarkMapper,
+    public EachMarkServiceImpl(EachMarkMapper eachMarkMapper,SubjectMapper subjectMapper,
                                MessageService messageService) {
         this.eachMarkMapper = eachMarkMapper;
         this.messageService = messageService;
+        this.subjectMapper = subjectMapper;
     }
 
     @Override
@@ -58,7 +63,13 @@ public class EachMarkServiceImpl extends ServiceImpl<EachMarkMapper, EachMark> i
         if (teacherMap != null && !teacherMap.isEmpty()) {
             for (MutualEvaluationVo element : mutualEvaluationVos) {
                 String teacherName = (String) teacherMap.get(element.getSubjectId()).get("name");
-                element.setOtherTeacher(teacherName);
+                String majorName = (String) teacherMap.get(element.getSubjectId()).get("majorName");
+                String phone = (String) teacherMap.get(element.getSubjectId()).get("phone");
+                String teacherId = String.valueOf(teacherMap.get(element.getSubjectId()).get("teacherId"));
+                element.setOtherTeacherName(teacherName);
+                element.setOtherTeacherMajor(majorName);
+                element.setOtherTeacherPhone(phone);
+                element.setOtherTeacherId(teacherId);
             }
         }
 
@@ -108,5 +119,11 @@ public class EachMarkServiceImpl extends ServiceImpl<EachMarkMapper, EachMark> i
     @Override
     public Map<Integer, Map<String, Object>> selectEachMarkTeacherBySubject(Integer subjectId) {
         return eachMarkMapper.selectEachMarkTeacherBySubject(subjectId);
+    }
+
+    @Override
+    public void removeOldDate(Integer majorId) {
+        List<Integer> subjectIds = subjectMapper.getIdsByMajor(majorId);
+        baseMapper.removeBySubjectIds(subjectIds);
     }
 }

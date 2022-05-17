@@ -204,16 +204,22 @@ public class SubjectApprovalController {
     @ApiOperation(value = "获取该教师的题目审批列表")
     public CommonResult<TotalPackageVo<ApproveDetailVo>> teacherApproveList(@Valid SubjectApproveListQuery query, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
-        Integer majorId = JwtUtil.getMajorId(jwt);
-        query.setMajorId(majorId);
-        query.setCollegeId(collegeService.getCollegeIdByMajorId(majorId));
         List<Integer> roleIds = JwtUtil.getRoleIds(jwt);
         Integer max = Collections.max(roleIds);
-        TotalPackageVo<ApproveDetailVo> result = null;
-        if (max == 3)
-            result = subjectService.administratorApproveSubjectPagination(query);
-        else if (max > 3)
-            result = subjectService.collegeAdminiApproveSubjectPagination(query);
+        Integer queryMajorId = query.getMajorId();
+        Integer queryCollegeId = query.getCollegeId();
+        TotalPackageVo<ApproveDetailVo> result;
+        if (max == 3){
+            Integer majorId = JwtUtil.getMajorId(jwt);
+            if (!majorId.equals(queryMajorId))
+                return CommonResult.success(null);
+        }
+        if (max == 4){
+            Integer collegeId = collegeService.getCollegeIdByMajorId(JwtUtil.getMajorId(jwt));
+            if (!collegeId.equals(queryCollegeId))
+                return CommonResult.success(null);
+        }
+        result = subjectService.adminApproveSubjectPagination(query);
         return CommonResult.success(result);
     }
 
@@ -235,7 +241,6 @@ public class SubjectApprovalController {
         }
         return CommonResult.success(result);
     }
-
 
     @GetMapping(value = "/approve/createFillingNumber/{majorId}/{year}")
     @LogAnnotation(content = "生成归档序号")

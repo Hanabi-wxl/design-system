@@ -4,16 +4,16 @@
 
     <resultMap id="processDetailMap" type="edu.dlu.bysj.base.model.vo.ProcessDetailVo">
         <result column="week" property="week"/>
-        <result column="student_comment" property="studentContent"/>
-        <result column="teacher_comment" property="teacherContent"/>
+        <result column="student_content" property="studentContent"/>
+        <result column="teacher_content" property="teacherContent"/>
         <result column="student_date" property="studentTime"/>
         <result column="name" property="teacherName"/>
     </resultMap>
 
     <select id="selectProcessInfoBySubjectId" resultMap="processDetailMap">
         select process.week,
-               process.student_comment,
-               process.teacher_comment,
+               process.student_content,
+               process.teacher_content,
                process.student_date,
                process.teacher_date,
                t.name

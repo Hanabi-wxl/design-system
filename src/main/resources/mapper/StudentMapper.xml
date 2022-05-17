@@ -194,7 +194,7 @@
         select s.id,
                s.name           as studentName,
                major.name       as studentMajorName,
-               class.name       as ClassName,
+               class.name       as className,
                s.student_number as studentNumber
         from (select student.id, student.name, student.class_id, student.major_id, student.student_number
               from student
@@ -204,9 +204,7 @@
                  left join major
                            on major.id = s.major_id
                  left join class
-                           on class.id = s.id
-
-
+                           on class.id = s.class_id
     </select>
 
     <select id="teacherSubjectListStudentInfo" resultType="java.util.Map">
