@@ -22,7 +22,7 @@ public enum ProcessEnum {
     SUBMIT_MIDDLE_CHECK("/paperManagement/middleCheck/content", 12),
     MIDDLE_CHECK_MAJOR_AUDIT("/paperManagement/middleCheck/submitResult ", 13),
     MIDDLE_CHECK_COLLEGE_AUDIT("/paperManagement/middleCheck/submitResult ", 14),
-    SUBMIT_PAPER("/paperManagement/upload/paper", 15),
+    SUBMIT_PAPER("/paperManagement/fileUpload/paper", 15),
     INSTRUCTOR_EVALUATION("/score/firstTeacher/commentFromScore", 16),
     PROCESS_EVALUATION("/gradeManage/score/process/commentFromScore", 17),
     MUTUAL_EVALUATION("/gradeManage/score/other/comment", 18),

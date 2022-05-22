@@ -784,5 +784,38 @@
     <select id="getIdsByMajor" resultType="java.lang.Integer">
         select id from subject where major_id = #{majorId}
     </select>
+    <select id="filterByYear" resultType="edu.dlu.bysj.base.model.vo.SubjectDetailVo">
+        select
+        s.id as id,
+        s.subject_name as subjectname,
+        st.name as studentName,
+        p.content as progress,
+        sc.sum_score as totalScore
+        from subject s
+        left join student st on st.id=s.student_id
+        left join progress p on p.id=s.progress_id
+        left join score sc on sc.subject_id=s.id
+        where s.id in
+        <foreach collection="idList" open="(" separator="," close=")" item="id">
+            #{id}
+        </foreach>
+        and s.grade=#{year}
+        limit #{start}, #{pageSize}
+    </select>
+    <select id="totalFilterByYear" resultType="java.lang.Integer">
+        select count(*) from (
+            select
+            s.id as id
+            from subject s
+            left join student st on st.id=s.student_id
+            left join progress p on p.id=s.progress_id
+            left join score sc on sc.subject_id=s.id
+            where s.id in
+            <foreach collection="idList" open="(" separator="," close=")" item="id">
+                #{id}
+            </foreach>
+            and s.grade=#{year}
+        ) s
+    </select>
 
 </mapper>

@@ -22,7 +22,8 @@ import org.springframework.context.annotation.Configuration;
                 "edu.dlu.bysj.paper.mapper",
                 "edu.dlu.bysj.defense.mapper",
                 "edu.dlu.bysj.grade.mapper",
-                "edu.dlu.bysj.notification.mapper"
+                "edu.dlu.bysj.notification.mapper",
+                "edu.dlu.bysj.document.mapper"
         })
 public class MapperConfig {
     /**

@@ -7,6 +7,7 @@ import javax.validation.Valid;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -46,7 +47,7 @@ public class ProcessEvaluationController {
     @LogAnnotation(content = "教师提交过程评价")
     @RequiresPermissions({"procedure:commentFroms"})
     @ApiOperation(value = "提交过程评价")
-    public CommonResult<Object> submitProcessEvaluation(@Valid ScoreProcessVo processVo) {
+    public CommonResult<Object> submitProcessEvaluation(@Valid @RequestBody ScoreProcessVo processVo) {
         Subject subject = subjectService.getById(processVo.getSubjectId());
         /*处于过程管理阶段和前一阶段即可操作*/
         boolean scoreFlag = false, subjectFlag = false;
@@ -58,7 +59,7 @@ public class ProcessEvaluationController {
                 scoreOne.setProcessDiscipline(processVo.getDiscipline());
                 scoreOne.setProcessReport(processVo.getReport());
                 scoreOne.setProcessComplete(processVo.getComplete());
-                scoreOne.setProcessSimilar(processVo.getSimilar());
+//                scoreOne.setProcessSimilar(processVo.getSimilar());
                 scoreOne.setProcessComment(processVo.getComment());
                 scoreOne.setProcessDate(LocalDate.now());
                 scoreFlag = scoreService.updateById(scoreOne);

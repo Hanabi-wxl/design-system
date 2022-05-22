@@ -163,4 +163,6 @@ public interface SubjectService extends IService<Subject> {
     Map<String,String> obtainsSubjectInfoById(Integer subjectId);
 
     SubjectTableVo obtainsSubjectTableInfo(String subjectId);
+
+    TotalPackageVo<SubjectDetailVo> filterByYear(List<Integer> idList, Integer pageSize, Integer pageNumber, Integer year);
 }

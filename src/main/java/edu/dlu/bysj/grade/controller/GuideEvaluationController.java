@@ -50,7 +50,7 @@ public class GuideEvaluationController {
     @LogAnnotation(content = "指导教师填写评语,和打分")
     @RequiresPermissions({"mentor:commentFroms"})
     @ApiOperation(value = "提交指导教师评语和打分")
-    public CommonResult<Object> submitGuideTeacherComments(@Valid BasicScoreVo basicScoreVo) {
+    public CommonResult<Object> submitGuideTeacherComments(@Valid @RequestBody BasicScoreVo basicScoreVo) {
         /*查询*/
         Subject subject = subjectService.getById(basicScoreVo.getSubjectId());
         Integer processCode = ProcessEnum.INSTRUCTOR_EVALUATION.getProcessCode();
@@ -83,12 +83,12 @@ public class GuideEvaluationController {
         return (scoreFlag && subjectFlag) ? CommonResult.success("操作成功") : CommonResult.failed("评语添加失败，请查看该题目所处的阶段");
     }
 
-    @GetMapping(value = "/score/all/{subjectId}")
+    @GetMapping(value = "/score/all")
     @RequiresPermissions({"score:all"})
     @LogAnnotation(content = "获取该题目的所有评分信息")
     @ApiOperation(value = "获取该题目的所有评分信息")
     @ApiImplicitParam(name = "subjectId", value = "题目id")
-    public CommonResult<ScoreInformationVo> obtainAllScoreInfo(@PathVariable("subjectId") @NotNull Integer subjectId) {
+    public CommonResult<ScoreInformationVo> obtainAllScoreInfo(@NotNull Integer subjectId) {
         Score score = scoreService.getOne(new QueryWrapper<Score>().eq("subject_id", subjectId));
         ScoreInformationVo info = new ScoreInformationVo();
 

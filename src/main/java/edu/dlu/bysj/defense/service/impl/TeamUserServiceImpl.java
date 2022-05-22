@@ -191,7 +191,7 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
         FileInfomation file = fileInformationService.getOne(new QueryWrapper<FileInfomation>()
                 .eq("user_id", userId)
                 .eq("is_student", 1)
-                .eq("type", "论文"));
+                .eq("type", "2"));
 
         if (ObjectUtil.isNull(file)) {
             need.add("论文未提交");

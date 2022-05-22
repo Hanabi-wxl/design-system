@@ -41,4 +41,6 @@ public class SubjectDetailVo {
     private String firstTeacherName;
     @ApiModelProperty(value = "教师手机号")
     private String firstTeacherPhone;
+    @ApiModelProperty(value = "教师手机号")
+    private String totalScore;
 }

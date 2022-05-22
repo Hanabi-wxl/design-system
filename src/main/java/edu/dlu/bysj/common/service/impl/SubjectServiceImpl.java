@@ -8,8 +8,6 @@ import edu.dlu.bysj.base.config.SnowflakeConfig;
 import edu.dlu.bysj.common.service.TeacherService;
 import edu.dlu.bysj.defense.mapper.EachMarkMapper;
 import edu.dlu.bysj.system.mapper.MajorMapper;
-import edu.dlu.bysj.system.service.MajorService;
-import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -650,6 +648,17 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
         }
 
         return result;
+    }
+
+    @Override
+    public TotalPackageVo<SubjectDetailVo> filterByYear(List<Integer> idList, Integer pageSize, Integer pageNumber, Integer year) {
+        int start = (pageNumber - 1) * pageNumber;
+        List<SubjectDetailVo> subjectDetailVos = subjectMapper.filterByYear(idList, start, pageSize, year);
+        Integer total = subjectMapper.totalFilterByYear(idList, year);
+        TotalPackageVo<SubjectDetailVo> vo = new TotalPackageVo<>();
+        vo.setArrays(subjectDetailVos);
+        vo.setTotal(total);
+        return vo;
     }
 
     private Subject packageSubject(SubjectApprovalVo score, Subject target) {

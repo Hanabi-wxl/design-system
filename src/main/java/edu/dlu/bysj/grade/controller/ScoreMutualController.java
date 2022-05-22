@@ -1,15 +1,22 @@
 package edu.dlu.bysj.grade.controller;
 
 import java.time.LocalDate;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
+import edu.dlu.bysj.base.model.entity.EachMark;
+import edu.dlu.bysj.base.model.vo.SubjectDetailVo;
+import edu.dlu.bysj.base.model.vo.TotalPackageVo;
+import edu.dlu.bysj.defense.service.EachMarkService;
+import io.jsonwebtoken.Jwt;
+import io.swagger.models.auth.In;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 
@@ -39,8 +46,11 @@ public class ScoreMutualController {
 
     private final ScoreService scoreService;
 
-    public ScoreMutualController(SubjectService subjectService, ScoreService scoreService) {
+    private final EachMarkService eachMarkService;
+
+    public ScoreMutualController(SubjectService subjectService,EachMarkService eachMarkService, ScoreService scoreService) {
         this.subjectService = subjectService;
+        this.eachMarkService = eachMarkService;
         this.scoreService = scoreService;
     }
 
@@ -49,7 +59,7 @@ public class ScoreMutualController {
     @LogAnnotation(content = "提交互评评语")
     @RequiresPermissions({"each:commentFrom"})
     @ApiOperation(value = "提交互评")
-    public CommonResult<Object> submitOtherEvaluation(@Valid BasicScoreVo scoreVo, HttpServletRequest request) {
+    public CommonResult<Object> submitOtherEvaluation(@Valid @RequestBody BasicScoreVo scoreVo, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
 
         Integer processCode = ProcessEnum.MUTUAL_EVALUATION.getProcessCode();
@@ -74,5 +84,24 @@ public class ScoreMutualController {
             }
         }
         return (scoreFlag && subjectFlag) ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
+    }
+
+    @GetMapping(value = "/score/other/list")
+    @LogAnnotation(content = "获取互评列表")
+    @RequiresPermissions({"each:commentFrom"})
+    @ApiOperation(value = "获取互评")
+    public CommonResult<Object> listOtherEvaluation(@NotNull Integer year,
+                                                    @NotNull Integer pageSize,
+                                                    @NotNull Integer pageNumber,
+                                                    HttpServletRequest request) {
+        String jwt = request.getHeader("jwt");
+        Integer userId = JwtUtil.getUserId(jwt);
+        List<EachMark> eachMarks = eachMarkService.list(new QueryWrapper<EachMark>().eq("teacher_id", userId));
+        List<Integer> idList = new LinkedList<>();
+        for (EachMark eachMark : eachMarks) {
+            idList.add(eachMark.getSubjectId());
+        }
+        TotalPackageVo<SubjectDetailVo> packageVo = subjectService.filterByYear(idList, pageSize, pageNumber, year);
+        return CommonResult.success(packageVo);
     }
 }

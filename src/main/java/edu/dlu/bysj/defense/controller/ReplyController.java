@@ -1,9 +1,8 @@
 package edu.dlu.bysj.defense.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import edu.dlu.bysj.base.model.entity.Subject;
-import edu.dlu.bysj.base.model.entity.Team;
-import edu.dlu.bysj.base.model.entity.TeamUser;
+import edu.dlu.bysj.base.model.entity.*;
+import edu.dlu.bysj.base.model.entity.Process;
 import edu.dlu.bysj.base.model.enums.ProcessEnum;
 import edu.dlu.bysj.base.model.vo.ApplyReplyVo;
 import edu.dlu.bysj.base.model.vo.ReplyInfo;
@@ -11,11 +10,14 @@ import edu.dlu.bysj.base.model.vo.ReplyTeacherVo;
 import edu.dlu.bysj.base.model.vo.StudentGroupVo;
 import edu.dlu.bysj.base.result.CommonResult;
 import edu.dlu.bysj.base.util.JwtUtil;
+import edu.dlu.bysj.common.service.StudentService;
 import edu.dlu.bysj.common.service.SubjectService;
+import edu.dlu.bysj.defense.service.ProgressService;
 import edu.dlu.bysj.defense.service.TeamConfigService;
 import edu.dlu.bysj.defense.service.TeamService;
 import edu.dlu.bysj.defense.service.TeamUserService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
+import edu.dlu.bysj.paper.service.ProcessService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -25,10 +27,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -49,15 +48,23 @@ public class ReplyController {
 
     private final TeamUserService teamUserService;
 
+    private final StudentService studentService;
+
     private final TeamService teamService;
 
     private final SubjectService subjectService;
 
+    private final ProgressService progressService;
+
 
     public ReplyController(TeamService teamService,
+                           ProgressService progressService,
+                           StudentService studentService,
                            TeamUserService teamUserService,
                            TeamConfigService teamConfigService,
                            SubjectService subjectService) {
+        this.progressService = progressService;
+        this.studentService = studentService;
         this.teamService = teamService;
         this.teamUserService = teamUserService;
         this.teamConfigService = teamConfigService;
@@ -100,27 +107,25 @@ public class ReplyController {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    @GetMapping(value = "/defence/application/{subjectId}")
+    @PostMapping(value = "/defence/application")
     @LogAnnotation(content = "学生申请答辩")
     @RequiresPermissions({"defence:application"})
     @ApiOperation(value = "学生申请答辩")
     @ApiImplicitParam(name = "subjectId", value = "题目id")
-    public CommonResult<ApplyReplyVo> studentApplyDefense(@PathVariable("subjectId") @NotNull Integer subjectId,
-                                                          HttpServletRequest request) {
+    public CommonResult<ApplyReplyVo> studentApplyDefense(HttpServletRequest request) {
         ApplyReplyVo result = new ApplyReplyVo();
         String jwt = request.getHeader("jwt");
+        Integer userId = JwtUtil.getUserId(jwt);
         Integer processCode = ProcessEnum.APPLICATION_DEFENSE.getProcessCode();
-
+        Integer subjectId = studentService.getById(userId).getSubjectId();
         boolean flag = false;
         List<String> need = null;
 
-
         Subject subject = subjectService.getById(subjectId);
-        
+        Progress progress = null;
         if (!StringUtils.isEmpty(jwt) && processCode.equals(subject.getProgressId() + 1)) {
-            Integer userId = JwtUtil.getUserId(jwt);
             // TODO 验证 1-18 环节是否完成，从开始申报题目到申请答辩
-            need = teamUserService.undoneLink(subjectId, userId);
+//            need = teamUserService.undoneLink(subjectId, userId);
             /*当need中没有任何警告数据的时候执行申请答辩操作*/
             result.setNeed(need);
 
@@ -145,10 +150,11 @@ public class ReplyController {
                 subject.setProgressId(processCode);
                 subjectService.updateById(subject);
             }
-
-
         }
-        return flag ? CommonResult.success(result) : CommonResult.failed(result);
+        else{
+            progress = progressService.getOne(new QueryWrapper<Progress>().eq("id", subject.getProgressId() + 1));
+        }
+        return flag ? CommonResult.success(result) : CommonResult.failed(progress.getContent() + "阶段未完成！");
     }
 
     @GetMapping(value = "/defence/infoBySubjectId/{subjectId}")

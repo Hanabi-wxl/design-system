@@ -232,4 +232,8 @@ public interface SubjectMapper extends BaseMapper<Subject> {
 
     List<Integer> getIdsByMajor(Integer majorId);
 
+    List<SubjectDetailVo> filterByYear(List<Integer> idList, Integer start, Integer pageSize, Integer year);
+
+    Integer totalFilterByYear(List<Integer> idList, Integer year);
+
 }
