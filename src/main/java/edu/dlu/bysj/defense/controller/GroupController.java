@@ -1,6 +1,7 @@
 package edu.dlu.bysj.defense.controller;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import edu.dlu.bysj.base.model.entity.Student;
 import edu.dlu.bysj.base.model.entity.Team;
@@ -8,6 +9,7 @@ import edu.dlu.bysj.base.model.entity.TeamConfig;
 import edu.dlu.bysj.base.model.entity.TeamUser;
 import edu.dlu.bysj.base.model.vo.*;
 import edu.dlu.bysj.base.result.CommonResult;
+import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.StudentService;
 import edu.dlu.bysj.defense.service.TeamConfigService;
@@ -30,6 +32,10 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Month;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 
@@ -63,29 +69,33 @@ public class GroupController {
         this.teamConfigService = teamConfigService;
     }
 
-    @GetMapping(value = "/defence/group/list/{majorId}/{grade}/{isSecond}")
+    @GetMapping(value = "/defence/group/list")
     @LogAnnotation(content = "教师查看专业答辩分组")
     @RequiresPermissions({"group:list"})
     @ApiOperation(value = "查看专业答辩分组")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "majorId", value = "专业id"),
-            @ApiImplicitParam(name = "grade", value = "年级"),
             @ApiImplicitParam(name = "isSecond", value = "是否二答")
     })
-    public CommonResult<List<TeamInfoVo>> majorDefenseTeam(@PathVariable("majorId") @NotNull Integer majorId,
-                                                           @PathVariable("grade") @NotNull Integer grade,
-                                                           @PathVariable("isSecond") @NotNull Integer isSecond) {
-
-        List<Team> list = teamService.list(new QueryWrapper<Team>().eq("major_id", majorId).eq("grade", grade).eq("is_repeat", isSecond));
+    public CommonResult<List<TeamInfoVo>> majorDefenseTeam(@NotNull Integer majorId,
+                                                           @NotNull Integer isSecond) {
+        int year = LocalDateTime.now().getYear();
+        Integer grade = GradeUtils.getGrade(year);
+        List<Team> list = teamService.list(new QueryWrapper<Team>().eq("major_id", majorId)
+                .eq("grade", grade).eq("is_repeat", isSecond));
         List<TeamInfoVo> result = new ArrayList<>();
         if (list != null && !list.isEmpty()) {
             for (Team element : list) {
                 TeamInfoVo teamInfoVo = new TeamInfoVo();
-                teamInfoVo.setStartTime(element.getStartDate());
+                teamInfoVo.setStartDate(element.getStartDate());
                 teamInfoVo.setAddress(element.getAddress());
-                teamInfoVo.setRequirement(element.getRequest());
+                teamInfoVo.setRequire(element.getRequest());
                 teamInfoVo.setEndTime(element.getEndTime());
-                teamInfoVo.setGroupNumber(element.getTeamNumber());
+                DateTimeFormatter dateTimeFormatter1 = DateTimeFormatter.ofPattern("MM月dd日 HH:mm");
+                DateTimeFormatter dateTimeFormatter2 = DateTimeFormatter.ofPattern("HH:mm");
+                String rangeTime = element.getStartDate().format(dateTimeFormatter1) + " - " + element.getEndTime().format(dateTimeFormatter2);
+                teamInfoVo.setRangeTime(rangeTime);
+                teamInfoVo.setTeamNumber(element.getTeamNumber());
                 teamInfoVo.setGroupId(element.getId());
                 result.add(teamInfoVo);
             }
@@ -112,7 +122,7 @@ public class GroupController {
     @LogAnnotation(content = "进行教师分组")
     @RequiresPermissions({"group:teacherGroup"})
     @ApiOperation(value = "提交教师分组")
-    public CommonResult<Object> submitTeacherGroup(@Valid TeacherGroupVo group) {
+    public CommonResult<Object> submitTeacherGroup(@Valid @RequestBody TeacherGroupVo group) {
 
         TeamUser teamUser = teamUserService.getOne(new QueryWrapper<TeamUser>()
                 .eq("user_id", group.getTeacherId())
@@ -124,14 +134,14 @@ public class GroupController {
             /*跟新*/
             teamUser.setTeamId(group.getGroupId());
             teamUser.setUserId(group.getTeacherId());
-            teamUser.setResposiblity(group.getResposiblity());
+            teamUser.setResposiblity(group.getResponsibility());
             flag = teamUserService.updateById(teamUser);
         } else {
             /*新建*/
             TeamUser value = new TeamUser();
             value.setTeamId(group.getGroupId());
             value.setUserId(group.getTeacherId());
-            value.setResposiblity(group.getResposiblity());
+            value.setResposiblity(group.getResponsibility());
             /*1学生, 0非学生*/
             value.setIsStudent(0);
             flag = teamUserService.save(value);
@@ -143,53 +153,48 @@ public class GroupController {
     @LogAnnotation(content = "新增/修改分组信息")
     @RequiresPermissions({"group:modify"})
     @ApiOperation(value = "新增/修改分组信息")
-    public CommonResult<Object> modifyGroupInformation(@Valid ModifyGroupVo groupVo,
+    public CommonResult<Object> modifyGroupInformation(@Valid @RequestBody ModifyGroupVo groupVo,
                                                        HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
         boolean flag = false;
         if (!StringUtils.isEmpty(jwt)) {
-            Team team = teamService.getById(groupVo.getGroupId());
+            Team team = teamService.getById(groupVo.getId());
             Optional<Team> teamOptional = Optional.ofNullable(team);
             if (!teamOptional.isPresent()) {
                 team = new Team();
             }
-            if (ObjectUtil.isNotNull(groupVo.getGroupId())) {
-                team.setId(groupVo.getGroupId());
-                team.setTeamNumber(groupVo.getGroupNumber());
+            if (ObjectUtil.isNotNull(groupVo.getId())) {
+                team.setId(groupVo.getId());
+                team.setTeamNumber(groupVo.getTeamNumber());
             }
 
-            /*新增时的team_number为当前年级当前专业的最最后一个组号+*/
-            int count = teamService.count(new QueryWrapper<Team>()
-                    .eq("grade", groupVo.getGrade())
-                    .eq("major_id", JwtUtil.getMajorId(jwt)));
-
-            team.setStartDate(groupVo.getStartTime());
-            team.setTeamNumber(count + 1);
+            team.setStartDate(groupVo.getStartDate());
+            team.setTeamNumber(groupVo.getTeamNumber());
             team.setEndTime(groupVo.getEndTime());
             team.setAddress(groupVo.getAddress());
-            team.setRequest(groupVo.getRequirement());
-            team.setGrade(groupVo.getGrade());
-            team.setIsRepeat(groupVo.getIsSecond());
+            team.setRequest(groupVo.getRequire());
+            team.setGrade(GradeUtils.getGrade());
+            team.setIsRepeat(groupVo.getIsRepeat());
+            team.setType(groupVo.getType());
             team.setMajorId(JwtUtil.getMajorId(jwt));
 
-            if (ObjectUtil.isNotNull(groupVo.getGroupId())) {
-                /*跟新*/
+            if (ObjectUtil.isNotNull(groupVo.getId())) {
+                /*更新*/
                 flag = teamService.updateById(team);
             } else {
                 /*保存*/
                 flag = teamService.save(team);
             }
-
         }
         return flag ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
     }
 
-    @GetMapping(value = "/defence/group/studentGroupList/{groupId}")
+    @GetMapping(value = "/defence/group/studentGroupList")
     @LogAnnotation(content = "学生查看自己在该组的第几答辩人")
     @RequiresPermissions({"group:studentGroup"})
     @ApiOperation(value = "获取学生答辩分组情况")
     @ApiImplicitParam(name = "groupId", value = "分组id")
-    public CommonResult<Map<String, Object>> obtainStudentSequenceOfGroup(@PathVariable("groupId") @NotNull Integer groupId,
+    public CommonResult<Map<String, Object>> obtainStudentSequenceOfGroup(@NotNull Integer groupId,
                                                                           HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
         Map<String, Object> result = new HashMap<>(16);
@@ -233,19 +238,19 @@ public class GroupController {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    @GetMapping(value = "/defence/group/delete/{groupId}")
+    @DeleteMapping(value = "/defence/group/delete")
     @LogAnnotation(content = "删除分组")
     @RequiresPermissions({"group:delete"})
     @ApiOperation(value = "删除分组")
     @ApiImplicitParam(name = "groupId", value = "分组id")
-    public CommonResult<Object> deleteGroup(@PathVariable("groupId") @NotNull Integer groupId) {
+    public CommonResult<Object> deleteGroup(@RequestBody String groupIdJson) {
+        String groupId = JSONUtil.parseObj(groupIdJson).get("groupId", String.class);
         /*删除分组并删除该分组下的组员*/
         /*由是否发送异常判断操作是否成功,发生异常事务回滚则该删除操作没有成功,remove()方法在没有记录时返回值为false*/
         teamService.removeById(groupId);
         teamUserService.remove(new QueryWrapper<TeamUser>().eq("team_id", groupId));
         return CommonResult.success("操作成功");
     }
-
 
     @GetMapping(value = "/defence/group/rule/{majorId}/{grade}/{type}")
     @LogAnnotation(content = "设置专业分组规则")
@@ -275,6 +280,23 @@ public class GroupController {
         return teamConfigService.saveOrUpdate(teamconfig) ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
     }
 
+    @GetMapping(value = "/defence/group/teacherInfo")
+    @RequiresPermissions({"group:teacherInfo"})
+    @LogAnnotation(content = "查看分组信息")
+    @ApiOperation(value = "查看分组信息")
+    public CommonResult<ModifyGroupVo> checkTeacherGroupInfo(@NotNull Integer groupId,HttpServletRequest request) {
+        String jwt = request.getHeader("jwt");
+        Team team = teamService.getById(groupId);
+        ModifyGroupVo groupVo = new ModifyGroupVo();
+        groupVo.setAddress(team.getAddress());
+        groupVo.setTeamNumber(team.getTeamNumber());
+        groupVo.setType(team.getType());
+        groupVo.setEndTime(team.getEndTime());
+        groupVo.setId(team.getId());
+        groupVo.setRequire(team.getRequest());
+        groupVo.setStartDate(team.getStartDate());
+        return CommonResult.success(groupVo);
+    }
 
     @GetMapping(value = "/defence/group/studentInfo")
     @RequiresPermissions({"group:studentInfo"})

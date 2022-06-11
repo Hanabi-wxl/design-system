@@ -16,20 +16,22 @@ import java.time.LocalDateTime;
 public class TeamInfoVo {
     @ApiModelProperty(value = "开始时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm ss", timezone = "Asia/Shanghai")
-    private LocalDateTime startTime;
+    private LocalDateTime startDate;
 
     @ApiModelProperty(value = "结束时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm ss", timezone = "Asia/Shanghai")
     private LocalDateTime endTime;
 
+    private String rangeTime;
+
     @ApiModelProperty(value = "地址")
     private String address;
 
     @ApiModelProperty(value = "要求")
-    private String requirement;
+    private String require;
 
     @ApiModelProperty(value = "分组编号")
-    private Integer groupNumber;
+    private Integer teamNumber;
 
     @ApiModelProperty(value = "组号id")
     private Integer groupId;

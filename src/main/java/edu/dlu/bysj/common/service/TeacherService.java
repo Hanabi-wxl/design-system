@@ -65,6 +65,14 @@ public interface TeacherService extends IService<Teacher> {
     List<TeacherDetailVo> getTeacherInfo(Integer majorId);
 
     /**
+     * 根据collegeId 获取教师详细信息;
+     *
+     * @param collegeId 学院id
+     * @return 教师详情列表
+     */
+    List<TeacherDetailVo> getCollegeTeacherInfo(Integer collegeId);
+
+    /**
      * 通过专业id查询该专业所属学院的所有专业
      *
      * @param majorId: 专业id

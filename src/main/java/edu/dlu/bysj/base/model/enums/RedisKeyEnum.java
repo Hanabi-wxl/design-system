@@ -60,6 +60,12 @@ public enum RedisKeyEnum {
             "edu.dlu.bysj.common.service.impl.TeacherServiceImpl:getTeacherInfo:",
             "list",
             "majorId"),
+    COLLEGE_TEACHER_INFO_KEY(
+            "学院教师信息进行缓存",
+            "edu.dlu.bysj.common.service.impl.TeacherServiceImpl:getCollegeTeacherInfo:",
+            "list",
+            "collegeId"
+    ),
     DEGREE_NAME_ID_KEY(
             "学位名称,id 缓存id",
             "edu.dlu.bysj.common.service.impl.DegreeServiceImpl:allDegreeSimplifyInfo:",

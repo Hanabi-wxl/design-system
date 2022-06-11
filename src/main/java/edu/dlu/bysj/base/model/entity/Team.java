@@ -19,6 +19,14 @@ import java.time.LocalDateTime;
  * @author XiangXinGang
  * @since 2021-10-06
  */
+
+/*
+ * @Description: fix
+ * @Author: sinre
+ * @Date: 2022/6/10 20:41
+ * @param null
+ * @return
+ **/
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ApiModel(value="Team对象", description="答辩分组表")
@@ -53,6 +61,9 @@ public class Team implements Serializable {
 
     @ApiModelProperty(value = "是否2答（1：参加二答，0：不参加二答）")
     private Integer isRepeat;
+
+    @ApiModelProperty(value = "分组类型")
+    private Integer type;
 
     @ApiModelProperty(value = "此条数据是否有效（1：有效，0：无效）")
     @TableLogic

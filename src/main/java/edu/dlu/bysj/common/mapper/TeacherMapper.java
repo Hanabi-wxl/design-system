@@ -86,6 +86,15 @@ public interface TeacherMapper extends BaseMapper<Teacher> {
     List<TeacherDetailVo> getTeacherDetailInformation(Integer majorId);
 
     /**
+     * 通过学院id获取老师详情信息;
+     *
+     * @param collegeId
+     *            学院id
+     * @return 教师详细信息集合
+     */
+    List<TeacherDetailVo> getCollegeTeacherDetailInformation(Integer collegeId);
+
+    /**
      * 根据教师的专业id查询教师所属学院的所有专业;
      *
      * @param majorId

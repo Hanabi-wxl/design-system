@@ -163,6 +163,24 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher>
     }
 
     @Override
+    public List<TeacherDetailVo> getCollegeTeacherInfo(Integer collegeId) {
+        List<TeacherDetailVo> result = null;
+        String key = RedisKeyEnum.COLLEGE_TEACHER_INFO_KEY.getKeyValue() + collegeId;
+        if (redisTemplate.hasKey(key)) {
+            Long size = redisTemplate.boundListOps(key).size();
+            // 获取
+            result = redisTemplate.boundListOps(key).range(0, size);
+        } else {
+            result = teacherMapper.getCollegeTeacherDetailInformation(collegeId);
+            // 放入;
+            if (result != null && !result.isEmpty()) {
+                redisTemplate.opsForList().rightPushAll(key, result);
+            }
+        }
+        return result;
+    }
+
+    @Override
     public List<CollegeMajorVo> teacherMajorByCollegeId(Integer majorId) {
         String key = RedisKeyEnum.COLLEGE_MAJOR_KEY.getKeyValue() + majorId;
         List<CollegeMajorVo> collegeMajorVos = null;

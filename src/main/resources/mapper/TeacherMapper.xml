@@ -187,7 +187,8 @@
                teacher.phone_number   as phone,
                teacher.email          as email,
                t.name                 as title,
-               teacher.id             as teacherId
+               teacher.id             as teacherId,
+               teacher.can_use        as canUse
         from teacher
                  inner join major m
                             on teacher.major_id = m.id
@@ -495,6 +496,33 @@
                            on title.id = t.title_id
                  left join office
                            on office.id = t.office_id
+    </select>
+    <select id="getCollegeTeacherDetailInformation" resultType="edu.dlu.bysj.base.model.vo.TeacherDetailVo">
+        select teacher.name           as username,
+               teacher.teacher_number as teacherNumber,
+               m.name                 as major,
+               o.name                 as office,
+               d.name                 as degree,
+               teacher.sex            as sex,
+               teacher.phone_number   as phone,
+               teacher.email          as email,
+               t.name                 as title,
+               teacher.id             as teacherId,
+               teacher.can_use        as canUse
+        from teacher
+                 inner join major m
+                            on teacher.major_id = m.id
+                 inner join office o
+                            on m.id = o.major_id
+                 inner join degree d
+                            on teacher.degree_id = d.id
+                 inner join title t
+                            on teacher.title_id = t.id
+        where teacher.major_id in (
+            select id from major m where m.college_id=#{collegeId}
+        )
+        and teacher.status = 1
+
     </select>
 
 

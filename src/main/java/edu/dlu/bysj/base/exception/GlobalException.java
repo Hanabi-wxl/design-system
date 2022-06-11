@@ -1,13 +1,17 @@
 package edu.dlu.bysj.base.exception;
 
 import edu.dlu.bysj.base.result.ResultCodeEnum;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.net.BindException;
 
 /**
  * 全局异常定义
  * @author XiangXinGang
  * @date 2021/10/13 10:30
  */
-public class GlobalException  extends RuntimeException{
+public class GlobalException extends RuntimeException{
     private final Integer code;
 
     public Integer getCode() {

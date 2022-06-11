@@ -23,9 +23,9 @@ public class TeacherGroupVo {
     @NotNull
     private Integer teacherId;
 
-    @ApiModelProperty(value = "职责,  0表示组长,1表示副组长,2表示秘书,3表示组员,4表示答辩人")
+    @ApiModelProperty(value = "职责, 0表示组长,1表示副组长,2表示秘书,3表示组员,4表示答辩人")
     @NotNull
-    private Integer resposiblity;
+    private Integer responsibility;
 
     @ApiModelProperty(value = "是否二答")
     private Integer isSecond;

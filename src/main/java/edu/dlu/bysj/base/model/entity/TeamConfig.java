@@ -18,9 +18,18 @@ import java.io.Serializable;
  * @author XiangXinGang
  * @since 2021-10-06
  */
+
+/*
+ * @Description: fix
+ * @Author: sinre
+ * @Date: 2022/6/10 20:43
+ * @param null
+ * @return
+ **/
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ApiModel(value="TeamConfig对象", description="答辩分组配置")
+@Deprecated
 public class TeamConfig implements Serializable {
 
     private static final long serialVersionUID = 1L;
