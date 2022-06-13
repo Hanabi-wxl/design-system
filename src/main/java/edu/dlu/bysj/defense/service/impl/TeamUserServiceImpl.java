@@ -22,8 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author XiangXinGang
@@ -75,7 +74,6 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
         this.teamService = teamService;
     }
 
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean adjustTeamUserOfStudent(Integer studentId, Integer groupId, Integer serial, Integer isStudent) {
         /*原来的组*/
@@ -83,40 +81,15 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
                 .eq("user_id", studentId)
                 .eq("is_student", isStudent));
         if (ObjectUtil.isNotNull(teamUser)) {
-            /*调整原来组内的序列号*/
-            this.removeById(teamUser);
-            /*原组内大于该答辩人的升序排列*/
-            List<TeamUser> originalGroup = this.list(new QueryWrapper<TeamUser>()
-                    .eq("team_id", teamUser.getTeamId())
-                    .gt("serial", teamUser.getSerial())
-                    .eq("resposiblity", 4)
-                    .orderByAsc("serial"));
-            if (originalGroup != null && !originalGroup.isEmpty()) {
-                for (TeamUser element : originalGroup) {
-                    element.setSerial(element.getSerial() - 1);
-                    this.updateById(element);
-                }
-            }
-            /*大于等于该序列后都+1调整新组的序列号*/
-            List<TeamUser> targetGroup = this.list(new QueryWrapper<TeamUser>()
-                    .eq("team_id", groupId)
-                    .ge("serial", serial)
-                    .eq("resposiblity", 4)
-                    .orderByAsc("serial"));
-            if (targetGroup != null && !targetGroup.isEmpty()) {
-                for (TeamUser element : targetGroup) {
-                    element.setSerial(element.getSerial() + 1);
-                    this.updateById(element);
-                }
-            }
             /*插入新的值*/
             TeamUser targetTeamUser = new TeamUser();
+            targetTeamUser.setId(teamUser.getId());
             targetTeamUser.setUserId(studentId);
             targetTeamUser.setTeamId(groupId);
             targetTeamUser.setSerial(serial);
-            targetTeamUser.setResposiblity(3);
+            targetTeamUser.setResposiblity(4);
             targetTeamUser.setIsStudent(isStudent);
-            this.save(targetTeamUser);
+            baseMapper.updateById(targetTeamUser);
         }
         return true;
     }
@@ -230,11 +203,24 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
 
         Integer grade = baseMapper.selectStudentGrade(studentId);
         /*查询答辩配置*/
-        TeamConfig teamconfig = teamConfigService.getOne(new QueryWrapper<TeamConfig>()
+        List<Team> teams = teamService.list(new QueryWrapper<Team>()
                 .eq("grade", grade)
                 .eq("major_id", majorId));
+        Set<Integer> ids = new HashSet<>();
+        for (Team team : teams) {
+            ids.add(team.getType());
+        }
+        Iterator<Integer> iterator = ids.iterator();
+        List<Integer> idList = new ArrayList<>();
+        while (iterator.hasNext()){
+            idList.add(iterator.next());
+        }
+        Random random = new Random();
+        int type = idList.get(random.nextInt(idList.size()));
         /*根据分组规则插入分组*/
-        return this.addRespondentByRule(studentId, teamconfig.getType(), resposiblity, subjectId, grade, majorId);
+        if(ObjectUtil.isNull(teams))
+            return false;
+        return this.addRespondentByRule(studentId, type, resposiblity, subjectId, grade, majorId);
     }
 
     private boolean addRespondentByRule(Integer studentId, Integer configRule, Integer resposiblity, Integer subjectId, Integer grade, Integer majorId) {

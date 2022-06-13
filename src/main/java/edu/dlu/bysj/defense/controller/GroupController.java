@@ -12,6 +12,7 @@ import edu.dlu.bysj.base.result.CommonResult;
 import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.StudentService;
+import edu.dlu.bysj.defense.model.vo.TeamUserVo;
 import edu.dlu.bysj.defense.service.TeamConfigService;
 import edu.dlu.bysj.defense.service.TeamService;
 import edu.dlu.bysj.defense.service.TeamUserService;
@@ -32,9 +33,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -103,21 +102,6 @@ public class GroupController {
         return CommonResult.success(result);
     }
 
-
-    @GetMapping(value = "/defence/group/otherMajorTeacher")
-    @LogAnnotation(content = "获取本院其他专业老师")
-    @RequiresPermissions({"group:otherTeacher"})
-    @ApiOperation(value = "获取本院其他专业老师")
-    public CommonResult<List<TeacherSimplyVo>> collegeOtherMajorTeacher(HttpServletRequest request) {
-        String jwt = request.getHeader("jwt");
-        List<TeacherSimplyVo> result = null;
-        if (!StringUtils.isEmpty(jwt)) {
-            Integer majorId = JwtUtil.getMajorId(jwt);
-            result = teamService.otherMajorTeacherInfo(majorId);
-        }
-        return CommonResult.success(result);
-    }
-
     @PostMapping(value = "/defence/group/teacherGroup")
     @LogAnnotation(content = "进行教师分组")
     @RequiresPermissions({"group:teacherGroup"})
@@ -133,12 +117,14 @@ public class GroupController {
         if (teamUserValue.isPresent()) {
             /*跟新*/
             teamUser.setTeamId(group.getGroupId());
+            teamUser.setInMajor(group.getInMajor());
             teamUser.setUserId(group.getTeacherId());
             teamUser.setResposiblity(group.getResponsibility());
             flag = teamUserService.updateById(teamUser);
         } else {
             /*新建*/
             TeamUser value = new TeamUser();
+            value.setInMajor(group.getInMajor());
             value.setTeamId(group.getGroupId());
             value.setUserId(group.getTeacherId());
             value.setResposiblity(group.getResponsibility());
@@ -189,47 +175,65 @@ public class GroupController {
         return flag ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
     }
 
-    @GetMapping(value = "/defence/group/studentGroupList")
-    @LogAnnotation(content = "学生查看自己在该组的第几答辩人")
-    @RequiresPermissions({"group:studentGroup"})
-    @ApiOperation(value = "获取学生答辩分组情况")
+    @GetMapping(value = "/defence/group/teacherGroupList")
+    @LogAnnotation(content = "查看该组教师分配情况")
+    @RequiresPermissions({"group:teacherGroup"})
+    @ApiOperation(value = "查看该组教师分配情况")
     @ApiImplicitParam(name = "groupId", value = "分组id")
-    public CommonResult<Map<String, Object>> obtainStudentSequenceOfGroup(@NotNull Integer groupId,
-                                                                          HttpServletRequest request) {
-        String jwt = request.getHeader("jwt");
-        Map<String, Object> result = new HashMap<>(16);
-        if (!StringUtils.isEmpty(jwt)) {
-            Student student = studentService.getById(JwtUtil.getUserId(jwt));
-            TeamUser teamUser = teamUserService.getOne(new QueryWrapper<TeamUser>()
-                    .eq("user_id", JwtUtil.getUserId(jwt))
-                    .eq("team_id", groupId)
-                    .eq("is_student", 1));
-            if (ObjectUtil.isNotNull(teamUser)) {
-                result.put("serial", teamUser.getSerial());
-                result.put("studentName", student.getName());
-                result.put("studentId", student.getId());
+    public CommonResult<List<Map<String, Integer>>> obtainTeacherSequenceOfGroup(@NotNull Integer groupId) {
+        List<Map<String, Integer>> result = new LinkedList<>();
+        List<TeamUser> teamUser = teamUserService.list(new QueryWrapper<TeamUser>()
+                .eq("team_id", groupId)
+                .eq("is_student", 0));
+        if (ObjectUtil.isNotNull(teamUser)) {
+            for (TeamUser user : teamUser) {
+                Map<String,Integer> map = new HashMap<>();
+                map.put("0", user.getInMajor());
+                map.put("1", user.getUserId());
+                map.put("2", user.getResposiblity());
+                result.add(map);
             }
         }
         return CommonResult.success(result);
     }
 
+    @GetMapping(value = "/defence/group/studentGroupList")
+    @LogAnnotation(content = "获取学生答辩分组情况")
+    @RequiresPermissions({"group:studentGroup"})
+    @ApiOperation(value = "获取学生答辩分组情况")
+    @ApiImplicitParam(name = "groupId", value = "分组id")
+    public CommonResult<List<Map<String, Object>>> obtainStudentSequenceOfGroup(@NotNull Integer groupId) {
 
-    @GetMapping(value = "/defence/group/modifyStudentGroup/{studentId}/{groupId}/{serial}")
+        Map<String, Object> result = new HashMap<>(16);
+
+        List<TeamUser> list = teamUserService.list(new QueryWrapper<TeamUser>()
+                .eq("team_id", groupId)
+                .eq("is_student", 1));
+        List<Map<String, Object>> resList = new LinkedList<>();
+        if (ObjectUtil.isNotNull(list)) {
+            for (TeamUser teamUser : list) {
+                Student student = studentService.getById(teamUser.getUserId());
+                Team team = teamService.getById(groupId);
+                result.put("serial", teamUser.getSerial());
+                result.put("teamNumber",team.getTeamNumber());
+                result.put("groupId",groupId);
+                result.put("studentName", student.getName());
+                result.put("studentId", student.getId());
+                resList.add(result);
+            }
+        }
+
+        return CommonResult.success(resList);
+    }
+
+    @PatchMapping(value = "/defence/group/modifyStudentGroup")
     @LogAnnotation(content = "管理员调整组内序号")
     @RequiresPermissions({"group:revision"})
     @ApiOperation(value = "调整学生组内序号")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "studentId", value = "学生id"),
-            @ApiImplicitParam(name = "groupId", value = "答辩分组id"),
-            @ApiImplicitParam(name = "serial", value = "组内序列号")
-    })
-    public CommonResult<Object> adjustmentStudentSequenceOfGroup(@PathVariable("studentId") @NotNull Integer studentId,
-                                                                 @PathVariable("groupId") @NotNull Integer groupId,
-                                                                 @PathVariable("serial") @NotNull Integer serial) {
-
+    public CommonResult<Object> adjustmentStudentSequenceOfGroup(@RequestBody @Valid TeamUserVo user) {
         boolean flag = false;
         try {
-            teamUserService.adjustTeamUserOfStudent(studentId, groupId, serial, 1);
+            teamUserService.adjustTeamUserOfStudent(user.getUserId(), user.getTeamNumber(), user.getSerial(), 1);
             flag = true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -252,33 +256,6 @@ public class GroupController {
         return CommonResult.success("操作成功");
     }
 
-    @GetMapping(value = "/defence/group/rule/{majorId}/{grade}/{type}")
-    @LogAnnotation(content = "设置专业分组规则")
-    @RequiresPermissions({"group:rule"})
-    @ApiOperation(value = "设置该年度专业分组规则")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "majorId", value = "专业id"),
-            @ApiImplicitParam(name = "grade", value = "年级"),
-            @ApiImplicitParam(name = "type", value = "答辩分组规则")
-    })
-
-    public CommonResult<Object> setUpStudentGroupRule(@PathVariable("majorId") @NotNull Integer majorId,
-                                                      @PathVariable("grade") @NotNull Integer grade,
-                                                      @PathVariable("type") @Range(min = 0, max = 3, message = "类型必须在[0,3]之内且为整数") Integer type) {
-        /*判断是否存在*/
-        TeamConfig teamconfig = teamConfigService.getOne(new QueryWrapper<TeamConfig>()
-                .eq("major_id", majorId)
-                .eq("grade", grade));
-        Optional<TeamConfig> configOptional = Optional.ofNullable(teamconfig);
-        if (!configOptional.isPresent()) {
-            teamconfig = new TeamConfig();
-        }
-
-        teamconfig.setMajorId(majorId);
-        teamconfig.setGrade(grade);
-        teamconfig.setType(type);
-        return teamConfigService.saveOrUpdate(teamconfig) ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
-    }
 
     @GetMapping(value = "/defence/group/teacherInfo")
     @RequiresPermissions({"group:teacherInfo"})

@@ -5,6 +5,7 @@ import java.util.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.dlu.bysj.base.config.SnowflakeConfig;
+import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.common.service.TeacherService;
 import edu.dlu.bysj.defense.mapper.EachMarkMapper;
 import edu.dlu.bysj.system.mapper.MajorMapper;
@@ -219,10 +220,11 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
             e.printStackTrace();
         }
         /*分页*/
+        Integer grade = GradeUtils.getGrade(query.getYear());
         List<SubjectDetailVo> subjectDetailVos = subjectMapper.teacherSubjectListByTeacherIdAndGrade(teacherId,
-            query.getYear(), (query.getPageNumber() - 1) * query.getPageSize(), query.getPageSize());
+                grade, (query.getPageNumber() - 1) * query.getPageSize(), query.getPageSize());
         /*总数*/
-        Integer total = subjectMapper.totalSubjectListByTeacher(teacherId, query.getYear());
+        Integer total = subjectMapper.totalSubjectListByTeacher(teacherId, grade);
 
         /*查询学生信息*/
         List<Integer> studentIds = new ArrayList<>();

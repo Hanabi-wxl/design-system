@@ -27,6 +27,10 @@ public class TeacherGroupVo {
     @NotNull
     private Integer responsibility;
 
+    @ApiModelProperty(value = "是否为本专业")
+    @NotNull
+    private Integer inMajor;
+
     @ApiModelProperty(value = "是否二答")
     private Integer isSecond;
 }

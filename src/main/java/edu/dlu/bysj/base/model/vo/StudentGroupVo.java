@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@Builder
 @ApiModel(description = "学生")
 public class StudentGroupVo {
     @ApiModelProperty(value = "分组编号")
@@ -30,6 +29,8 @@ public class StudentGroupVo {
     private LocalDateTime endTime;
     @ApiModelProperty(value = "地址")
     private String address;
+    @ApiModelProperty(value = "答辩顺序")
+    private Integer serial;
     @ApiModelProperty(value = "角色名称")
     private String roleName;
     @ApiModelProperty(value = "学生名称")

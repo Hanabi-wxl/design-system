@@ -31,10 +31,8 @@ public interface TeamMapper extends BaseMapper<Team> {
     /**
      * 根据教师的id grade查询该组的学生信息
      *
-     * @param teamId    教师id
-     * @param isStudent 是否为学生
+     * @param studentId
      * @return 学生分组信息集合;
      */
-    List<StudentGroupVo> selectStudentInfofSimilarGroup(@Param("teacherId") Integer teamId,
-                                                        @Param("isStudent") Integer isStudent);
+    StudentGroupVo selectStudentInfofSimilarGroup(Integer studentId);
 }

@@ -39,14 +39,16 @@
 
     </select>
     <select id="selectStudentInfofSimilarGroup" resultType="edu.dlu.bysj.base.model.vo.StudentGroupVo">
-        select student.name as studentName, t.resposiblity as roleName
-
-        from (select team_user.user_id, team_user.resposiblity
+        select
+               student.name as studentName,
+               t.resposiblity as roleName,
+               t.serial as serial
+        from (select team_user.user_id, team_user.resposiblity,team_user.serial
               from team_user
               where team_user.status = 1
-                and team_user.team_id = #{teamId}
-                and team_user.is_student = #{isStudent}) as t
-                 left join student
+                and team_user.user_id = #{studentId}
+                and team_user.is_student = 1) as t
+                left join student
                            on t.user_id = student.id
     </select>
 </mapper>

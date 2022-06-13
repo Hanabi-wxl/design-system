@@ -44,6 +44,9 @@ public class TeamUser implements Serializable {
     @ApiModelProperty(value = "该组的第几个答辩人")
     private Integer serial;
 
+    @ApiModelProperty(value = "是否为本专业")
+    private Integer inMajor;
+
     @ApiModelProperty(value = "词条数据是否有效（0：无效，1：有效）")
     @TableLogic
     private Integer status;

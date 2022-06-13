@@ -21,10 +21,11 @@ public class DefenseRecordServiceImpl extends ServiceImpl<DefenceRecordMapper, D
     @Override
     public TotalPackageVo<SimilarTeamStudentVo> studentInfoOfTeam(DefenseRecordQuery query) {
         TotalPackageVo<SimilarTeamStudentVo> result = new TotalPackageVo<>();
-
         Integer start = (query.getPageNumber() - 1) * query.getPageSize();
-        List<SimilarTeamStudentVo> similarTeamStudentVos = baseMapper.studentInfoOfGroup(query.getGroupNumber(), query.getMajorId(), query.getGrade(), start, query.getPageSize());
-        Integer total = baseMapper.totalInfoOfGroup(query.getGroupNumber(), query.getMajorId(), query.getGrade());
+        List<SimilarTeamStudentVo> similarTeamStudentVos = baseMapper.studentInfoOfGroup(
+                query.getUserId(), query.getYear(), start, query.getPageSize());
+
+        Integer total = baseMapper.totalInfoOfGroup(query.getUserId(),query.getYear());
         result.setTotal(total);
         result.setArrays(similarTeamStudentVos);
         return result;

@@ -4,20 +4,24 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import edu.dlu.bysj.base.model.entity.Major;
+import edu.dlu.bysj.base.model.entity.Subject;
 import edu.dlu.bysj.base.model.entity.Team;
+import edu.dlu.bysj.base.model.entity.TeamUser;
 import edu.dlu.bysj.base.model.enums.ResponsibilityEnum;
-import edu.dlu.bysj.base.model.vo.ReplyTeacherVo;
-import edu.dlu.bysj.base.model.vo.StudentGroupVo;
-import edu.dlu.bysj.base.model.vo.TeacherSimplyVo;
+import edu.dlu.bysj.base.model.vo.*;
+import edu.dlu.bysj.common.mapper.SubjectMapper;
 import edu.dlu.bysj.common.mapper.TeacherMapper;
 import edu.dlu.bysj.defense.mapper.TeamMapper;
+import edu.dlu.bysj.defense.mapper.TeamUserMapper;
 import edu.dlu.bysj.defense.service.TeamService;
-import edu.dlu.bysj.system.service.MajorService;
+import edu.dlu.bysj.system.mapper.MajorMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author XiangXinGang
@@ -26,15 +30,21 @@ import java.util.List;
 @Service
 public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements TeamService {
 
-    private final MajorService majorService;
+    private final MajorMapper majorMapper;
 
     private final TeacherMapper teacherMapper;
 
+    private final SubjectMapper subjectMapper;
+
+    private final TeamUserMapper teamUserMapper;
+
     @Autowired
 
-    public TeamServiceImpl(MajorService majorService,
-                           TeacherMapper teacherMapper) {
-        this.majorService = majorService;
+    public TeamServiceImpl(MajorMapper majorMapper,TeamUserMapper teamUserMapper,
+                           TeacherMapper teacherMapper,SubjectMapper subjectMapper) {
+        this.teamUserMapper = teamUserMapper;
+        this.majorMapper = majorMapper;
+        this.subjectMapper = subjectMapper;
         this.teacherMapper = teacherMapper;
     }
 
@@ -42,10 +52,10 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     @Override
     public List<TeacherSimplyVo> otherMajorTeacherInfo(Integer majorId) {
         /*获取学院Id*/
-        Major major = majorService.getById(majorId);
+        Major major = majorMapper.selectById(majorId);
         Integer collegeId = major.getCollegeId();
         /*反馈该学院其他专业id*/
-        List<Major> majorList = majorService.list(new QueryWrapper<Major>()
+        List<Major> majorList = majorMapper.selectList(new QueryWrapper<Major>()
                 .eq("college_id", collegeId)
                 .ne("id", majorId));
         List<Integer> majorIds = new ArrayList<>();
@@ -75,28 +85,28 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     }
 
     @Override
-    public List<StudentGroupVo> studentReplyInfoOfSimilarGroup(Integer majorId, Integer grade, Integer isSecond) {
-        List<StudentGroupVo> result = null;
-        Team teamInfo = this.getOne(new QueryWrapper<Team>()
-                .eq("major_id", majorId)
-                .eq("grade", grade)
-                .eq("is_repeat", isSecond));
-        if (ObjectUtil.isNotNull(teamInfo)) {
-            /*team_user 中 isStudent 1代表为学生,teamUser中的基础信息*/
-            result = baseMapper.selectStudentInfofSimilarGroup(teamInfo.getId(), 1);
-
-            if (result != null && !result.isEmpty()) {
-                for (StudentGroupVo element : result) {
-                    element.setGroupNumber(teamInfo.getTeamNumber());
-                    element.setStartTime(teamInfo.getStartDate());
-                    element.setEndTime(teamInfo.getEndTime());
-                    element.setAddress(teamInfo.getAddress());
-                    element.setRequirement(teamInfo.getRequest());
-                    element.setRoleName(ResponsibilityEnum.getResponsibilityMessage(element.getRoleName()));
-                }
+    public List<StudentGroupVo> studentReplyInfoOfSimilarGroup(Integer majorId, Integer grade, Integer isSecond, Integer teacherId) {
+        List<StudentGroupVo> result = new LinkedList<>();
+        List<Map<String, Object>> maps = subjectMapper.selectMaps(new QueryWrapper<Subject>()
+                .select("student_id")
+                .eq("first_teacher_id", teacherId));
+        for (Map<String, Object> map : maps) {
+            if (ObjectUtil.isNotNull(map)){
+                Object studentId = map.get("student_id");
+                TeamUser teamUser = teamUserMapper.selectOne(new QueryWrapper<TeamUser>()
+                        .eq("user_id", studentId)
+                        .eq("is_student", 1));
+                Team teamInfo = baseMapper.selectById(teamUser.getTeamId());
+                StudentGroupVo groupVo = baseMapper.selectStudentInfofSimilarGroup(teamUser.getUserId());
+                groupVo.setGroupNumber(teamInfo.getTeamNumber());
+                groupVo.setStartTime(teamInfo.getStartDate());
+                groupVo.setEndTime(teamInfo.getEndTime());
+                groupVo.setAddress(teamInfo.getAddress());
+                groupVo.setRequirement(teamInfo.getRequest());
+                groupVo.setRoleName(ResponsibilityEnum.getResponsibilityMessage(groupVo.getRoleName()));
+                result.add(groupVo);
             }
         }
-
         return result;
     }
 }

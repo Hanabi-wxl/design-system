@@ -41,5 +41,5 @@ public interface TeamService extends IService<Team> {
      * @param isSecond 是否为学生
      * @return 学生分组信息集合
      */
-    List<StudentGroupVo> studentReplyInfoOfSimilarGroup(Integer majorId, Integer grade, Integer isSecond);
+    List<StudentGroupVo> studentReplyInfoOfSimilarGroup(Integer majorId, Integer grade, Integer isSecond, Integer teacherId);
 }

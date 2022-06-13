@@ -2,13 +2,13 @@ package edu.dlu.bysj.defense.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import edu.dlu.bysj.base.model.entity.*;
-import edu.dlu.bysj.base.model.entity.Process;
 import edu.dlu.bysj.base.model.enums.ProcessEnum;
 import edu.dlu.bysj.base.model.vo.ApplyReplyVo;
 import edu.dlu.bysj.base.model.vo.ReplyInfo;
 import edu.dlu.bysj.base.model.vo.ReplyTeacherVo;
 import edu.dlu.bysj.base.model.vo.StudentGroupVo;
 import edu.dlu.bysj.base.result.CommonResult;
+import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.StudentService;
 import edu.dlu.bysj.common.service.SubjectService;
@@ -17,7 +17,6 @@ import edu.dlu.bysj.defense.service.TeamConfigService;
 import edu.dlu.bysj.defense.service.TeamService;
 import edu.dlu.bysj.defense.service.TeamUserService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
-import edu.dlu.bysj.paper.service.ProcessService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -71,13 +70,13 @@ public class ReplyController {
         this.subjectService = subjectService;
     }
 
-    @GetMapping(value = "/defence/teacherInfo/{grade}")
+    @GetMapping(value = "/defence/teacherInfo")
     @LogAnnotation(content = "获取教师答辩信息")
     @RequiresPermissions({"defence:teacherInfo"})
     @ApiOperation(value = "获取教师答辩信息")
     @ApiImplicitParam(name = "grade", value = "年级")
-    public CommonResult<List<ReplyTeacherVo>> obtainReplyTeacherInfo(@PathVariable("grade") @NotNull Integer grade,
-                                                                     HttpServletRequest request) {
+    public CommonResult<List<ReplyTeacherVo>> obtainReplyTeacherInfo(HttpServletRequest request) {
+        Integer grade = GradeUtils.getGrade();
         String jwt = request.getHeader("jwt");
         List<ReplyTeacherVo> result = null;
         if (!StringUtils.isEmpty(jwt)) {
@@ -87,7 +86,7 @@ public class ReplyController {
         return CommonResult.success(result);
     }
 
-    @GetMapping(value = "/defence/selfStudentInfo/{isSecond}/{grade}")
+    @GetMapping(value = "/defence/selfStudentInfo")
     @LogAnnotation(content = "查看与该教师相同答辩组同组的学生")
     @RequiresPermissions({"defence:selfInfo"})
     @ApiOperation(value = "查看该教师答辩组同组的学生答辩信息")
@@ -95,13 +94,13 @@ public class ReplyController {
             @ApiImplicitParam(name = "isSecond", value = "是否二答"),
             @ApiImplicitParam(name = "grade", value = "年级")
     })
-    public CommonResult<List<StudentGroupVo>> studentInfoOfSimilarGuide(@PathVariable("isSecond") @NotNull Integer isSecond,
-                                                                        @PathVariable("grade") @NotNull Integer grade,
+    public CommonResult<List<StudentGroupVo>> studentInfoOfSimilarGuide(@NotNull Integer isSecond,
                                                                         HttpServletRequest request) {
+        Integer grade = GradeUtils.getGrade();
         String jwt = request.getHeader("jwt");
         List<StudentGroupVo> result = null;
         if (!StringUtils.isEmpty(jwt)) {
-            result = teamService.studentReplyInfoOfSimilarGroup(JwtUtil.getMajorId(jwt), grade, isSecond);
+            result = teamService.studentReplyInfoOfSimilarGroup(JwtUtil.getMajorId(jwt), grade, isSecond, JwtUtil.getUserId(jwt));
         }
         return CommonResult.success(result);
     }
@@ -131,7 +130,7 @@ public class ReplyController {
 
             if (need == null || need.isEmpty()) {
                 /*答辩角色设置未4答辩人*/
-                flag = teamUserService.addReplyStudent(subjectId, JwtUtil.getMajorId(jwt), 4, subjectId);
+                flag = teamUserService.addReplyStudent(JwtUtil.getUserId(jwt), JwtUtil.getMajorId(jwt), 4, subjectId);
                 /*再次查询申请答辩后此人的组信息*/
                 TeamUser teamuser = teamUserService.getOne(new QueryWrapper<TeamUser>()
                         .eq("user_id", userId)
@@ -150,13 +149,15 @@ public class ReplyController {
                 subject.setProgressId(processCode);
                 subjectService.updateById(subject);
             }
-        }
-        else{
+        } else if (subject.getProgressId() == 19){
+            return CommonResult.failed("已申请答辩，请等待通知！");
+        } else{
             progress = progressService.getOne(new QueryWrapper<Progress>().eq("id", subject.getProgressId() + 1));
         }
         return flag ? CommonResult.success(result) : CommonResult.failed(progress.getContent() + "阶段未完成！");
     }
 
+    @Deprecated
     @GetMapping(value = "/defence/infoBySubjectId/{subjectId}")
     @LogAnnotation(content = "题目答辩信息")
     @RequiresPermissions({"defence:subjectInfo"})

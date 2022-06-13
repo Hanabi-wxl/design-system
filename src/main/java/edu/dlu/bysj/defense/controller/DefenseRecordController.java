@@ -9,6 +9,7 @@ import edu.dlu.bysj.base.model.vo.RecordInfoVo;
 import edu.dlu.bysj.base.model.vo.SimilarTeamStudentVo;
 import edu.dlu.bysj.base.model.vo.TotalPackageVo;
 import edu.dlu.bysj.base.result.CommonResult;
+import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.defense.service.DefenseRecordService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
@@ -99,11 +100,14 @@ public class DefenseRecordController {
     @LogAnnotation(content = "查询组内学生信息")
     @RequiresPermissions({"record:yearGroup"})
     @ApiOperation(value = "查询组内学生信息")
-    public CommonResult<TotalPackageVo<SimilarTeamStudentVo>> defenseRecordListOfSimilarTeam(@Valid DefenseRecordQuery query) {
+    public CommonResult<TotalPackageVo<SimilarTeamStudentVo>> defenseRecordListOfSimilarTeam(
+            @Valid DefenseRecordQuery query, HttpServletRequest request) {
+        Integer userId = JwtUtil.getUserId(request.getHeader("jwt"));
+        query.setYear(GradeUtils.getGrade(query.getYear()));
+        query.setUserId(userId);
         TotalPackageVo<SimilarTeamStudentVo> result = defenseRecordService.studentInfoOfTeam(query);
         return CommonResult.success(result);
     }
-
 
     @GetMapping(value = "/defence/record/detail/{recordId}")
     @LogAnnotation(content = "获取学生答辩记录详情")

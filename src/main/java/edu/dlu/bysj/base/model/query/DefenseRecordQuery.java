@@ -12,14 +12,9 @@ import lombok.Data;
 @Data
 @ApiModel(description = "专业id")
 public class DefenseRecordQuery extends CommonPage {
-    @ApiModelProperty(value = "专业id")
-    private Integer majorId;
+    @ApiModelProperty(value = "年份")
+    private Integer year;
 
-    @ApiModelProperty(value = "分组编号")
-    private Integer groupNumber;
-
-    @ApiModelProperty(value = "年级")
-    private Integer grade;
-
-
+    @ApiModelProperty(value = "用户id")
+    private Integer userId;
 }
