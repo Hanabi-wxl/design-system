@@ -1,6 +1,7 @@
 package edu.dlu.bysj.defense.controller;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import edu.dlu.bysj.base.model.entity.DefenceRecord;
 import edu.dlu.bysj.base.model.query.DefenseRecordQuery;
@@ -51,16 +52,17 @@ public class DefenseRecordController {
     @LogAnnotation(content = "新增/修改答辩记录")
     @RequiresPermissions({"record:add"})
     @ApiOperation(value = "新增/修改答辩记录")
-    public CommonResult<Object> modifyDefenseQuestion(@Valid DefenseRecordVo recordVo,
+    public CommonResult<Object> modifyDefenseQuestion(@Valid @RequestBody DefenseRecordVo recordVo,
                                                       HttpServletRequest request) {
         boolean flag = false;
         String jwt = request.getHeader("jwt");
         if (!StringUtils.isEmpty(jwt)) {
             DefenceRecord record = new DefenceRecord();
             record.setSubjectId(recordVo.getSubjectId());
-            record.setId(record.getId());
-            record.setQuestion(recordVo.getQuestionName());
-            record.setAnswer(record.getAnswer());
+            record.setId(""+recordVo.getSubjectId()+recordVo.getQuestionNumber());
+            record.setQuestionNumber(recordVo.getQuestionNumber());
+            record.setQuestion(recordVo.getQuestion());
+            record.setAnswer(recordVo.getAnswer());
             record.setResult(recordVo.getCorrect());
             record.setDate(LocalDate.now());
             record.setNoteTakerId(JwtUtil.getUserId(jwt));
@@ -69,28 +71,31 @@ public class DefenseRecordController {
         return flag ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
     }
 
-    @DeleteMapping(value = "/defence/record/delete/{recordId}")
+    @DeleteMapping(value = "/defence/record/delete")
     @LogAnnotation(content = "删除答辩记录")
     @RequiresPermissions({"record:delete"})
     @ApiOperation(value = "删除答辩记录")
     @ApiImplicitParam(name = "recordId", value = "答辩记录id")
-    public CommonResult<Object> deleteDefenceRecord(@PathVariable("recordId") @NotNull Integer recordId) {
-        return defenseRecordService.removeById(recordId) ? CommonResult.success("删除成功") : CommonResult.failed("删除失败");
+    public CommonResult<Object> deleteDefenceRecord(@NotNull @RequestBody String recordId) {
+        Integer id = JSONUtil.parseObj(recordId).get("recordId", Integer.class);
+        return defenseRecordService.removeById(id) ? CommonResult.success("删除成功") : CommonResult.failed("删除失败");
     }
 
-    @GetMapping(value = "/defence/record/list/{subjectId}")
+    @GetMapping(value = "/defence/record/list")
     @LogAnnotation(content = "获取答辩记录列表")
     @RequiresPermissions({"record:list"})
     @ApiOperation(value = "获取答辩记录列表")
     @ApiImplicitParam(name = "subjectId", value = "题目id")
-    public CommonResult<List<Map<String, Object>>> defenseRecordList(@PathVariable("subjectId") @NotNull Integer subjectId) {
+    public CommonResult<List<Map<String, Object>>> defenseRecordList(@NotNull Integer subjectId) {
         List<Map<String, Object>> array = new ArrayList<>();
         List<DefenceRecord> records = defenseRecordService.list(new QueryWrapper<DefenceRecord>()
                 .eq("subject_id", subjectId));
         for (DefenceRecord element : records) {
             Map<String, Object> map = new HashMap<>(16);
-            map.put("recordId", element.getId());
-            map.put("questionName", element.getQuestion());
+            map.put("id", element.getId());
+            map.put("questionNumber", element.getQuestionNumber());
+            map.put("question", element.getQuestion());
+            map.put("answer", element.getAnswer());
             array.add(map);
         }
         return CommonResult.success(array);
@@ -109,6 +114,7 @@ public class DefenseRecordController {
         return CommonResult.success(result);
     }
 
+    @Deprecated
     @GetMapping(value = "/defence/record/detail/{recordId}")
     @LogAnnotation(content = "获取学生答辩记录详情")
     @RequiresPermissions({"record:detail"})

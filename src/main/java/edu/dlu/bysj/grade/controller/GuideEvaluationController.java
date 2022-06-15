@@ -88,10 +88,9 @@ public class GuideEvaluationController {
     @LogAnnotation(content = "获取该题目的所有评分信息")
     @ApiOperation(value = "获取该题目的所有评分信息")
     @ApiImplicitParam(name = "subjectId", value = "题目id")
-    public CommonResult<ScoreInformationVo> obtainAllScoreInfo(@NotNull Integer subjectId) {
+    public CommonResult<ScoreInformationVo> obtainAllScoreInfo(Integer subjectId) {
         Score score = scoreService.getOne(new QueryWrapper<Score>().eq("subject_id", subjectId));
         ScoreInformationVo info = new ScoreInformationVo();
-
         if (ObjectUtil.isNotNull(score)) {
             info.setProcessAttitude(score.getProcessAttitude());
             info.setProcessDiscipline(score.getProcessDiscipline());

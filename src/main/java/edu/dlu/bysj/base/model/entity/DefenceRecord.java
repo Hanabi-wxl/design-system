@@ -27,11 +27,14 @@ public class DefenceRecord implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty(value = "id")
-    @TableId(value = "id", type = IdType.AUTO)
-    private Integer id;
+    @TableId(value = "id")
+    private String id;
 
     @ApiModelProperty(value = "题目id")
     private Integer subjectId;
+
+    @ApiModelProperty(value = "问题号")
+    private Integer questionNumber;
 
     @ApiModelProperty(value = "问题")
     private String question;
@@ -48,9 +51,8 @@ public class DefenceRecord implements Serializable {
     @ApiModelProperty(value = "记录人id")
     private Integer noteTakerId;
 
-    @ApiModelProperty(value = "此条数据是否有效（1：有效，0：无效）")
-    @TableLogic
-    private Integer status;
-
-
+    // 本数据为保证id唯一不可采用逻辑删除
+//    @ApiModelProperty(value = "此条数据是否有效（1：有效，0：无效）")
+//    @TableId
+//    private Integer status;
 }

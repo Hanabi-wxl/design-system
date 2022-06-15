@@ -2,6 +2,7 @@ package edu.dlu.bysj.base.model.vo;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import io.swagger.models.auth.In;
 import lombok.Data;
 import org.hibernate.validator.constraints.Range;
 
@@ -20,15 +21,19 @@ public class DefenseRecordVo {
     private Integer subjectId;
 
     @ApiModelProperty(value = "问题名称")
+    @NotNull
+    private Integer questionNumber;
+
+    @ApiModelProperty(value = "问题名称")
     @NotBlank
-    private String questionName;
+    private String question;
 
     @ApiModelProperty(value = "问题回答")
     @NotBlank
-    private String questionAnswer;
+    private String answer;
 
     @ApiModelProperty(value = "记录id（若新增，该字段为空）")
-    private Integer recordId;
+    private Integer id;
 
     @ApiModelProperty(value = "是否正确")
     @Range(min = 0, max = 1)
