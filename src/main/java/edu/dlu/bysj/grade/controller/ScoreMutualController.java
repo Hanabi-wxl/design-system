@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 import edu.dlu.bysj.base.model.entity.EachMark;
 import edu.dlu.bysj.base.model.vo.SubjectDetailVo;
 import edu.dlu.bysj.base.model.vo.TotalPackageVo;
+import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.defense.service.EachMarkService;
 import io.jsonwebtoken.Jwt;
 import io.swagger.models.auth.In;
@@ -101,7 +102,8 @@ public class ScoreMutualController {
         for (EachMark eachMark : eachMarks) {
             idList.add(eachMark.getSubjectId());
         }
-        TotalPackageVo<SubjectDetailVo> packageVo = subjectService.filterByYear(idList, pageSize, pageNumber, year);
+        Integer grade = GradeUtils.getGrade(year);
+        TotalPackageVo<SubjectDetailVo> packageVo = subjectService.filterByYear(idList, pageSize, pageNumber, grade);
         return CommonResult.success(packageVo);
     }
 }

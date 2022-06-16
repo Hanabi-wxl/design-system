@@ -80,198 +80,252 @@
                             on s.student_id = score.subject_id
     </select>
     <select id="selectByMajorId" resultType="edu.dlu.bysj.base.model.vo.ScoreSummaryVo">
-        select count(*)                as total,
-               sum(if(
-                               (score.process_attitude +
-                                score.process_discipline +
-                                score.process_report +
-                                score.process_complete) * 100 >= 15 * 0.9 * 100
-                   , 1, 0)) / count(*) as processOutstanding,
-
-               sum(if(
-                           (score.process_attitude +
-                            score.process_discipline +
-                            score.process_report +
-                            score.process_complete) * 100 between 15 * 0.8 * 100 and 20 * 0.89 * 100
-                   , 1, 0)) / count(*) as processGood,
-
-               sum(if(
-                           (score.process_attitude +
-                            score.process_discipline +
-                            score.process_report +
-                            score.process_complete) * 100 between 15 * 0.7 * 100 and 20 * 0.79 * 100
-                   , 1, 0)) / count(*) as processMiddle,
-
-
-               sum(if(
-                           (score.process_attitude +
-                            score.process_discipline +
-                            score.process_report +
-                            score.process_complete) * 100 between 15 * 0.6 * 100 and 20 * 0.69 * 100
-                   , 1, 0)) / count(*) as processBad,
-
-               sum(if(
-                           (score.process_attitude +
-                            score.process_discipline +
-                            score.process_report +
-                            score.process_complete) * 100 between 0 and 15 * 0.59 * 100
-                   , 1, 0)) / count(*) as processFailed,
-
-
-               sum(if(
-                               (score.process_attitude +
-                                score.process_discipline +
-                                score.process_report +
-                                score.process_complete) * 100 = 0
-                   , 1, 0)) / count(*) as processNoScore,
-
-
-               sum(if(
-                               (score.first_quality +
-                                score.first_ability +
-                                score.first_complete) * 100 >= 20 * 0.9 * 100
-                   , 1, 0)) / count(*) as firstOutstanding,
-
-               sum(if(
-                           (score.first_quality +
-                            score.first_ability +
-                            score.first_complete) * 100 between 20 * 0.8 * 100 and 15 * 0.89 * 100
-                   , 1, 0)) / count(*) as firstGood,
-
-               sum(if(
-                           (score.first_quality +
-                            score.first_ability +
-                            score.first_complete) * 100 between 20 * 0.7 * 100 and 15 * 0.79 * 100
-                   , 1, 0)) / count(*) as firstMiddle,
-
-               sum(if(
-                           (score.first_quality +
-                            score.first_ability +
-                            score.first_complete) * 100 between 20 * 0.6 * 100 and 15 * 0.69 * 100
-                   , 1, 0)) / count(*) as firstBad,
-
-
-               sum(if(
-                           (score.first_quality +
-                            score.first_ability +
-                            score.first_complete) * 100 between 0 and 20 * 0.59 * 100
-                   , 1, 0)) / count(*) as firstFailed,
-
-
-               sum(if(
-                               (score.first_quality +
-                                score.first_ability +
-                                score.first_complete) * 100 = 0
-                   , 1, 0)) / count(*) as firstNoScore,
-
-
-               sum(if(
-                               (score.other_quality +
-                                score.other_ability +
-                                score.other_complete) * 100 >= 20 * 0.9
-                   , 1, 0)) / count(*) as otherOutstanding,
-
-
-               sum(if(
-                           (score.other_quality +
-                            score.other_ability +
-                            score.other_complete) * 100 between 20 * 0.8 * 100 and 20 * 0.89 * 100
-                   , 1, 0)) / count(*) as otherGood,
-
-               sum(if(
-                           (score.other_quality +
-                            score.other_ability +
-                            score.other_complete) * 100 between 20 * 0.7 * 100 and 20 * 0.79 * 100
-                   , 1, 0)) / count(*) as otherMiddle,
-
-
-               sum(if(
-                           (score.other_quality +
-                            score.other_ability +
-                            score.other_complete) * 100 between 20 * 0.6 * 100 and 20 * 0.69 * 100
-                   , 1, 0)) / count(*) as otherBad,
-
-
-               sum(if(
-                           (score.other_quality +
-                            score.other_ability +
-                            score.other_complete) * 100 between 0 and 20 * 0.59 * 100
-                   , 1, 0)) / count(*) as otherFailed,
-
-
-               sum(if(
-                               (score.other_quality +
-                                score.other_ability +
-                                score.other_complete) * 100 = 0
-                   , 1, 0)) / count(*) as otherNoScore,
-
-               sum(if(
-                               (score.total_self_summary +
-                                score.total_process +
-                                score.total_quality +
-                                score.total_complete_quality +
-                                score.total_ability) * 100 >= 45 * 0.9 * 100
-                   , 1, 0)) / count(*) as totalOutstanding,
-
-
-               sum(if(
-                           (score.total_self_summary +
-                            score.total_process +
-                            score.total_quality +
-                            score.total_complete_quality +
-                            score.total_ability) * 100 between 45 * 0.8 * 100 and 45 * 0.89 * 100
-                   , 1, 0)) / count(*) as totalGood,
-
-
-               sum(if(
-                           (score.total_self_summary +
-                            score.total_process +
-                            score.total_quality +
-                            score.total_complete_quality +
-                            score.total_ability) * 100 between 45 * 0.7 * 100 and 45 * 0.79 * 100
-                   , 1, 0)) / count(*) as totalMiddle,
-
-
-               sum(if(
-                           (score.total_self_summary +
-                            score.total_process +
-                            score.total_quality +
-                            score.total_complete_quality +
-                            score.total_ability) * 100 between 45 * 0.6 * 100 and 45 * 0.69 * 100
-                   , 1, 0)) / count(*) as totalBad,
-
-
-               sum(if(
-                           (score.total_self_summary +
-                            score.total_process +
-                            score.total_quality +
-                            score.total_complete_quality +
-                            score.total_ability) * 100 between 0 and 45 * 0.59 * 100
-                   , 1, 0)) / count(*) as totalFailed,
-
-
-               sum(if(
-                               (score.total_self_summary +
-                                score.total_process +
-                                score.total_quality +
-                                score.total_complete_quality +
-                                score.total_ability) * 100 = 0
-                   , 1, 0)) / count(*) as totalNoScore
-
-
-        from score
-
-                 left join subject
-                           on score.subject_id = subject.id
-                 left join student
-                           on subject.student_id = student.id
-
+        select
+            count(*) as total,
+            sum(
+                    if(
+                                    (
+                                            score.process_attitude + score.process_discipline + score.process_report + score.process_complete
+                                        ) * 100 >= 15 * 0.9 * 100,
+                                    1,
+                                    0
+                        )
+                ) / count(*) as processOutstanding,
+            sum(
+                    if(
+                                (
+                                        score.process_attitude + score.process_discipline + score.process_report + score.process_complete
+                                    ) * 100 between 15 * 0.8 * 100
+                                and 15 * 0.89 * 100,
+                                1,
+                                0
+                        )
+                ) / count(*) as processGood,
+            sum(
+                    if(
+                                (
+                                        score.process_attitude + score.process_discipline + score.process_report + score.process_complete
+                                    ) * 100 between 15 * 0.7 * 100
+                                and 15 * 0.79 * 100,
+                                1,
+                                0
+                        )
+                ) / count(*) as processMiddle,
+            sum(
+                    if(
+                                (
+                                        score.process_attitude + score.process_discipline + score.process_report + score.process_complete
+                                    ) * 100 between 15 * 0.6 * 100
+                                and 15 * 0.69 * 100,
+                                1,
+                                0
+                        )
+                ) / count(*) as processBad,
+            sum(
+                    if(
+                                (
+                                        score.process_attitude + score.process_discipline + score.process_report + score.process_complete
+                                    ) * 100 between 0
+                                and 15 * 0.59 * 100,
+                                1,
+                                0
+                        )
+                ) / count(*) as processFailed,
+            sum(
+                    if(
+                                    (
+                                            score.process_attitude + score.process_discipline + score.process_report + score.process_complete
+                                        ) * 100 = 0,
+                                    1,
+                                    0
+                        )
+                ) / count(*) as processNoScore,
+            sum(
+                    if(
+                                    (
+                                        score.first_quality + score.first_ability + score.first_complete
+                                        ) * 100 >= 20 * 0.9 * 100,
+                                    1,
+                                    0
+                        )
+                ) / count(*) as firstOutstanding,
+            sum(
+                    if(
+                                (
+                                    score.first_quality + score.first_ability + score.first_complete
+                                    ) * 100 between 20 * 0.8 * 100
+                                and 20 * 0.89 * 100,
+                                1,
+                                0
+                        )
+                ) / count(*) as firstGood,
+            sum(
+                    if(
+                                (
+                                    score.first_quality + score.first_ability + score.first_complete
+                                    ) * 100 between 20 * 0.7 * 100
+                                and 20 * 0.79 * 100,
+                                1,
+                                0
+                        )
+                ) / count(*) as firstMiddle,
+            sum(
+                    if(
+                                (
+                                    score.first_quality + score.first_ability + score.first_complete
+                                    ) * 100 between 20 * 0.6 * 100
+                                and 20 * 0.69 * 100,
+                                1,
+                                0
+                        )
+                ) / count(*) as firstBad,
+            sum(
+                    if(
+                                (
+                                    score.first_quality + score.first_ability + score.first_complete
+                                    ) * 100 between 0
+                                and 20 * 0.59 * 100,
+                                1,
+                                0
+                        )
+                ) / count(*) as firstFailed,
+            sum(
+                    if(
+                                    (
+                                        score.first_quality + score.first_ability + score.first_complete
+                                        ) * 100 = 0,
+                                    1,
+                                    0
+                        )
+                ) / count(*) as firstNoScore,
+            sum(
+                    if(
+                                    (
+                                        score.other_quality + score.other_ability + score.other_complete
+                                        ) * 100 >= 20 * 0.9 * 100,
+                                    1,
+                                    0
+                        )
+                ) / count(*) as otherOutstanding,
+            sum(
+                    if(
+                                (
+                                    score.other_quality + score.other_ability + score.other_complete
+                                    ) * 100 between 20 * 0.8 * 100
+                                and 20 * 0.89 * 100,
+                                1,
+                                0
+                        )
+                ) / count(*) as otherGood,
+            sum(
+                    if(
+                                (
+                                    score.other_quality + score.other_ability + score.other_complete
+                                    ) * 100 between 20 * 0.7 * 100
+                                and 20 * 0.79 * 100,
+                                1,
+                                0
+                        )
+                ) / count(*) as otherMiddle,
+            sum(
+                    if(
+                                (
+                                    score.other_quality + score.other_ability + score.other_complete
+                                    ) * 100 between 20 * 0.6 * 100
+                                and 20 * 0.69 * 100,
+                                1,
+                                0
+                        )
+                ) / count(*) as otherBad,
+            sum(
+                    if(
+                                (
+                                    score.other_quality + score.other_ability + score.other_complete
+                                    ) * 100 between 0
+                                and 20 * 0.59 * 100,
+                                1,
+                                0
+                        )
+                ) / count(*) as otherFailed,
+            sum(
+                    if(
+                                    (
+                                        score.other_quality + score.other_ability + score.other_complete
+                                        ) * 100 = 0,
+                                    1,
+                                    0
+                        )
+                ) / count(*) as othernoScore,
+            sum(
+                    if(
+                                    (
+                                            score.total_self_summary + score.total_process + score.total_quality + score.total_complete_quality + score.total_ability
+                                        ) * 100 >= 45 * 0.9 * 100,
+                                    1,
+                                    0
+                        )
+                ) / count(*) as totalOutstanding,
+            sum(
+                    if(
+                                (
+                                        score.total_self_summary + score.total_process + score.total_quality + score.total_complete_quality + score.total_ability
+                                    ) * 100 between 45 * 0.8 * 100
+                                and 45 * 0.89 * 100,
+                                1,
+                                0
+                        )
+                ) / count(*) as totalGood,
+            sum(
+                    if(
+                                (
+                                        score.total_self_summary + score.total_process + score.total_quality + score.total_complete_quality + score.total_ability
+                                    ) * 100 between 45 * 0.7 * 100
+                                and 45 * 0.79 * 100,
+                                1,
+                                0
+                        )
+                ) / count(*) as totalMiddle,
+            sum(
+                    if(
+                                (
+                                        score.total_self_summary + score.total_process + score.total_quality + score.total_complete_quality + score.total_ability
+                                    ) * 100 between 45 * 0.6 * 100
+                                and 45 * 0.69 * 100,
+                                1,
+                                0
+                        )
+                ) / count(*) as totalBad,
+            sum(
+                    if(
+                                (
+                                        score.total_self_summary + score.total_process + score.total_quality + score.total_complete_quality + score.total_ability
+                                    ) * 100 between 0
+                                and 45 * 0.59 * 100,
+                                1,
+                                0
+                        )
+                ) / count(*) as totalFailed,
+            sum(
+                    if(
+                                    (
+                                            score.total_self_summary + score.total_process + score.total_quality + score.total_complete_quality + score.total_ability
+                                        ) * 100 = 0,
+                                    1,
+                                    0
+                        )
+                ) / count(*) as totalNoScore
+        from
+            score
+                left join subject
+                          on score.subject_id = subject.id
+                left join student
+                          on subject.student_id = student.id
         where student.major_id = #{majorId}
           and subject.grade = #{year}
           and score.status = 1
           and subject.status = 1
           and student.status = 1
-          and student.subject_id != -1
+          and student.subject_id != - 1
     </select>
 
 

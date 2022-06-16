@@ -29,7 +29,7 @@ public class ScoreInformationVo {
     private String processComment;
 
     @ApiModelProperty(value = "过程评价-查重成绩")
-    private Integer processSimilar;
+    private String processSimilar;
 
     @ApiModelProperty(value = "第一指导老师-选题质量")
     private Integer firstQuality;

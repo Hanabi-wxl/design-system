@@ -41,6 +41,14 @@ public class SubjectDetailVo {
     private String firstTeacherName;
     @ApiModelProperty(value = "教师手机号")
     private String firstTeacherPhone;
-    @ApiModelProperty(value = "教师手机号")
-    private String totalScore;
+    @ApiModelProperty(value = "总分")
+    private Integer summaryScore;
+    @ApiModelProperty(value = "指导教师评价分")
+    private Integer teacherScore;
+    @ApiModelProperty(value = "过程评价分")
+    private Integer processScore;
+    @ApiModelProperty(value = "互评评价分")
+    private Integer otherScore;
+    @ApiModelProperty(value = "答辩评价分")
+    private Integer defenceScore;
 }

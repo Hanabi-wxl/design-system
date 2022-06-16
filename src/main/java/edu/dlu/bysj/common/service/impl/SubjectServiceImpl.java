@@ -236,6 +236,8 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
 
         Integer index;
         for (SubjectDetailVo element : subjectDetailVos) {
+            Integer summaryScore = summaryScore(element.getDefenceScore(), element.getOtherScore(), element.getProcessScore(), element.getTeacherScore());
+            element.setSummaryScore(summaryScore);
             index = element.getStudentId();
             if (studentMap.containsKey(index)) {
                 element.setStudentName((String)studentMap.get(index).get("name"));
@@ -251,6 +253,20 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
         result.setArrays(subjectDetailVos);
 
         return result;
+    }
+
+    private Integer summaryScore(Integer s1, Integer s2, Integer s3, Integer s4){
+        int sum = 0;
+        if (ObjectUtil.isNotNull(s1)){
+            sum += s1;
+        } else if (ObjectUtil.isNotNull(s2)){
+            sum += s2;
+        } else if (ObjectUtil.isNotNull(s3)){
+            sum += s3;
+        } else if (ObjectUtil.isNotNull(s4)){
+            sum += s4;
+        }
+        return sum;
     }
 
     // TODO: 2022/5/7  专业管理员获取审核列表

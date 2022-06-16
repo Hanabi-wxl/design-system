@@ -38,7 +38,9 @@ public class ModifyScoreVo {
     @NotNull
     private Integer ability;
 
+    @ApiModelProperty(value = "能力水平")
+    private String comment;
+
     @ApiModelProperty(value = "是否二答")
-    @NotNull
     private Integer isSecond;
 }

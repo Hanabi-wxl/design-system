@@ -60,7 +60,7 @@ public class ProcessEvaluationController {
                 scoreOne.setProcessDiscipline(processVo.getDiscipline());
                 scoreOne.setProcessReport(processVo.getReport());
                 scoreOne.setProcessComplete(processVo.getComplete());
-//                scoreOne.setProcessSimilar(processVo.getSimilar());
+                scoreOne.setProcessSimilar(processVo.getSimilar());
                 scoreOne.setProcessComment(processVo.getComment());
                 scoreOne.setProcessDate(LocalDate.now());
                 scoreFlag = scoreService.updateById(scoreOne);

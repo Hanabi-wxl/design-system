@@ -3,8 +3,12 @@ package edu.dlu.bysj.defense.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import edu.dlu.bysj.base.model.entity.TeamUser;
 import edu.dlu.bysj.base.model.vo.ReplyInformationVo;
+import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author XiangXinGang
@@ -30,4 +34,12 @@ public interface TeamUserMapper extends BaseMapper<TeamUser> {
      * @return 学生年级
      */
     Integer selectStudentGrade(Integer studentId);
+
+    @MapKey("id")
+    List<Map<String, Object>> groupMemberByGroupId(Integer groupId, Integer start, Integer size);
+
+    Integer totalGroupMemberByGroupId(Integer groupId);
+
+    @MapKey("")
+    List<Map<String, String>> groupMemberInfo(List<Integer> ids);
 }

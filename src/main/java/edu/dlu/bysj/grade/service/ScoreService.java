@@ -1,14 +1,13 @@
 package edu.dlu.bysj.grade.service;
 
 import java.util.List;
+import java.util.Map;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import edu.dlu.bysj.base.model.entity.Score;
-import edu.dlu.bysj.base.model.vo.ExcellentTeacherTableVo;
-import edu.dlu.bysj.base.model.vo.GroupScoreVo;
-import edu.dlu.bysj.base.model.vo.ScoreSummaryVo;
-import edu.dlu.bysj.base.model.vo.TeacherYearEvaluationVo;
+import edu.dlu.bysj.base.model.query.GroupMemberQuery;
+import edu.dlu.bysj.base.model.vo.*;
 
 /**
  * @author XiangXinGang
@@ -64,4 +63,6 @@ public interface ScoreService extends IService<Score> {
      * @return
      */
     ScoreSummaryVo summaryScorePercentage(Integer majorId, Integer year);
+
+    TotalPackageVo<Map<String, Object>> obtainGroupMember(GroupMemberQuery query);
 }

@@ -34,9 +34,9 @@ public class ScoreProcessVo {
     @NotNull
     private Integer complete;
 
-//    @ApiModelProperty(value = "成绩查重")
-//    @NotNull
-//    private Integer similar;
+    @ApiModelProperty(value = "成绩查重")
+    @NotNull
+    private String similar;
 
     @ApiModelProperty(value = "过程评价内容")
     @NotBlank

@@ -1,19 +1,23 @@
 package edu.dlu.bysj.grade.controller;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
+import edu.dlu.bysj.base.model.query.GroupMemberQuery;
+import edu.dlu.bysj.base.model.vo.TotalPackageVo;
+import edu.dlu.bysj.base.util.GradeUtils;
+import edu.dlu.bysj.base.util.JwtUtil;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 
@@ -50,39 +54,52 @@ public class GradeSummaryController {
         this.teamService = teamService;
     }
 
-    @GetMapping(value = "/score/summary/rank/{majorId}/{grade}")
+    @GetMapping(value = "/score/summary/rank")
     @LogAnnotation(content = "查看成绩汇总")
     @RequiresPermissions({"summary:rank"})
     @ApiOperation(value = "获取成绩汇总表")
     @ApiImplicitParams({@ApiImplicitParam(name = "majorId", value = "专业id"),
         @ApiImplicitParam(name = "grade", value = "年级")})
-    public CommonResult<ScoreSummaryVo> obtainScoreSummaryTable(@PathVariable("majorId") @NotNull Integer majorId,
-        @PathVariable("grade") @NotNull Integer grade) {
+    public CommonResult<ScoreSummaryVo> obtainScoreSummaryTable(@NotNull Integer majorId, @NotNull Integer year) {
         // TODO 汇总成绩分段标准
+        Integer grade = GradeUtils.getGrade(year);
         ScoreSummaryVo result = scoreService.summaryScorePercentage(majorId, grade);
         return CommonResult.success(result);
     }
 
-    @GetMapping(value = "/score/summary/group/{groupId}")
+    @Deprecated
+    @GetMapping(value = "/score/summary/group")
     @LogAnnotation(content = "按答辩分组获取学生成绩")
     @RequiresPermissions({"summary:group"})
     @ApiOperation(value = "按答辩分组获取成绩")
     @ApiImplicitParam(name = "groupId", value = "答辩分组id")
     public CommonResult<List<GroupScoreVo>>
-        obtainScoreByDefenseGroup(@PathVariable("groupId") @NotNull Integer groupId) {
+        obtainScoreByDefenseGroup(@NotNull Integer groupId) {
         List<GroupScoreVo> groupScoreVos = scoreService.scoreOfSubjectTeam(groupId);
         return CommonResult.success(groupScoreVos);
     }
 
-    @GetMapping(value = "/score/summary/majorGroup/{majorId}/{grade}")
+    @GetMapping(value = "/score/summary/groupMember")
+    @LogAnnotation(content = "按答辩分组获取组内成员")
+    @RequiresPermissions({"summary:group"})
+    @ApiOperation(value = "按答辩分组获取组内成员")
+    @ApiImplicitParam(name = "groupId", value = "答辩分组id")
+    public CommonResult<TotalPackageVo<Map<String, Object>>>
+    obtainGroupMember(@NotNull GroupMemberQuery query) {
+        TotalPackageVo<Map<String, Object>> mapTotalPackageVo = scoreService.obtainGroupMember(query);
+        return CommonResult.success(mapTotalPackageVo);
+    }
+
+    @GetMapping(value = "/score/summary/majorGroup")
     @LogAnnotation(content = "按专业,年级获取答辩分组信息")
     @RequiresPermissions({"summary:majorGroup"})
     @ApiOperation(value = "按专业,年级获取答辩分组信息")
     @ApiImplicitParams({@ApiImplicitParam(name = "majorId", value = "专业id"),
         @ApiImplicitParam(name = "grade", value = "年级")})
     public CommonResult<List<Map<String, Object>>> obtainDefenseTeamInfo(
-        @PathVariable("majorId") @NotNull Integer majorId, @PathVariable("grade") @NotNull Integer grade) {
+        @NotNull Integer majorId, @NotNull Integer grade) {
         List<Map<String, Object>> result = new ArrayList<>();
+        grade = GradeUtils.getGrade(grade);
         List<Team> list = teamService.list(new QueryWrapper<Team>().eq("grade", grade).eq("major_id", majorId));
         if (list != null && !list.isEmpty()) {
             for (Team element : list) {
@@ -95,14 +112,18 @@ public class GradeSummaryController {
         return CommonResult.success(result);
     }
 
-    @GetMapping(value = "/score/summary/changeScore")
+    @PostMapping(value = "/score/summary/changeScore")
     @LogAnnotation(content = "修改/新增总评成绩")
     @RequiresPermissions({"summary:change"})
     @ApiOperation(value = "修改总评成绩")
-    public CommonResult<Object> modifySummaryScore(@Valid ModifyScoreVo modifyScoreVo) {
+    public CommonResult<Object> modifySummaryScore(@Valid @RequestBody ModifyScoreVo modifyScoreVo, HttpServletRequest request) {
         Score score = scoreService.getOne(new QueryWrapper<Score>().eq("subject_id", modifyScoreVo.getSubjectId()));
+        String jwt = request.getHeader("jwt");
         boolean flag = false;
         if (ObjectUtil.isNotNull(score)) {
+            score.setTotalPersonId(JwtUtil.getUserId(jwt));
+            score.setTotalDate(LocalDate.now());
+            score.setTotalComment(modifyScoreVo.getComment());
             score.setTotalSelfSummary(modifyScoreVo.getSummary());
             score.setTotalProcess(modifyScoreVo.getProcess());
             score.setTotalQuality(modifyScoreVo.getQuality());

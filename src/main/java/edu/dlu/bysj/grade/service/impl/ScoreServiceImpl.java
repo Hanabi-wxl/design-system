@@ -1,8 +1,10 @@
 package edu.dlu.bysj.grade.service.impl;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
+import edu.dlu.bysj.base.model.query.GroupMemberQuery;
+import edu.dlu.bysj.base.model.vo.*;
+import edu.dlu.bysj.defense.mapper.TeamUserMapper;
 import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -13,10 +15,6 @@ import edu.dlu.bysj.base.model.dto.SubjectInfoConvey;
 import edu.dlu.bysj.base.model.entity.GoodTeacher;
 import edu.dlu.bysj.base.model.entity.Score;
 import edu.dlu.bysj.base.model.enums.FractionalSegmentEnum;
-import edu.dlu.bysj.base.model.vo.ExcellentTeacherTableVo;
-import edu.dlu.bysj.base.model.vo.GroupScoreVo;
-import edu.dlu.bysj.base.model.vo.ScoreSummaryVo;
-import edu.dlu.bysj.base.model.vo.TeacherYearEvaluationVo;
 import edu.dlu.bysj.base.model.vo.basic.BasicExcellentVo;
 import edu.dlu.bysj.grade.mapper.GoodTeacherMapper;
 import edu.dlu.bysj.grade.mapper.ScoreMapper;
@@ -31,7 +29,10 @@ public class ScoreServiceImpl extends ServiceImpl<ScoreMapper, Score> implements
 
     private final GoodTeacherMapper goodTeacherMapper;
 
-    public ScoreServiceImpl(GoodTeacherMapper goodTeacherMapper) {
+    private final TeamUserMapper teamUserMapper;
+
+    public ScoreServiceImpl(GoodTeacherMapper goodTeacherMapper,TeamUserMapper teamUserMapper) {
+        this.teamUserMapper = teamUserMapper;
         this.goodTeacherMapper = goodTeacherMapper;
     }
 
@@ -44,7 +45,7 @@ public class ScoreServiceImpl extends ServiceImpl<ScoreMapper, Score> implements
     public Integer sumScore(Score score) {
         int sum = 0;
         sum = (score.getProcessAttitude() + score.getProcessDiscipline() + score.getProcessReport()
-            + score.getProcessComplete() + score.getProcessSimilar() + score.getFirstQuality() + score.getFirstAbility()
+            + score.getProcessComplete() + score.getFirstQuality() + score.getFirstAbility()
             + score.getFirstComplete() + score.getOtherQuality() + score.getOtherAbility() + score.getOtherComplete()
             + score.getTotalSelfSummary() + score.getTotalProcess() + score.getTotalQuality()
             + score.getTotalCompleteQuality() + score.getTotalAbility());
@@ -129,5 +130,35 @@ public class ScoreServiceImpl extends ServiceImpl<ScoreMapper, Score> implements
         }
 
         return result;
+    }
+
+    @Override
+    public TotalPackageVo<Map<String, Object>> obtainGroupMember(GroupMemberQuery query) {
+        TotalPackageVo<Map<String, Object>> packageVo = new TotalPackageVo<>();
+        /*分页*/
+        List<Map<String,Object>> groupMembers = teamUserMapper.groupMemberByGroupId(
+                query.getGroupId(),
+                (query.getPageNumber() - 1) * query.getPageSize(),
+                query.getPageSize());
+        /*总数*/
+        Integer total = teamUserMapper.totalGroupMemberByGroupId(query.getGroupId());
+        List<Integer> ids = new LinkedList<>();
+        for (Map<String, Object> groupMember : groupMembers) {
+            ids.add(Integer.parseInt(String.valueOf(groupMember.get("subjectId"))));
+        }
+        if (ids.size() != 0){
+            List<Map<String,String>> groupMemberInfo = teamUserMapper.groupMemberInfo(ids);
+            Iterator<Map<String, Object>> iterator = groupMembers.iterator();
+            Iterator<Map<String, String>> iterator1 = groupMemberInfo.iterator();
+            while (iterator.hasNext()){
+                Map<String, Object> next = iterator.next();
+                Map<String, String> next1 = iterator1.next();
+                next.put("progress",next1.get("progress"));
+                next.put("defenceScore",next1.get("defenceScore"));
+            }
+            packageVo.setArrays(groupMembers);
+            packageVo.setTotal(total);
+        }
+        return packageVo;
     }
 }

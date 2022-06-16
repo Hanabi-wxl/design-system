@@ -48,7 +48,7 @@ public class Score implements Serializable {
     private String processComment;
 
     @ApiModelProperty(value = "过程评价-查重成绩")
-    private Integer processSimilar;
+    private String processSimilar;
 
     @ApiModelProperty(value = "过程评价-评价日期")
     private LocalDate processDate;
