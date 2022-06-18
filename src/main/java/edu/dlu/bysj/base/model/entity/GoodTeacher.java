@@ -39,6 +39,9 @@ public class GoodTeacher implements Serializable {
     @ApiModelProperty(value = "院负责人是否同意（1：同意，0：不同意）")
     private Integer collegeAgree;
 
+    @ApiModelProperty(value = "学院评语")
+    private String collegeComment;
+
     @ApiModelProperty(value = "院级负责人id")
     private Integer collegeLeadingId;
 
@@ -47,9 +50,6 @@ public class GoodTeacher implements Serializable {
 
     @ApiModelProperty(value = "获得优秀称号的学年")
     private Integer schoolYear;
-
-    @ApiModelProperty(value = "设置人id")
-    private Integer setupPersonId;
 
     @ApiModelProperty(value = "此条数据是否有效（1：有效，0：无效）")
     @TableLogic

@@ -5,9 +5,13 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+import edu.dlu.bysj.base.model.query.MajorSearchQuery;
+import edu.dlu.bysj.base.model.vo.TotalPackageVo;
+import edu.dlu.bysj.grade.model.vo.CollegeCommentVo;
+import edu.dlu.bysj.grade.model.vo.CommitGoodTeacherVo;
+import edu.dlu.bysj.grade.model.vo.TeacherCommentVo;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +20,6 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 
 import cn.hutool.core.util.ObjectUtil;
 import edu.dlu.bysj.base.model.entity.GoodTeacher;
-import edu.dlu.bysj.base.model.query.UnTopicListQuery;
 import edu.dlu.bysj.base.model.vo.ExcellentTeacherTableVo;
 import edu.dlu.bysj.base.model.vo.MajorExcellentTeacherVo;
 import edu.dlu.bysj.base.model.vo.TeacherYearEvaluationVo;
@@ -59,13 +62,13 @@ public class ExcellentTeacherController {
         return CommonResult.success(result);
     }
 
-    @GetMapping(value = "/score/goodTeacher/detail/{year}")
+    @GetMapping(value = "/score/goodTeacher/detail")
     @LogAnnotation(content = "查看优秀教师申报表")
     @RequiresPermissions({"goodeTeacher:detail"})
     @ApiOperation(value = "查看优秀教师申报表")
     @ApiImplicitParam(name = "year", value = "年份")
     public CommonResult<ExcellentTeacherTableVo>
-        checkContentOfExcellentTeacher(@PathVariable("year") @NotNull Integer year, HttpServletRequest request) {
+        checkContentOfExcellentTeacher(@NotNull Integer year, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
         ExcellentTeacherTableVo result = null;
         if (!StringUtils.isEmpty(jwt)) {
@@ -75,22 +78,20 @@ public class ExcellentTeacherController {
     }
 
     @PostMapping(value = "/score/goodTeacher/comment")
+    @LogAnnotation(content = "提交指导教师评语")
     @RequiresPermissions({"goodTeacher:comment"})
     @ApiOperation(value = "提交指导教师评语")
-    @ApiImplicitParams({@ApiImplicitParam(name = "year", value = "年份"),
-        @ApiImplicitParam(name = "comment", value = "评语")})
-    public CommonResult<Object> submitGoodTeacherComment(@RequestParam("year") @NotNull Integer year,
-        @RequestParam("comment") @NotBlank String comment, HttpServletRequest request) {
+    public CommonResult<Object> submitGoodTeacherComment(@RequestBody @Valid TeacherCommentVo teacherVo, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
         boolean flag = false;
         if (!StringUtils.isEmpty(jwt)) {
             Integer userId = JwtUtil.getUserId(jwt);
             GoodTeacher goodTeacher = goodTeacherService
-                .getOne(new QueryWrapper<GoodTeacher>().eq("teacher_id", userId).eq("school_year", year));
+                .getOne(new QueryWrapper<GoodTeacher>().eq("teacher_id", userId).eq("school_year", teacherVo.getYear()));
             if (ObjectUtil.isNotNull(goodTeacher)) {
                 goodTeacher.setTeacherId(userId);
-                goodTeacher.setSchoolYear(year);
-                goodTeacher.setSelfComment(comment);
+                goodTeacher.setSchoolYear(teacherVo.getYear());
+                goodTeacher.setSelfComment(teacherVo.getComment());
                 flag = goodTeacherService.updateById(goodTeacher);
             }
         }
@@ -101,51 +102,50 @@ public class ExcellentTeacherController {
     @LogAnnotation(content = "管理员获取审阅优秀教师列表")
     @RequiresPermissions({"goodTeacher:auditList"})
     @ApiOperation(value = "获取审阅优秀教师列表")
-    public CommonResult<List<MajorExcellentTeacherVo>> reviewGoodTeacherList(@Valid UnTopicListQuery query) {
-        List<MajorExcellentTeacherVo> result = goodTeacherService.obtainGoodTeacherSelectionList(query.getMajorId(),
-            query.getYear(), query.getTeacherName(), query.getTeacherNumber());
-        return CommonResult.success(result);
+    public CommonResult<TotalPackageVo<MajorExcellentTeacherVo>> reviewGoodTeacherList(@Valid MajorSearchQuery query) {
+        TotalPackageVo<MajorExcellentTeacherVo> packageVo = goodTeacherService.obtainGoodTeacherSelectionList(query);
+        return CommonResult.success(packageVo);
     }
 
-    @GetMapping(value = "/score/goodTeacher/commitGoodTeacher/{teacherId}/{year}")
+    @PostMapping(value = "/score/goodTeacher/commitGoodTeacher")
     @LogAnnotation(content = "管理员选择优秀教师")
     @RequiresPermissions({"goodTeacher:fix"})
     @ApiOperation(value = "确定优秀教师")
-    @ApiImplicitParams({@ApiImplicitParam(name = "teacherId", value = "教师id"),
-        @ApiImplicitParam(name = "year", value = "年级")})
-    public CommonResult<Object> sureGoodTeacher(@PathVariable("teacherId") @NotNull Integer teacherId,
-        @PathVariable("year") @NotNull Integer year, HttpServletRequest request) {
+    public CommonResult<Object> sureGoodTeacher(@RequestBody @Valid CommitGoodTeacherVo teacher,HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
-
         GoodTeacher goodTeacher = goodTeacherService
-            .getOne(new QueryWrapper<GoodTeacher>().eq("teacher_id", teacherId).eq("school_year", year));
-        if (!StringUtils.isEmpty(jwt)) {
-            if (ObjectUtil.isNull(goodTeacher)) {
-                goodTeacher = new GoodTeacher();
-            }
-            goodTeacher.setTeacherId(teacherId);
-            goodTeacher.setSchoolYear(year);
-            goodTeacher.setSetupPersonId(JwtUtil.getUserId(jwt));
-        }
+            .getOne(new QueryWrapper<GoodTeacher>().eq("teacher_id", teacher.getTeacherId()).eq("school_year", teacher.getYear()));
 
+        if (ObjectUtil.isNull(goodTeacher)) {
+            goodTeacher = new GoodTeacher();
+            goodTeacher.setTeacherId(teacher.getTeacherId());
+            goodTeacher.setSchoolYear(teacher.getYear());
+        }
+        if (teacher.getIsGood() == 1){
+            goodTeacher.setCollegeAgree(1);
+        } else {
+            goodTeacher.setCollegeAgree(0);
+        }
+        goodTeacher.setCollegeDate(LocalDate.now());
+        goodTeacher.setCollegeLeadingId(JwtUtil.getUserId(jwt));
         return goodTeacherService.saveOrUpdate(goodTeacher) ? CommonResult.success("操作成功")
-            : CommonResult.failed("操作失败");
+                : CommonResult.failed("操作失败");
     }
 
     @PostMapping(value = "/score/goodTeacher/collegeComment")
     @LogAnnotation(content = "学院负责人提交优秀指导教师意见")
     @ApiOperation(value = "提交学院负责人关于优秀指导教师意见")
-    @ApiImplicitParams({@ApiImplicitParam(name = "year", value = "学年"),
-        @ApiImplicitParam(name = "teacherId", value = "指导教师id"), @ApiImplicitParam(name = "comment", value = "指导教师评语")})
-    public CommonResult<Object> opinionOfGoodTeacher(@RequestParam("year") @NotNull Integer year,
-        @RequestParam("teacherId") @NotNull Integer teacherId, @RequestParam("comment") @NotNull Integer comment,
-        HttpServletRequest request) {
+    @RequiresPermissions({"goodTeacher:collegeComment"})
+    public CommonResult<Object> opinionOfGoodTeacher(@RequestBody @Valid CollegeCommentVo commentVo, HttpServletRequest request) {
         GoodTeacher goodTeacher = goodTeacherService
-            .getOne(new QueryWrapper<GoodTeacher>().eq("teacher_id", teacherId).eq("school_year", year));
+            .getOne(new QueryWrapper<GoodTeacher>()
+                    .eq("teacher_id", commentVo.getTeacherId())
+                    .eq("school_year", commentVo.getYear()));
         boolean flag = false;
         String jwt = request.getHeader("jwt");
         if (ObjectUtil.isNotNull(goodTeacher)) {
-            goodTeacher.setCollegeAgree(comment);
+            goodTeacher.setCollegeAgree(commentVo.getAgree());
+            goodTeacher.setCollegeComment(commentVo.getComment());
             goodTeacher.setCollegeDate(LocalDate.now());
             goodTeacher.setCollegeLeadingId(JwtUtil.getUserId(jwt));
             flag = goodTeacherService.updateById(goodTeacher);

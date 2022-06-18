@@ -55,7 +55,7 @@
                sum(if((score.sum_score between 60 and 69), 1, 0)) as D,
                sum(if(score.sum_score &lt; 60, 1, 0))             as F,
                sum(if(score.is_second = 1, 1, 0))                 as isSecond,
-               s.grade                                            as year
+               s.grade+4                                            as year
         from (select subject.id, subject.grade
               from subject
               where subject.status = 1
@@ -72,12 +72,12 @@
         from (select subject.id, subject.subject_id, subject_name, subject.student_id
               from subject
               where subject.status = 1
-                and subject.first_teacher_id = 1
-                and subject.grade = 1) as s
+                and subject.first_teacher_id = #{teacherId}
+                and subject.grade = #{grade}) as s
                  inner join student
                             on s.student_id = student.id
                  inner join score
-                            on s.student_id = score.subject_id
+                            on s.id = score.subject_id
     </select>
     <select id="selectByMajorId" resultType="edu.dlu.bysj.base.model.vo.ScoreSummaryVo">
         select

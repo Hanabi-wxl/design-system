@@ -3,18 +3,14 @@ package edu.dlu.bysj.common.controller;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import edu.dlu.bysj.base.model.entity.Major;
-import edu.dlu.bysj.base.model.entity.Teacher;
+import edu.dlu.bysj.base.model.entity.*;
 import edu.dlu.bysj.base.model.query.TopicApprovalListQuery;
 import edu.dlu.bysj.base.model.vo.*;
 import edu.dlu.bysj.base.result.CommonResult;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.*;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
-import edu.dlu.bysj.system.service.ClassService;
-import edu.dlu.bysj.system.service.FunctionService;
-import edu.dlu.bysj.system.service.MajorService;
-import edu.dlu.bysj.system.service.SchoolService;
+import edu.dlu.bysj.system.service.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -57,13 +53,17 @@ public class InformationController {
 
     private final MajorService majorService;
 
+    private final CollegeService collegeService;
+
 
     @Autowired
     public InformationController(FunctionService functionService, SchoolService schoolService,
                                  ClassService classService, OfficeService officeService,
                                  DegreeService degreeService, TitleService titleService,
                                  SubjectService subjectService, StudentService studentService,
-                                 TeacherService teacherService, MajorService majorService) {
+                                 TeacherService teacherService, MajorService majorService,
+                                 CollegeService collegeService) {
+        this.collegeService = collegeService;
         this.functionService = functionService;
         this.schoolService = schoolService;
         this.classService = classService;
@@ -150,8 +150,15 @@ public class InformationController {
         String jwt = request.getHeader("jwt");
         String userNumber = JwtUtil.getUserNumber(jwt);
         Teacher teacher = teacherService.getOne(new QueryWrapper<Teacher>().eq("teacher_number",userNumber));
-        Major major = majorService.getOne(new QueryWrapper<Major>().eq("id", teacher.getMajorId()));
+        Major major = majorService.getById(teacher.getMajorId());
+        Title title = titleService.getById(teacher.getTitleId());
+        Office office = officeService.getById(teacher.getOfficeId());
+        Integer collegeId = collegeService.getCollegeIdByMajorId(teacher.getMajorId());
+        College college = collegeService.getById(collegeId);
         TeacherDetailVo detailVo = new TeacherDetailVo();
+        detailVo.setCollege(college.getName());
+        detailVo.setOffice(office.getName());
+        detailVo.setTitle(title.getName());
         detailVo.setTeacherNumber(teacher.getTeacherNumber());
         detailVo.setUsername(teacher.getName());
         detailVo.setMajor(major.getName());

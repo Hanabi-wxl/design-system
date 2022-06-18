@@ -225,7 +225,6 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
                 grade, (query.getPageNumber() - 1) * query.getPageSize(), query.getPageSize());
         /*总数*/
         Integer total = subjectMapper.totalSubjectListByTeacher(teacherId, grade);
-
         /*查询学生信息*/
         List<Integer> studentIds = new ArrayList<>();
         for (SubjectDetailVo element : subjectDetailVos) {

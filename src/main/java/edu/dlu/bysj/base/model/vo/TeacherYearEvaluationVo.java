@@ -2,7 +2,6 @@ package edu.dlu.bysj.base.model.vo;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -12,7 +11,6 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@Builder
 @ApiModel(description = "查看教师本人评优情况返回类")
 public class TeacherYearEvaluationVo {
     @ApiModelProperty(value = "年份")
@@ -29,5 +27,7 @@ public class TeacherYearEvaluationVo {
     private Integer F;
     @ApiModelProperty(value = "二答人数")
     private Integer isSecond;
+    @ApiModelProperty(value = "优秀教师")
+    private Integer isGood;
 
 }

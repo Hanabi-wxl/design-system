@@ -15,6 +15,7 @@ import edu.dlu.bysj.base.model.vo.*;
 import edu.dlu.bysj.base.model.vo.basic.CommonReviewVo;
 import edu.dlu.bysj.base.model.vo.basic.CommonReviewsVo;
 import edu.dlu.bysj.base.result.CommonResult;
+import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.SubjectService;
 import edu.dlu.bysj.common.service.TeacherService;
@@ -125,7 +126,6 @@ public class SubjectApprovalController {
     }
 
 
-    // TODO: 2022/5/6 学生或教师报题
     @PostMapping(value = "/approve/teacherCommitSubject")
     @LogAnnotation(content = "教师提交/修改题目审批表")
     @RequiresPermissions({"approve:subjectApprove"})
@@ -180,7 +180,6 @@ public class SubjectApprovalController {
 
     }
 
-    // TODO: 2022/5/6 查看题目列表
     @GetMapping(value = "/approve/subjectList")
     @LogAnnotation(content = "查看教师/学生自带的题目")
     @RequiresPermissions({"approve:subjectList"})
@@ -197,7 +196,6 @@ public class SubjectApprovalController {
         return CommonResult.success(subjectVo);
     }
 
-    // TODO: 2022/5/7 获取教师审批列表
     @GetMapping(value = "/approve/getListByTeacher")
     @LogAnnotation(content = "获取该教师的题目审批列表")
     @RequiresPermissions({"approve:subjectAudit"})
@@ -206,6 +204,7 @@ public class SubjectApprovalController {
         String jwt = request.getHeader("jwt");
         List<Integer> roleIds = JwtUtil.getRoleIds(jwt);
         Integer max = Collections.max(roleIds);
+        query.setYear(GradeUtils.getGrade(query.getYear()));
         Integer queryMajorId = query.getMajorId();
         Integer queryCollegeId = query.getCollegeId();
         TotalPackageVo<ApproveDetailVo> result;

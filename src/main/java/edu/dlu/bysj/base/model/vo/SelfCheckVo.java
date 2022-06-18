@@ -27,7 +27,7 @@ public class SelfCheckVo {
 
     @ApiModelProperty(value = "研究内容")
     @NotNull
-    private Integer reaserchContent;
+    private Integer researchContent;
 
     @ApiModelProperty(value = "文献综述")
     @NotNull
@@ -35,7 +35,7 @@ public class SelfCheckVo {
 
     @ApiModelProperty(value = "任务书")
     @NotNull
-    private Integer taskbook;
+    private Integer taskBook;
 
     @ApiModelProperty(value = "教师指导")
     @NotNull

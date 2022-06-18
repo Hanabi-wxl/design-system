@@ -5,11 +5,11 @@ package edu.dlu.bysj.base.model.enums;
  * @date 2021/11/14 14:58
  */
 public enum FractionalSegmentEnum {
-    EXCELLENT(90, Integer.MAX_VALUE, "A"),
-    GOODE(80, 89, "B"),
-    MEDIUM(70, 79, "C"),
-    POOR(60, 69, "D"),
-    FAILED(60, Integer.MIN_VALUE, "F");
+    EXCELLENT(Integer.MAX_VALUE, 90, "A"),
+    GOODE(89, 80, "B"),
+    MEDIUM(79, 70, "C"),
+    POOR(69, 60, "D"),
+    FAILED(59, Integer.MIN_VALUE, "F");
 
 
     private Integer scoreUpperBound;

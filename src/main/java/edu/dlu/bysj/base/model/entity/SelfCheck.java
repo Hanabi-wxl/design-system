@@ -39,13 +39,13 @@ public class SelfCheck implements Serializable {
     private Integer content;
 
     @ApiModelProperty(value = "研究内容")
-    private Integer reaserchContent;
+    private Integer researchContent;
 
     @ApiModelProperty(value = "文献综述")
     private Integer literatureReview;
 
     @ApiModelProperty(value = "任务书")
-    private Integer taskbook;
+    private Integer taskBook;
 
     @ApiModelProperty(value = "教师指导")
     private Integer teacherGuide;

@@ -42,12 +42,11 @@ public interface ScoreMapper extends BaseMapper<Score> {
      *
      * @param teacherId
      *            教师id
-     * @param year
+     * @param grade
      *            年份;
      * @return
      */
-    List<SubjectInfoConvey> selectSubjectByTeacherIdAndYear(@Param("teacherId") Integer teacherId,
-        @Param("year") Integer year);
+    List<SubjectInfoConvey> selectSubjectByTeacherIdAndYear(Integer teacherId, Integer grade);
 
     /**
      * 搜索该专业下的所有成绩详情

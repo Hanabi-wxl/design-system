@@ -4,6 +4,7 @@ import java.util.*;
 
 import edu.dlu.bysj.base.model.query.GroupMemberQuery;
 import edu.dlu.bysj.base.model.vo.*;
+import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.defense.mapper.TeamUserMapper;
 import org.springframework.stereotype.Service;
 
@@ -54,12 +55,23 @@ public class ScoreServiceImpl extends ServiceImpl<ScoreMapper, Score> implements
 
     @Override
     public List<TeacherYearEvaluationVo> studentScoreNum(Integer teacherId) {
-        return baseMapper.selectStudentNumByScore(teacherId);
+        List<TeacherYearEvaluationVo> teacherYearEvaluationVos = baseMapper.selectStudentNumByScore(teacherId);
+        for (TeacherYearEvaluationVo teacherYearEvaluationVo : teacherYearEvaluationVos) {
+            Integer year = teacherYearEvaluationVo.getYear();
+            GoodTeacher goodTeacher = goodTeacherMapper.selectOne(new QueryWrapper<GoodTeacher>()
+                    .eq("teacher_id", teacherId)
+                    .eq("college_agree",1)
+                    .eq("school_year", year));
+            if (ObjectUtil.isNotNull(goodTeacher))
+                teacherYearEvaluationVo.setIsGood(1);
+        }
+        return teacherYearEvaluationVos;
     }
 
     @Override
     public ExcellentTeacherTableVo excellentInfoOfYear(Integer teacherId, Integer year) {
-        List<SubjectInfoConvey> subjectInfoConveys = baseMapper.selectSubjectByTeacherIdAndYear(teacherId, year);
+        Integer grade = GradeUtils.getGrade(year);
+        List<SubjectInfoConvey> subjectInfoConveys = baseMapper.selectSubjectByTeacherIdAndYear(teacherId, grade);
         ExcellentTeacherTableVo result = new ExcellentTeacherTableVo();
         result.setTotal(0);
         if (subjectInfoConveys != null && !subjectInfoConveys.isEmpty()) {
@@ -84,8 +96,8 @@ public class ScoreServiceImpl extends ServiceImpl<ScoreMapper, Score> implements
                 basicExcellentVo.setSubjectName(element.getSubjectName());
                 String scoreMapping = FractionalSegmentEnum.getScoreMapping(element.getScore());
                 basicExcellentVo.setScore(scoreMapping);
+                array.add(basicExcellentVo);
             }
-
             result.setInfo(array);
         }
 

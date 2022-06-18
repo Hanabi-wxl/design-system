@@ -14,7 +14,6 @@
         <result column="id" property="teacherId"/>
     </resultMap>
 
-
     <select id="selectGoodTeacherInfo" resultMap="goodTeacherMap">
         <choose>
             <when test="teacherNumber != null and teacherNumber != '' ">
@@ -49,12 +48,45 @@
         and score.status = 1
         and major.id = #{majorId}
         <if test="teacherNumber != null and teacherNumber != ''">
-            and teacher.teacher_number like #{number_pattern},
+            and teacher.teacher_number like #{number_pattern}
         </if>
-
         <if test="teacherName != null and teacherName != ''">
             and teacher.name like #{name_pattern}
         </if>
-        group by teacher.id;
+        limit #{start},#{size}
+
+    </select>
+    <select id="selectTotalGoodTeacherInfo" resultType="java.lang.Integer">
+        <choose>
+            <when test="teacherNumber != null and teacherNumber != '' ">
+                <bind name="number_pattern" value="'%'+teacherNumber+'%'"/>
+            </when>
+        </choose>
+
+        <choose>
+            <when test="teacherName != null and teacherName != ''">
+                <bind name="name_pattern" value="'%'+teacherName+'%'"/>
+            </when>
+        </choose>
+        select count(*) from (
+            select
+            teacher.id
+            from score
+            inner join subject
+            on score.subject_id = subject.id
+            inner join teacher
+            on subject.first_teacher_id = teacher.id
+            inner join major
+            on teacher.major_id = major.id
+            where subject.status = 1
+            and score.status = 1
+            and major.id = #{majorId}
+            <if test="teacherNumber != null and teacherNumber != ''">
+                and teacher.teacher_number like #{number_pattern}
+            </if>
+            <if test="teacherName != null and teacherName != ''">
+                and teacher.name like #{name_pattern}
+            </if>
+        ) as s
     </select>
 </mapper>

@@ -1,5 +1,7 @@
 package edu.dlu.bysj.base.model.vo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
@@ -12,9 +14,9 @@ import java.io.Serializable;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @ApiModel(description = "获取本专业教师信息记录返回类")
 public class TeacherDetailVo implements Serializable {
   private static final long serialVersionUID = 1L;
@@ -24,6 +26,9 @@ public class TeacherDetailVo implements Serializable {
 
   @ApiModelProperty(value = "教工号")
   private String teacherNumber;
+
+  @ApiModelProperty(value = "学院名称")
+  private String college;
 
   @ApiModelProperty(value = "专业名称")
   private String major;

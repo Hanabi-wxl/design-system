@@ -11,10 +11,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
+import edu.dlu.bysj.base.model.entity.Subject;
+import edu.dlu.bysj.base.model.enums.ProcessEnum;
 import edu.dlu.bysj.base.model.query.GroupMemberQuery;
 import edu.dlu.bysj.base.model.vo.TotalPackageVo;
 import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.base.util.JwtUtil;
+import edu.dlu.bysj.common.service.SubjectService;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -47,9 +50,12 @@ import io.swagger.annotations.ApiOperation;
 public class GradeSummaryController {
     private final ScoreService scoreService;
 
+    private final SubjectService subjectService;
+
     private final TeamService teamService;
 
-    public GradeSummaryController(ScoreService scoreService, TeamService teamService) {
+    public GradeSummaryController(ScoreService scoreService, TeamService teamService,SubjectService subjectService) {
+        this.subjectService = subjectService;
         this.scoreService = scoreService;
         this.teamService = teamService;
     }
@@ -117,20 +123,31 @@ public class GradeSummaryController {
     @RequiresPermissions({"summary:change"})
     @ApiOperation(value = "修改总评成绩")
     public CommonResult<Object> modifySummaryScore(@Valid @RequestBody ModifyScoreVo modifyScoreVo, HttpServletRequest request) {
-        Score score = scoreService.getOne(new QueryWrapper<Score>().eq("subject_id", modifyScoreVo.getSubjectId()));
-        String jwt = request.getHeader("jwt");
+        Integer subjectId = modifyScoreVo.getSubjectId();
+        Subject subject = subjectService.getOne(new QueryWrapper<Subject>().eq("id", subjectId));
+        Integer processCode = ProcessEnum.GENERAL_EVALUATION.getProcessCode();
         boolean flag = false;
-        if (ObjectUtil.isNotNull(score)) {
-            score.setTotalPersonId(JwtUtil.getUserId(jwt));
-            score.setTotalDate(LocalDate.now());
-            score.setTotalComment(modifyScoreVo.getComment());
-            score.setTotalSelfSummary(modifyScoreVo.getSummary());
-            score.setTotalProcess(modifyScoreVo.getProcess());
-            score.setTotalQuality(modifyScoreVo.getQuality());
-            score.setTotalCompleteQuality(modifyScoreVo.getCompleteQuality());
-            score.setTotalAbility(modifyScoreVo.getAbility());
-            score.setIsSecond(modifyScoreVo.getIsSecond());
-            flag = scoreService.updateById(score);
+        if (processCode.equals(subject.getProgressId()) || processCode.equals(subject.getProgressId()+1)){
+            Score score = scoreService.getOne(new QueryWrapper<Score>().eq("subject_id", modifyScoreVo.getSubjectId()));
+            String jwt = request.getHeader("jwt");
+            if (ObjectUtil.isNotNull(score)) {
+                score.setTotalPersonId(JwtUtil.getUserId(jwt));
+                score.setTotalDate(LocalDate.now());
+                score.setTotalComment(modifyScoreVo.getComment());
+                score.setTotalSelfSummary(modifyScoreVo.getSummary());
+                score.setTotalProcess(modifyScoreVo.getProcess());
+                score.setTotalQuality(modifyScoreVo.getQuality());
+                score.setTotalCompleteQuality(modifyScoreVo.getCompleteQuality());
+                score.setTotalAbility(modifyScoreVo.getAbility());
+                score.setIsSecond(modifyScoreVo.getIsSecond());
+                score.setSumScore(score.getFirstAbility()+score.getFirstQuality()+score.getFirstComplete()+
+                        score.getProcessComplete()+score.getProcessReport()+score.getProcessAttitude()+score.getProcessDiscipline()+
+                        score.getOtherAbility()+score.getOtherComplete()+score.getOtherQuality()+
+                        score.getTotalAbility()+score.getTotalSelfSummary()+score.getTotalProcess()+score.getTotalQuality()+score.getTotalCompleteQuality());
+                flag = scoreService.updateById(score);
+                subject.setProgressId(processCode);
+                subjectService.updateById(subject);
+            }
         }
         return flag ? CommonResult.success("操作成功") : CommonResult.failed("操作失败请查看该题目是否进入该成绩阶段");
     }

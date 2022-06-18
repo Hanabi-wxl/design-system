@@ -93,8 +93,7 @@ public class OnlineGlobalException {
         restResultWrapper.setData(map.toString());
         return restResultWrapper;
     }
- 
- 
+
     /**
      * 访问接口参数不全
      * @param request
