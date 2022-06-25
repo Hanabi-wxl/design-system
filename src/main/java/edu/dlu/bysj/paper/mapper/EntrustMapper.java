@@ -20,5 +20,5 @@ public interface EntrustMapper extends BaseMapper<Entrust> {
      * @param year        年份
      * @return 题目id集合
      */
-    List<Integer> selectByConsigneeIdAndDate(Integer consigneeId, String year);
+    List<Integer> selectByConsigneeIdAndDate(Integer consigneeId, Integer year);
 }

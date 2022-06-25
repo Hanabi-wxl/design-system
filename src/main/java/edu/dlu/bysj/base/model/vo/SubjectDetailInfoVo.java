@@ -40,13 +40,9 @@ public class SubjectDetailInfoVo {
     @ApiModelProperty(value = "班级名称")
     private String className;
     @ApiModelProperty(value = "是否为第一次指导")
-    private String isFirst;
-    @ApiModelProperty(value = "是否为第一次指导")
-    private String isFirstString;
+    private Integer isFirst;
     @ApiModelProperty(value = "是否雷同")
-    private String isSimilar;
-    @ApiModelProperty(value = "是否雷同")
-    private String isSimilarString;
+    private Integer isSimilar;
     @ApiModelProperty(value = "第二指导教师姓名")
     private String secondTeacherName;
     @ApiModelProperty(value = "拟需人数")

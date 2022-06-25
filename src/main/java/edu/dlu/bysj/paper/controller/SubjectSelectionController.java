@@ -3,6 +3,8 @@ package edu.dlu.bysj.paper.controller;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import edu.dlu.bysj.base.model.query.YearQuery;
+import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.paper.model.dto.SelectStudentDto;
 import edu.dlu.bysj.paper.model.dto.SubjectTopicDto;
 import edu.dlu.bysj.base.model.entity.Student;
@@ -66,7 +68,14 @@ public class SubjectSelectionController {
         this.studentService = studentService;
     }
 
-    // TODO: 2022/5/8 学生选题列表
+    /*
+     * @Description: 获取学生选题列表
+     * @Author: sinre
+     * @Date: 2022/6/20 21:05
+     * @param query
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<edu.dlu.bysj.base.model.vo.TotalPackageVo<edu.dlu.bysj.base.model.vo.TopicsVo>>
+     **/
     @GetMapping(value = "/topics/studentList")
     @LogAnnotation(content = "获取学生选题列表")
     @RequiresPermissions({"topics:studentList"})
@@ -76,14 +85,20 @@ public class SubjectSelectionController {
         TotalPackageVo<TopicsVo> result = null;
         if (!StringUtils.isEmpty(jwt)) {
             /*年份*/
-            String year = DateUtil.format(new Date(), "yyyy");
-            Integer grade = Integer.valueOf(year);
+            Integer grade = GradeUtils.getGrade();
             result = subjectService.studentSelectSubjectInfo(query, JwtUtil.getMajorId(jwt), grade);
         }
         return CommonResult.success(result);
     }
 
-    // TODO: 2022/5/8 学生选题提交
+    /*
+     * @Description: 学生提交选题结果
+     * @Author: sinre 
+     * @Date: 2022/6/20 23:22
+     * @param topicDto
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @PatchMapping(value = "/topics/studentSubmit")
     @LogAnnotation(content = "学生提交选题结果")
     @RequiresPermissions({"topics:studentSubmit"})
@@ -144,7 +159,13 @@ public class SubjectSelectionController {
         return flag ? CommonResult.success("操作成功该题目") : CommonResult.failed("操作失败，请再次尝试");
     }
 
-    // TODO: 2022/5/8 已选列表
+    /*
+     * @Description: 学生获取已选题目列表
+     * @Author: sinre
+     * @Date: 2022/6/20 23:15
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<java.util.List<edu.dlu.bysj.base.model.vo.SelectedVo>>
+     **/
     @GetMapping(value = "/topics/selectedList")
     @LogAnnotation(content = "学生获取已选题目列表")
     @RequiresPermissions({"topic:selectedList"})
@@ -158,42 +179,59 @@ public class SubjectSelectionController {
         return CommonResult.success(selectedVos);
     }
 
+    /*
+     * @Description: 教师已确定题目列表
+     * @Author: sinre
+     * @Date: 2022/6/25 16:19
+     * @param year
+     * @param pageSize
+     * @param pageNumber
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<edu.dlu.bysj.base.model.vo.TotalPackageVo<edu.dlu.bysj.base.model.vo.DetermineStudentVo>>
+     **/
     @GetMapping(value = "/topics/teacherSelectedList")
-    @LogAnnotation(content = "教师以确定题目列表")
+    @LogAnnotation(content = "教师已确定题目列表")
     @RequiresPermissions({"topic:teacherList"})
-    @ApiOperation(value = "教师以确定的题目列表")
+    @ApiOperation(value = "教师已确定的题目列表")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "year", value = "年份"),
             @ApiImplicitParam(name = "pageSize", value = "每页记录数"),
             @ApiImplicitParam(name = "pageNumber", value = "当前页码")
     })
     public CommonResult<TotalPackageVo<DetermineStudentVo>> teacherDetermineTopic(
-            @NotNull Integer year,
-            @Min(value = 1, message = "每页记录数不得少于1") Integer pageSize,
-            @Min(value = 1, message = "每页记录数不得少于1") Integer pageNumber,
+            @Valid YearQuery query,
             HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
+        Integer grade = GradeUtils.getGrade(query.getYear());
         TotalPackageVo<DetermineStudentVo> result = new TotalPackageVo<>();
         if (!StringUtils.isEmpty(jwt)) {
-            result = subjectService.studentEnsureSubjectByTeacherId(JwtUtil.getUserId(jwt), year, pageNumber, pageSize);
+            result = subjectService.studentEnsureSubjectByTeacherId(JwtUtil.getUserId(jwt), grade, query.getPageNumber(), query.getPageSize());
         }
         return CommonResult.success(result);
     }
 
+    /*
+     * @Description: 教师查看他自己报题被学生选择情况
+     * @Author: sinre
+     * @Date: 2022/6/25 16:18
+     * @param pageSize
+     * @param pageNumber
+     * @param year
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<edu.dlu.bysj.base.model.vo.TotalPackageVo<edu.dlu.bysj.base.model.vo.TotalVolunteerPackage<edu.dlu.bysj.base.model.vo.UnselectStudentVo>>>
+     **/
     @GetMapping(value = "/topics/teacherUnselectedList")
     @LogAnnotation(content = "教师查看他自己报题被学生选择情况")
     @RequiresPermissions({"topic:teacherUnselects"})
     @ApiOperation(value = "教师查看他自己报题被学生选择情况")
     public CommonResult<TotalPackageVo<TotalVolunteerPackage<UnselectStudentVo>>> teacherSelectStudentList(
-            @Min(value = 1, message = "每页记录数不得少于1") Integer pageSize,
-            @Min(value = 1, message = "每页记录数不得少于1") Integer pageNumber,
-            @NotNull Integer year,
+            @Valid YearQuery query,
             HttpServletRequest request) {
         TotalPackageVo<TotalVolunteerPackage<UnselectStudentVo>> result = null;
         String jwt = request.getHeader("jwt");
-        /* 当jwt合格并且为老师才能进行该操作*/
+        Integer grade = GradeUtils.getGrade(query.getYear());
         if (!StringUtils.isEmpty(jwt) && TYPE.equals(JwtUtil.getUserType(jwt))) {
-            result = topicService.unselectStudentList(JwtUtil.getUserId(jwt), year, pageNumber, pageSize);
+            result = topicService.unselectStudentList(JwtUtil.getUserId(jwt), grade, query.getPageNumber(), query.getPageSize());
         }
         return CommonResult.success(result);
     }

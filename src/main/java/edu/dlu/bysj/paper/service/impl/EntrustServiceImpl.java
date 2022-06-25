@@ -31,7 +31,7 @@ public class EntrustServiceImpl extends ServiceImpl<EntrustMapper, Entrust> impl
     }
 
     @Override
-    public TotalPackageVo<EntrustInfoVo> selfEntrusts(Integer consigneeId, String year, Integer pageNumber, Integer pageSize) {
+    public TotalPackageVo<EntrustInfoVo> selfEntrusts(Integer consigneeId, Integer year, Integer pageNumber, Integer pageSize) {
         /*获取被委托题目id*/
         List<Integer> list = entrustMapper.selectByConsigneeIdAndDate(consigneeId, year);
         Integer start = (pageNumber - 1) * pageSize;

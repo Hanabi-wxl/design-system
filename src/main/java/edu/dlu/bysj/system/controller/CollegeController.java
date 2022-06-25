@@ -36,7 +36,7 @@ public class CollegeController {
     }
 
     /*
-     * @Description:  根据前端传入的id获取学院 取代根据个人账号获取学院
+     * @Description:  根据前端传入的id获取学院
      * @Author: sinre
      * @Date: 2022/4/27 14:36
      * @param page

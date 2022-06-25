@@ -1,5 +1,6 @@
 package edu.dlu.bysj.base.model.vo;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
@@ -10,10 +11,10 @@ import lombok.*;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @ApiModel(description = "获取用户列表返回值类")
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserVo {
     @ApiModelProperty(value = "用户编号（学号、教工号）")
     private String userNumber;

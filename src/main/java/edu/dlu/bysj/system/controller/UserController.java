@@ -36,6 +36,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.util.*;
 
 /**
@@ -80,17 +83,23 @@ public class UserController {
         }
     }
 
+    /*
+     * @Description: 查看教师详细信息
+     * @Author: sinre 
+     * @Date: 2022/6/18 19:42
+     * @param teacherId
+     * @return edu.dlu.bysj.base.result.CommonResult<java.util.Map<java.lang.String,java.lang.Object>>
+     **/
     @GetMapping("/system/user/detail")
     @LogAnnotation(content = "查看教师详细信息")
     @RequiresPermissions({"user:detail"})
     @ApiOperation(value = "查看用户详细信息")
-    @ApiImplicitParams({@ApiImplicitParam(name = "teacherId", value = "教师id", required = true)})
-    public CommonResult<Map<String, Object>> checkDetailInformation(@RequestParam("teacherId") String teacherId)
+    public CommonResult<Map<String, Object>> checkDetailInformation(
+            @Valid @NotNull(message = "教师信息不能为空") Integer teacherId)
             throws JsonProcessingException {
         Map<String, Object> result = teacherService.teacherHeadDetail(teacherId);
         return CommonResult.success(result);
     }
-
 
     @PostMapping(value = "/system/user/change")
     @LogAnnotation(content = "修该用户信息")

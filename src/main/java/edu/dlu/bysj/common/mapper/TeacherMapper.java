@@ -56,7 +56,7 @@ public interface TeacherMapper extends BaseMapper<Teacher> {
      *            教师id
      * @return 职称map
      */
-    DegreeAndTileConvey teacherDegreeAndTitle(String teacherId);
+    DegreeAndTileConvey teacherDegreeAndTitle(Integer teacherId);
 
     /**
      * 根据uservo 更改教师信息

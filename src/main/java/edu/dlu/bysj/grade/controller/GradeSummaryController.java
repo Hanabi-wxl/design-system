@@ -91,11 +91,19 @@ public class GradeSummaryController {
     @ApiOperation(value = "按答辩分组获取组内成员")
     @ApiImplicitParam(name = "groupId", value = "答辩分组id")
     public CommonResult<TotalPackageVo<Map<String, Object>>>
-    obtainGroupMember(@NotNull GroupMemberQuery query) {
+    obtainGroupMember(@Valid GroupMemberQuery query) {
         TotalPackageVo<Map<String, Object>> mapTotalPackageVo = scoreService.obtainGroupMember(query);
         return CommonResult.success(mapTotalPackageVo);
     }
 
+    /*
+     * @Description: 切换专业后查询该专业的答辩分组信息
+     * @Author: sinre 
+     * @Date: 2022/6/18 18:48
+     * @param majorId
+     * @param grade
+     * @return edu.dlu.bysj.base.result.CommonResult<java.util.List<java.util.Map<java.lang.String,java.lang.Object>>>
+     **/
     @GetMapping(value = "/score/summary/majorGroup")
     @LogAnnotation(content = "按专业,年级获取答辩分组信息")
     @RequiresPermissions({"summary:majorGroup"})
@@ -103,7 +111,7 @@ public class GradeSummaryController {
     @ApiImplicitParams({@ApiImplicitParam(name = "majorId", value = "专业id"),
         @ApiImplicitParam(name = "grade", value = "年级")})
     public CommonResult<List<Map<String, Object>>> obtainDefenseTeamInfo(
-        @NotNull Integer majorId, @NotNull Integer grade) {
+        @Valid @NotNull(message = "专业不能为空") Integer majorId,@Valid @NotNull(message = "年级不能为空") Integer grade) {
         List<Map<String, Object>> result = new ArrayList<>();
         grade = GradeUtils.getGrade(grade);
         List<Team> list = teamService.list(new QueryWrapper<Team>().eq("grade", grade).eq("major_id", majorId));

@@ -1,5 +1,6 @@
 package edu.dlu.bysj.paper.controller;
 
+import edu.dlu.bysj.base.model.query.YearQuery;
 import edu.dlu.bysj.paper.model.dto.EntrustDto;
 import edu.dlu.bysj.base.model.entity.Entrust;
 import edu.dlu.bysj.base.model.vo.EntrustInfoVo;
@@ -18,6 +19,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 
 /**
@@ -38,7 +40,14 @@ public class EntrustController {
         this.teacherService = teacherService;
     }
 
-
+    /*
+     * @Description: 设置题目委托
+     * @Author: sinre 
+     * @Date: 2022/6/20 21:13
+     * @param dto
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @PostMapping(value = "/entrust/setEntrust")
     @LogAnnotation(content = "设置题目委托")
     @RequiresPermissions({"entrust:subjectEntrust"})
@@ -61,22 +70,29 @@ public class EntrustController {
         return save ? CommonResult.success(null) : CommonResult.failed();
     }
 
-
+    /*
+     * @Description: 获取我的委托列表
+     * @Author: sinre
+     * @Date: 2022/6/20 21:13
+     * @param pageSize
+     * @param pageNumber
+     * @param year
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<edu.dlu.bysj.base.model.vo.TotalPackageVo<edu.dlu.bysj.base.model.vo.EntrustInfoVo>>
+     **/
     @GetMapping(value = "/entrust/myList")
     @LogAnnotation(content = "获取我的委托列表")
     @RequiresPermissions({"entrust:list"})
     @ApiOperation(value = "获取我的委托列表")
     public CommonResult<TotalPackageVo<EntrustInfoVo>> selfSubjectEntrust(
-              Integer pageSize,
-              Integer pageNumber,
-              String year,
-              HttpServletRequest request) {
+            @Valid YearQuery query,
+            HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
         TotalPackageVo<EntrustInfoVo> result = null;
         Integer userId = JwtUtil.getUserId(jwt);
         String userNumber = teacherService.idToNumber(userId);
         if (!StringUtils.isEmpty(jwt)) {
-            result = entrustService.selfEntrusts(Integer.valueOf(userNumber), year, pageNumber, pageSize);
+            result = entrustService.selfEntrusts(Integer.valueOf(userNumber), query.getYear(), query.getPageNumber(), query.getPageSize());
         }
         return CommonResult.success(result);
     }

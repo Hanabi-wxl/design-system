@@ -20,6 +20,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 
 /**
  * @author XiangXinGang
@@ -39,16 +40,21 @@ public class MajorController {
         this.collegeService = collegeService;
     }
 
+    /*
+     * @Description: 教师选择学院后获取专业列表
+     * @Author: sinre
+     * @Date: 2022/6/18 18:19
+     * @param majorQueryDto
+     * @return edu.dlu.bysj.base.result.CommonResult<edu.dlu.bysj.base.model.vo.TotalPackageVo<edu.dlu.bysj.base.model.vo.MajorVo>>
+     **/
     @GetMapping(value = "/system/major/list")
     @LogAnnotation(content = "获取专业列表")
     @RequiresPermissions({"major:list"})
     @ApiOperation(value = "获取专业列表")
     public CommonResult<TotalPackageVo<MajorVo>> majorList(
-            MajorQueryDto majorQueryDto, HttpServletRequest request
+            @Valid MajorQueryDto majorQueryDto
     ) {
-        String jwt = request.getHeader("jwt");
-        String collegeId = String.valueOf(collegeService.getCollegeIdByMajorId(JwtUtil.getMajorId(jwt)));
-        String myCollegeId = majorQueryDto.getCollegeId().equals("") ? collegeId : majorQueryDto.getCollegeId();
+        Integer myCollegeId = majorQueryDto.getCollegeId();
         int pageNumber = majorQueryDto.getPageNumber() == null ? 1 : majorQueryDto.getPageNumber();
         int pageSize = majorQueryDto.getPageSize() == null ? 12 : majorQueryDto.getPageSize();
         TotalPackageVo<MajorVo> totalPackageVo =

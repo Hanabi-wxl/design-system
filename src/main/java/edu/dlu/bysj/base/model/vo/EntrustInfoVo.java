@@ -12,7 +12,7 @@ import lombok.Data;
 @ApiModel(value = "题目委托列表返会类")
 public class EntrustInfoVo {
     @ApiModelProperty(value = "题目编号")
-    private Integer subjectId;
+    private String subjectId;
 
     @ApiModelProperty(value = "题目名称")
     private String subjectName;

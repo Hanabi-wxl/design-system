@@ -3,6 +3,7 @@ package edu.dlu.bysj.paper.controller;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import edu.dlu.bysj.base.model.vo.TotalPackageVo;
+import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.paper.model.dto.SelectStudentDto;
 import edu.dlu.bysj.base.model.entity.Student;
 import edu.dlu.bysj.base.model.entity.Subject;
@@ -60,6 +61,14 @@ public class SelectApproveController {
         this.subjectService = subjectService;
     }
 
+    /*
+     * @Description: 管理员获取未选题学生列表
+     * @Author: sinre
+     * @Date: 2022/6/25 16:43
+     * @param query
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<java.util.List<edu.dlu.bysj.base.model.vo.UnselectStudentVo>>
+     **/
     @GetMapping(value = "/topics/queryUnselectedStudentList")
     @LogAnnotation(content = "获取未选题学生列表")
     @RequiresPermissions({"topic:UnselectList"})
@@ -68,7 +77,9 @@ public class SelectApproveController {
         Integer majorId = query.getMajorId();
         if (ObjectUtil.isNull(majorId))
             majorId = JwtUtil.getMajorId(request.getHeader("jwt"));
-        List<UnselectStudentVo> unselectStudentVos = topicService.unChooseStudentList(query.getStudentNumber(), query.getStudentName(), query.getYear()-3, majorId);
+        Integer grade = GradeUtils.getGrade(query.getYear());
+        List<UnselectStudentVo> unselectStudentVos =
+                topicService.unChooseStudentList(query.getStudentNumber(), query.getStudentName(), grade, majorId);
         return CommonResult.success(unselectStudentVos);
     }
 

@@ -8,6 +8,7 @@ import edu.dlu.bysj.base.model.vo.MajorSimpleInfoVo;
 import edu.dlu.bysj.base.model.vo.MajorVo;
 import edu.dlu.bysj.base.model.vo.TotalPackageVo;
 import edu.dlu.bysj.base.model.vo.UserVo;
+import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.system.mapper.MajorMapper;
 import edu.dlu.bysj.system.service.MajorService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +35,7 @@ public class MajorServiceImpl extends ServiceImpl<MajorMapper, Major> implements
 
     @Override
     public TotalPackageVo<MajorVo> majorPagination(
-            String collegeId, Integer pageNumber, Integer pagesize) {
+            Integer collegeId, Integer pageNumber, Integer pagesize) {
 
         String zsetKey = RedisKeyEnum.MAJOR_ZSET_KEY.getKeyValue() + collegeId;
         String hashKey = RedisKeyEnum.MAJOR_HASH_KEY.getKeyValue() + collegeId;
@@ -73,7 +74,8 @@ public class MajorServiceImpl extends ServiceImpl<MajorMapper, Major> implements
     @Transactional(rollbackFor = RuntimeException.class)
     public boolean generateFillingNumber(Integer majorId, Integer year) {
         /*按序归档序的题目id*/
-        List<Integer> list = majorMapper.archiveNumber(majorId, year);
+        Integer grade = GradeUtils.getGrade(year);
+        List<Integer> list = majorMapper.archiveNumber(majorId, grade);
         /*归档序号从1开始*/
         for (int i = 0; i < list.size(); i++) {
             majorMapper.updateFillNumber(list.get(i), i + 1);

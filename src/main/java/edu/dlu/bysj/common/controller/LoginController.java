@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -109,7 +110,7 @@ public class LoginController {
             @ApiImplicitParam(name = "username", value = "教工号", required = true),
             @ApiImplicitParam(name = "password", value = "密码", required = true)
     })
-    public CommonResult<Object> teacherLogin( @RequestBody
+    public CommonResult<Object> teacherLogin( @RequestBody @Valid
             LoginUser user, HttpServletRequest request, HttpServletResponse response) {
 
         String username = user.getUsername();

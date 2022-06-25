@@ -86,7 +86,7 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
     public List<PaperCoverTemplate> packPaperCoverData(Integer majorId) {
         List<PaperCoverTemplate> paperCoverTemplates = subjectMapper.selectPaperCoverInfo(majorId);
         for (PaperCoverTemplate paperCoverTemplate : paperCoverTemplates) {
-            paperCoverTemplate.setGrade(String.valueOf(Integer.parseInt(paperCoverTemplate.getGrade())-3));
+            paperCoverTemplate.setGrade(String.valueOf(Integer.parseInt(paperCoverTemplate.getGrade())));
         }
         return paperCoverTemplates;
     }
@@ -116,7 +116,7 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
             aClass = classMapper.selectById(student.getClassId());
         }
         return packageSubjectApproveForm(subject, teacherInfo, college.getName(), student.getName(), studentMajor, aClass.getName(),
-            subjectType.getName());
+                subjectType.getName());
     }
 
     @Override
@@ -430,8 +430,12 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
             result.setMajorOpinion(subject.getMajorAgree());
             result.setCollegeOption(subject.getCollegeAgree());
             result.setGuideOpinionDate(DateTimeFormatter.ofPattern("yyyy-MM-dd").format(subject.getSubmitDate()));
-            result.setMajorOpinionDate(DateTimeFormatter.ofPattern("yyyy-MM-dd").format(subject.getMajorDate()));
-            result.setCollegeOpinionDate(DateTimeFormatter.ofPattern("yyyy-MM-dd").format(subject.getCollegeDate()));
+            if(ObjectUtil.isNotNull(subject.getMajorDate())){
+                result.setMajorOpinionDate(DateTimeFormatter.ofPattern("yyyy-MM-dd").format(subject.getMajorDate()));
+            }
+            if(ObjectUtil.isNotNull(subject.getCollegeDate())){
+                result.setCollegeOpinionDate(DateTimeFormatter.ofPattern("yyyy-MM-dd").format(subject.getCollegeDate()));
+            }
         }
         return result;
     }

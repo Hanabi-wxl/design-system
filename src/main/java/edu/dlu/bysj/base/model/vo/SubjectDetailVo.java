@@ -1,5 +1,6 @@
 package edu.dlu.bysj.base.model.vo;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -12,6 +13,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ApiModel(description = "教师自带题目列表")
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SubjectDetailVo {
     @ApiModelProperty(value = "id")
     private Integer id;

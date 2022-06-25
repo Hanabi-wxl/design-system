@@ -145,8 +145,8 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
         SubjectDetailInfoVo result = new SubjectDetailInfoVo();
         if (ObjectUtil.isNotNull(subject)) {
             result.setSubjectName(subject.getSubjectName());
-            result.setIsFirst(subject.getIsFirstTeach() == 1 ? "1" : "0");
-            result.setIsSimilar(subject.getIsSimilar() == 1 ? "1" : "0");
+            result.setIsFirst(subject.getIsFirstTeach());
+            result.setIsSimilar(subject.getIsSimilar());
             result.setFirstTeacherId(subject.getFirstTeacherId());
             result.setSecondTeacherId(subject.getSecondTeacherId());
             result.setSourceId(subject.getSourceId());
@@ -361,7 +361,6 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
     public TotalPackageVo<TopicsVo> studentSelectSubjectInfo(TopicsListQuery query, Integer majorId, Integer grade) {
         TotalPackageVo<TopicsVo> result = new TotalPackageVo<>();
         Integer start = (query.getPageNumber() - 1) * query.getPageSize();
-
         /*分页获取该年度该题目的指定条件下的记录*/
         List<TopicsVo> topicsVos = subjectMapper.studentSelectSubject(majorId, grade, start, query.getPageSize(),
             query.getTeacherName(), query.getSubjectName());
@@ -378,7 +377,6 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
         }
 
         result.setArrays(topicsVos);
-
         return result;
     }
 
@@ -398,14 +396,13 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
         return result;
     }
 
-    // TODO: 2022/5/6 报题
     @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean addedApprove(SubjectApprovalVo subjectApprovalVo, Integer majorId) {
         subjectApprovalVo.setSubjectId(String.valueOf(snowflakeConfig.snowflakeId()));
         Integer studentNumber = subjectApprovalVo.getStudentNumber();
-        Integer total = subjectMapper.totalSubjectListByStudent(studentService.numberToId(studentNumber),LocalDate.now().getYear());
-        if (total < 1) {
+        Integer total = subjectMapper.totalSubjectListByStudent(studentService.numberToId(studentNumber),GradeUtils.getGrade(LocalDate.now().getYear()));
+        if (total < 3) {
             subjectApprovalVo.setStudentId(studentService.numberToId(studentNumber));
             Subject subject = new Subject();
             subject.setMajorId(majorId);
@@ -415,7 +412,7 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
                     this.packageSubjectMajor(subjectApprovalVo.getMajorIds(), subjectApprovalVo.getSubjectId());
             /*设置题目提交日期*/
             subject.setSubmitDate(LocalDate.now());
-            subject.setGrade(LocalDate.now().getYear());
+            subject.setGrade(GradeUtils.getGrade(LocalDate.now().getYear()));
 
             boolean save = this.save(subject);
             boolean saveBatch = subjectMajorService.saveBatch(subjectMajorList);
@@ -720,6 +717,7 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
             value.setSubjectName(element.getSubjectName());
             value.setSubjectId(element.getSubjectId());
             value.setId(element.getId());
+            value.setFillingNumber(element.getFillingNumber());
             value.setProgress(element.getProgress());
 
             /*教师信息, 封装成Map<Integer,Map<String,Object>>  第一层map 以teacherId 为key, 第二层map以字段的名称为key*/

@@ -36,7 +36,6 @@ public class CollegeServiceImpl extends ServiceImpl<CollegeMapper, College>
 
     @Override
     public TotalPackageVo<College> collegePagination(CommonPage page, Integer schoolId) {
-
         List<College> result = null;
         String zsetKey = RedisKeyEnum.COLLEGE_ZSET_KEY.getKeyValue() + schoolId;
         String hashKey = RedisKeyEnum.COLLEGE_HASH_KEY.getKeyValue() + schoolId;

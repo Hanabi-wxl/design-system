@@ -11,6 +11,7 @@ import edu.dlu.bysj.base.model.entity.Major;
 import edu.dlu.bysj.base.model.entity.Student;
 import edu.dlu.bysj.base.model.entity.Subject;
 import edu.dlu.bysj.base.result.ResultCodeEnum;
+import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.StudentService;
 import edu.dlu.bysj.common.service.SubjectService;
@@ -30,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -38,6 +40,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.io.*;
 import java.net.URLEncoder;
@@ -51,6 +54,7 @@ import java.util.Map;
  * @date 2021/11/17 21:21
  */
 @Controller
+@Validated
 public class FileDownLoadController {
 
     private final FileDownLoadService fileDownLoadService;
@@ -70,6 +74,14 @@ public class FileDownLoadController {
         this.studentService = studentService;
     }
 
+    /*
+     * @Description: 下载论文封面
+     * @Author: sinre
+     * @Date: 2022/6/20 20:18
+     * @param request
+     * @param response
+     * @return void
+     **/
     @LogAnnotation(content = "下载论文封面")
     @RequiresPermissions({"paper:download"})
     @RequestMapping(value = "/paperManagement/fileDownload/paperCover", method = RequestMethod.GET)
@@ -79,8 +91,7 @@ public class FileDownLoadController {
         if (!StringUtils.isEmpty(jwt)) {
             Integer majorId = JwtUtil.getMajorId(jwt);
             List<PaperCoverTemplate> result = fileDownLoadService.packPaperCoverData(majorId);
-            Major major = majorService.getById(1);
-            String fileName = "论文封面_" + (DateUtil.year(new Date())-3) + "_DADFP" + ".pdf";
+            String fileName = "论文封面_" + GradeUtils.getGrade() + "_LWFP" + ".pdf";
             ClassPathResource classPathResource = new ClassPathResource("template/pdf/PaperCover.jasper");
 
             InputStream source = null;
@@ -114,11 +125,22 @@ public class FileDownLoadController {
 
     }
 
+    /*
+     * @Description: 下载题目审批表
+     * @Author: sinre
+     * @Date: 2022/6/19 17:23
+     * @param subjectId
+     * @param request
+     * @param response
+     * @return void
+     **/
     @LogAnnotation(content = "下载题目审批表")
     @RequiresPermissions({"approve:download"})
-    @RequestMapping(value = "/paperManagement/fileDownload/subjectAuditTable", method = RequestMethod.GET)
-    public void subjectApproveFormDownLoad(@RequestParam("subjectId") @NotNull String subjectId, HttpServletRequest request,
-        HttpServletResponse response) {
+    @GetMapping(value = "/paperManagement/fileDownload/subjectAuditTable")
+    public void subjectApproveFormDownLoad(
+            @NotNull(message = "课题信息不能为空") @Valid String subjectId,
+            HttpServletRequest request,
+            HttpServletResponse response) {
         String jwt = request.getHeader("jwt");
         List<Integer> roleIds = JwtUtil.getRoleIds(jwt);
         boolean isStudent = roleIds.contains(1);
@@ -151,7 +173,7 @@ public class FileDownLoadController {
         else
             resource = new ClassPathResource("template/excel/SubjectApproveFormTeacher.xls");
 
-        String fileName = "题目审批表_" + (DateUtil.year(new Date()) - 3) + "_TMSPB_" + studentNumber + ".xls";
+        String fileName = "题目审批表_" + GradeUtils.getGrade() + "_TMSPB_" + studentNumber + ".xls";
         TemplateExportParams params = new TemplateExportParams(resource.getPath(), true);
 
         Workbook workbook = ExcelExportUtil.exportExcel(params, objectMap);

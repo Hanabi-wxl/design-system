@@ -16,12 +16,15 @@ import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +35,7 @@ import java.util.Map;
 @RestController
 @RequestMapping(value = "/common")
 @Api(tags = "公共信息控制器")
+@Validated
 public class InformationController {
     private final TeacherService teacherService;
 
@@ -89,11 +93,19 @@ public class InformationController {
         return CommonResult.success(result);
     }
 
+    /*
+     * @Description: 用户选择专业后获取本专业的教师
+     * @Author: sinre
+     * @Date: 2022/6/18 18:19
+     * @param majorId
+     * @return edu.dlu.bysj.base.result.CommonResult<java.util.List<edu.dlu.bysj.base.model.vo.TeacherDetailVo>>
+     **/
     @GetMapping(value = "/teacherInfoByMajorId")
     @LogAnnotation(content = "获取教师信息")
     @RequiresPermissions({"common:teacherInformation"})
     @ApiOperation(value = "根据专业id获取教师信息")
-    public CommonResult<List<TeacherDetailVo>> teacherInformation(Integer majorId) {
+    public CommonResult<List<TeacherDetailVo>> teacherInformation(
+            @Valid @NotNull(message = "专业id不能为空") Integer majorId) {
         return CommonResult.success(teacherService.getTeacherInfo(majorId));
     }
 
@@ -101,10 +113,17 @@ public class InformationController {
     @LogAnnotation(content = "获取教师信息")
     @RequiresPermissions({"common:teacherInformation"})
     @ApiOperation(value = "根据学院id获取教师信息")
-    public CommonResult<List<TeacherDetailVo>> teacherCollegeInformation(Integer collegeId) {
+    public CommonResult<List<TeacherDetailVo>> teacherCollegeInformation(@NotNull(message = "专业id不能为空") Integer collegeId) {
         return CommonResult.success(teacherService.getCollegeTeacherInfo(collegeId));
     }
 
+    /*
+     * @Description: 获取本学院教师信息
+     * @Author: sinre
+     * @Date: 2022/6/18 19:11
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<java.util.List<edu.dlu.bysj.base.model.vo.UserVo>>
+     **/
     @GetMapping(value = "/collegeTeacher")
     @LogAnnotation(content = "获取教师信息")
     @RequiresPermissions({"common:teacherInformation"})
@@ -120,6 +139,19 @@ public class InformationController {
         return CommonResult.success(list);
     }
 
+    @GetMapping(value = "/userCollegeMajor")
+    @LogAnnotation(content = "获取学院专业信息")
+    @RequiresPermissions({"common:collegeMajor"})
+    @ApiOperation(value = "获取学院专业信息")
+    public CommonResult<TotalPackageVo<MajorVo>> userCollegeMajor(HttpServletRequest request) {
+        String jwt = request.getHeader("jwt");
+        Integer majorId = JwtUtil.getMajorId(jwt);
+        Integer collegeIdByMajorId = collegeService.getCollegeIdByMajorId(majorId);
+        TotalPackageVo<MajorVo> totalPackageVo =
+                majorService.majorPagination(collegeIdByMajorId, 1, 100);
+        return CommonResult.success(totalPackageVo);
+    }
+
     @GetMapping(value = "/studentInformation")
     @LogAnnotation(content = "获取学生个人详细信息")
     @RequiresPermissions({"common:studentInformation"})
@@ -133,12 +165,22 @@ public class InformationController {
         return CommonResult.success(detailVo);
     }
 
+    /*
+     * @Description: 获取学生个人详细信息
+     * @Author: sinre
+     * @Date: 2022/6/18 20:07
+     * @param studentNumber
+     * @return edu.dlu.bysj.base.result.CommonResult<edu.dlu.bysj.base.model.vo.StudentDetailVo>
+     **/
     @GetMapping(value = "/studentInformationByNumber")
     @LogAnnotation(content = "获取学生个人详细信息")
     @RequiresPermissions({"common:studentInformation"})
     @ApiOperation(value = "通过Id获取学生个人信息")
-    public CommonResult<StudentDetailVo> studentInformationByNumber(@RequestParam("studentNumber") Integer number) {
-        StudentDetailVo detailVo = studentService.checkStudentInfoByNumber(number);
+    public CommonResult<StudentDetailVo> studentInformationByNumber(
+            @Valid @NotNull(message = "学生信息不能为空") Integer studentNumber) {
+        StudentDetailVo detailVo = null;
+        if (studentNumber.toString().length() == 8)
+            detailVo = studentService.checkStudentInfoByNumber(studentNumber);
         return CommonResult.success(detailVo);
     }
 
@@ -185,7 +227,7 @@ public class InformationController {
     @LogAnnotation(content = "查看学生题目信息")
     @RequiresPermissions({"common:studentSubject"})
     @ApiOperation(value = "获取学生题目信息")
-    public CommonResult<Map<String,String>> subjectInfoById(Integer subjectId) {
+    public CommonResult<Map<String,String>> subjectInfoById(@Valid @NotNull(message = "专业id不能为空") Integer subjectId) {
         return CommonResult.success(subjectService.obtainsSubjectInfoById(subjectId));
     }
 
@@ -193,7 +235,7 @@ public class InformationController {
     @LogAnnotation(content = "查看学生题目信息")
     @RequiresPermissions({"common:studentSubject"})
     @ApiOperation(value = "获取学生题目信息")
-    public CommonResult<SubjectTableVo> subjectDetailById(String subjectId) {
+    public CommonResult<SubjectTableVo> subjectDetailById(@Valid @NotNull(message = "专业id不能为空") String subjectId) {
         return CommonResult.success(subjectService.obtainsSubjectTableInfo(subjectId));
     }
 
@@ -242,7 +284,8 @@ public class InformationController {
     @LogAnnotation(content = "获取本专业的所有班级")
     @RequiresPermissions({"common:majorClass"})
     @ApiOperation(value = "获取本专业的所有班级")
-    public CommonResult<List<ClassSimplifyVo>> majorClassList(Integer majorId, HttpServletRequest request) {
+    public CommonResult<List<ClassSimplifyVo>> majorClassList(
+            @Valid @NotNull(message = "专业id不能为空") Integer majorId, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
         List<ClassSimplifyVo> result = null;
         if (!StringUtils.isEmpty(jwt)) {

@@ -15,7 +15,7 @@ import java.util.List;
  */
 public interface MajorService extends IService<Major> {
 
-    TotalPackageVo<MajorVo> majorPagination(String collegeId, Integer pageNumber, Integer pagesize);
+    TotalPackageVo<MajorVo> majorPagination(Integer collegeId, Integer pageNumber, Integer pagesize);
 
     /**
      * 根据majorId 按顺序插入归档序号

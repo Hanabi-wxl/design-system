@@ -190,13 +190,13 @@
                teacher.id             as teacherId,
                teacher.can_use        as canUse
         from teacher
-                 inner join major m
+                 left join major m
                             on teacher.major_id = m.id
-                 inner join office o
-                            on m.id = o.major_id
-                 inner join degree d
+                 left join office o
+                            on o.id = teacher.office_id
+                 left join degree d
                             on teacher.degree_id = d.id
-                 inner join title t
+                 left join title t
                             on teacher.title_id = t.id
         where teacher.major_id = #{majorId}
           and teacher.status = 1

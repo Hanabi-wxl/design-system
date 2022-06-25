@@ -38,7 +38,7 @@ public interface TeacherService extends IService<Teacher> {
      * @param teacherId 教师id
      * @return 学位职称map;
      */
-    Map<String, Object> teacherHeadDetail(String teacherId) throws JsonProcessingException;
+    Map<String, Object> teacherHeadDetail(Integer teacherId) throws JsonProcessingException;
 
     /**
      * 根据uservo 修改教师信息

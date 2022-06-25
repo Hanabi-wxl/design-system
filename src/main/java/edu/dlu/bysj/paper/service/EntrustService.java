@@ -17,5 +17,5 @@ public interface EntrustService extends IService<Entrust> {
      * @param consigneeId 被委托人
      * @return List<EntrustInfo>
      */
-    TotalPackageVo<EntrustInfoVo> selfEntrusts(Integer consigneeId, String year, Integer pageNumber, Integer pageSize);
+    TotalPackageVo<EntrustInfoVo> selfEntrusts(Integer consigneeId, Integer year, Integer pageNumber, Integer pageSize);
 }

@@ -20,7 +20,7 @@
     </select>
 
     <select id="teacherPermissions" resultType="java.lang.String">
-        select authority.description
+        select authority.url
         from authority
         where authority.id in (
         select authority_id
@@ -42,9 +42,8 @@
         ))
     </select>
 
-
     <select id="allAuthority" resultType="java.lang.String">
-        select authority.description
+        select authority.url
         from authority
         where authority.status = 1
     </select>

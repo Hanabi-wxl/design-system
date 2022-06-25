@@ -23,15 +23,15 @@ public class SubjectApproveListQuery extends CommonPage {
     }
 
     @ApiModelProperty(value = "专业id")
-    @NotNull
+    @NotNull(message = "专业id不能为空")
     private Integer majorId;
 
-    @ApiModelProperty(value = "专业id")
-    @NotNull
+    @ApiModelProperty(value = "学院id")
+    @NotNull(message = "学院id不能为空")
     private Integer collegeId;
 
     @ApiModelProperty(value = "当前年份")
-    @NotNull
+    @NotNull(message = "当前年份不能为空")
     private Integer year;
 
     @ApiModelProperty(value = "教师id")

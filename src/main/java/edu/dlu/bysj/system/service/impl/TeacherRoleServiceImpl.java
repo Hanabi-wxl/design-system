@@ -77,7 +77,7 @@ public class TeacherRoleServiceImpl extends ServiceImpl<TeacherRoleMapper, Teach
         if(redisTemplate.hasKey(key)){
             adminVos = (List<AdminVo>) redisTemplate.opsForSet().members(key);
         } else {
-            List<MajorVo> majorVos = majorMapper.selectMajorList(String.valueOf(collegeId));
+            List<MajorVo> majorVos = majorMapper.selectMajorList(collegeId);
             List<Integer> majorIds = new LinkedList<>();
             List<Integer> ids1 = new LinkedList<>();
             for (MajorVo majorVo : majorVos) {

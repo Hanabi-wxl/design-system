@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author XiangXinGang
@@ -18,10 +19,10 @@ import javax.validation.constraints.Min;
 @NoArgsConstructor
 public class CommonPage {
     @ApiModelProperty(value = "每页记录数")
-    @Min(value = 1, message = "每页记录数不能小于1")
+    @NotNull(message = "页面大小不能为空")
     private Integer pageSize;
 
     @ApiModelProperty(value = "当前页码")
-    @Min(value = 1, message = "当前页码不能小于1")
+    @NotNull(message = "页码不能为空")
     private Integer pageNumber;
 }

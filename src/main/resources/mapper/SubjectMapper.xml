@@ -355,7 +355,8 @@
         progress.content,
         s.filing_number
 
-        from (select subject.id,
+        from (select
+        subject.subject_id as id,
         subject.subject_name,
         subject.first_teacher_id,
         subject.student_id,
@@ -435,8 +436,10 @@
                    subject.subject_name,
                    subject.first_teacher_id
             from subject
+            left join
+                subject_major sm on sm.subject_id = subject.subject_id
             where subject.status = 1
-            and subject.major_id = #{majorId}
+            and sm.major_id = #{majorId}
             and subject.grade = #{grade}
             and subject.progress_id = 3
         ) as s

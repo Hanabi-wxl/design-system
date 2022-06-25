@@ -45,7 +45,11 @@
         where college.id = (select college_id from major where major.id = #{majorId})
     </select>
     <select id="obtainCollegeTeacher" resultType="edu.dlu.bysj.base.model.vo.UserVo">
-        select teacher.id as userId, teacher.name as userName from teacher where major_id in (
+        select
+               teacher.id as userId,
+               teacher.name as userName,
+               teacher.teacher_number as userNumber
+        from teacher where major_id in (
             select id from major where college_id = #{collegeId}
         )
     </select>

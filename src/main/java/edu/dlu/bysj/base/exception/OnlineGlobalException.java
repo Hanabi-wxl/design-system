@@ -1,6 +1,7 @@
 package edu.dlu.bysj.base.exception;
 
 import edu.dlu.bysj.base.result.CommonResult;
+import org.apache.shiro.authz.UnauthorizedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
  
 import javax.servlet.http.HttpServletRequest;
@@ -37,10 +39,11 @@ public class OnlineGlobalException {
      */
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseBody
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public CommonResult<Object> handleValidationException(HttpServletRequest request, ConstraintViolationException ex) {
         logger.error("异常:" + request.getRequestURI(), ex);
         String collect = ex.getConstraintViolations().stream().filter(Objects::nonNull)
-                .map(cv -> cv == null ? "null" : cv.getPropertyPath() + ": " + cv.getMessage())
+                .map(cv -> cv == null ? "null" : cv.getMessage())
                 .collect(Collectors.joining(", "));
         CommonResult<Object> restResultWrapper = new CommonResult<>();
         logger.info("请求参数异常",collect);
@@ -57,6 +60,7 @@ public class OnlineGlobalException {
      */
     @ExceptionHandler(value = MethodArgumentNotValidException.class) //400
     @ResponseBody
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public CommonResult<Object> methodArgumentValidationHandler(HttpServletRequest request, MethodArgumentNotValidException exception){
         logger.info("异常:" + request.getRequestURI(), exception);
         logger.info("请求参数错误！{}",getExceptionDetail(exception),"参数数据："+showParams(request));
@@ -78,6 +82,7 @@ public class OnlineGlobalException {
      */
     @ExceptionHandler(BindException.class)
     @ResponseBody
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public CommonResult<Object> bindException(HttpServletRequest request, BindException pe) {
         logger.error("异常:" + request.getRequestURI(), pe);
         CommonResult<Object> restResultWrapper = new CommonResult<>();
@@ -85,7 +90,7 @@ public class OnlineGlobalException {
         if(pe.getBindingResult()!=null){
             List<ObjectError> allErrors = pe.getBindingResult().getAllErrors();
             allErrors.stream().filter(Objects::nonNull).forEach(objectError -> {
-                map.put("请求路径："+request.getRequestURI()+"--请求参数："+(((FieldError) ((FieldError) allErrors.get(0))).getField().toString()),objectError.getDefaultMessage());
+                map.put("请求参数绑定异常",objectError.getDefaultMessage());
             });
         }
         restResultWrapper.setCode(HttpStatus.BAD_REQUEST.value());
@@ -102,6 +107,7 @@ public class OnlineGlobalException {
      */
     @ExceptionHandler(MissingServletRequestParameterException.class)
     @ResponseBody
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public CommonResult<Object> missingServletRequestParameterException(HttpServletRequest request, MissingServletRequestParameterException pe) {
         logger.error("异常:" + request.getRequestURI(), pe);
         CommonResult<Object> restResultWrapper = new CommonResult<>();
@@ -118,11 +124,29 @@ public class OnlineGlobalException {
      */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     @ResponseBody
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
     public CommonResult<Object> httpRequestMethodNotSupportedException(HttpServletRequest request, HttpRequestMethodNotSupportedException pe) {
         logger.error("异常:" + request.getRequestURI(), pe);
         CommonResult<Object> restResultWrapper = new CommonResult<>();
-        restResultWrapper.setCode(HttpStatus.BAD_REQUEST.value());
+        restResultWrapper.setCode(HttpStatus.METHOD_NOT_ALLOWED.value());
         restResultWrapper.setMessage("请求方式不正确");
+        return restResultWrapper;
+    }
+
+    /**
+     * HttpRequestMethodNotSupportedException
+     * @param request
+     * @param pe
+     * @return
+     */
+    @ExceptionHandler(UnauthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ResponseBody
+    public CommonResult<Object> unauthorizedExceptionHandler(HttpServletRequest request, UnauthorizedException pe) {
+        logger.error("异常:" + request.getRequestURI(), pe);
+        CommonResult<Object> restResultWrapper = new CommonResult<>();
+        restResultWrapper.setCode(HttpStatus.UNAUTHORIZED.value());
+        restResultWrapper.setMessage("无相关权限");
         return restResultWrapper;
     }
  
@@ -135,6 +159,7 @@ public class OnlineGlobalException {
      */
     @ExceptionHandler(Exception.class)
     @ResponseBody
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public CommonResult<Object> otherException(HttpServletRequest request, Exception pe) {
         logger.error("异常:" + request.getRequestURI(), pe);
         CommonResult<Object> commonResult = new CommonResult<>();

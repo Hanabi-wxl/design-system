@@ -20,7 +20,7 @@ public class UnselectStudentQuery {
     private String studentName;
 
     @ApiModelProperty(value = "年份")
-    @NotNull
+    @NotNull(message = "年份不能为空")
     private Integer year;
 
     @ApiModelProperty(value = "专业id")

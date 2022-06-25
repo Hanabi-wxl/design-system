@@ -27,7 +27,7 @@ public interface MajorMapper extends BaseMapper<Major> {
      *            专业id
      * @return majorVo
      */
-    List<MajorVo> selectMajorList(String collegeId);
+    List<MajorVo> selectMajorList(Integer collegeId);
 
     /**
      * 根据majorId 按归档顺序获取学生以确定的题目id

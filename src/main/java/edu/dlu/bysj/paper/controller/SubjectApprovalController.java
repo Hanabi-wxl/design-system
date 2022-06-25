@@ -5,6 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.dlu.bysj.base.exception.GlobalException;
+import edu.dlu.bysj.base.model.dto.MajorFillingDto;
 import edu.dlu.bysj.base.model.entity.Subject;
 import edu.dlu.bysj.base.model.entity.Teacher;
 import edu.dlu.bysj.base.model.enums.ProcessEnum;
@@ -42,6 +43,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.Collections;
@@ -61,11 +63,9 @@ public class SubjectApprovalController {
     private final TeacherService teacherService;
     private final SourceService sourceService;
     private final SubjectService subjectService;
-
     private final SubjectTypeService subjectTypeService;
     private final MajorService majorService;
     private final CollegeService collegeService;
-
 
     private static final Integer ONE = 1;
     private static final Integer ZERO = 0;
@@ -85,20 +85,13 @@ public class SubjectApprovalController {
         this.collegeService = collegeService;
     }
 
-    @GetMapping(value = "/approve/major-information")
-    @LogAnnotation(content = "获取老师所属学院的所有专业")
-    @RequiresPermissions({"approve:collegeMajor"})
-    @ApiOperation(value = "获取老师所属学院的所有专业")
-    public CommonResult<List<CollegeMajorVo>> teacherCollegeMajor(HttpServletRequest request) {
-        String jwt = request.getHeader("jwt");
-        List<CollegeMajorVo> majorVos = null;
-        if (!StringUtils.isEmpty(jwt)) {
-            majorVos = teacherService.teacherMajorByCollegeId(JwtUtil.getMajorId(jwt));
-        }
-        return CommonResult.success(majorVos);
-    }
-
-
+    /*
+     * @Description: 获取本专业的所有老师
+     * @Author: sinre
+     * @Date: 2022/6/18 19:09
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<java.util.List<edu.dlu.bysj.base.model.vo.TeacherSimplyVo>>
+     **/
     @GetMapping(value = "/approve/allMajorTeacher")
     @LogAnnotation(content = "获取本专业的所有老师")
     @RequiresPermissions({"approve:majorTeacher"})
@@ -115,6 +108,13 @@ public class SubjectApprovalController {
         return CommonResult.success(result);
     }
 
+    /*
+     * @Description: 获取题目来源列表
+     * @Author: sinre 
+     * @Date: 2022/6/18 19:40
+     * @param 
+     * @return edu.dlu.bysj.base.result.CommonResult<java.util.List<edu.dlu.bysj.base.model.vo.SubjectSourceVo>>
+     **/
     @GetMapping(value = "/approve/subjectOrigin")
     @LogAnnotation(content = "获取题目来源列表")
     @RequiresPermissions({"approve:subjectSource"})
@@ -125,12 +125,19 @@ public class SubjectApprovalController {
         return CommonResult.success(result);
     }
 
-
+    /*
+     * @Description: 教师提交/修改题目审批表
+     * @Author: sinre 
+     * @Date: 2022/6/18 20:09
+     * @param subjectApprovalVo
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @PostMapping(value = "/approve/teacherCommitSubject")
     @LogAnnotation(content = "教师提交/修改题目审批表")
     @RequiresPermissions({"approve:subjectApprove"})
     @ApiOperation(value = "教师提交/修改题目审批表")
-    public CommonResult<Object> submitSubjectApproveTable(@NotNull @RequestBody SubjectApprovalVo subjectApprovalVo, HttpServletRequest request) {
+    public CommonResult<Object> submitSubjectApproveTable(@Valid @RequestBody SubjectApprovalVo subjectApprovalVo, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
         Integer majorId = JwtUtil.getMajorId(jwt);
         boolean flag = false;
@@ -141,10 +148,16 @@ public class SubjectApprovalController {
             /*修改*/
             flag = subjectService.modifyApprove(subjectApprovalVo);
         }
-        return flag ? CommonResult.success("操作成功") : CommonResult.failed("报题超过限制!");
+        return flag ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
     }
 
-
+    /*
+     * @Description: 获取论文类型
+     * @Author: sinre
+     * @Date: 2022/6/18 19:37
+     * @param
+     * @return edu.dlu.bysj.base.result.CommonResult<java.util.List<java.util.Map<java.lang.String,java.lang.Object>>>
+     **/
     @GetMapping(value = "/approve/paperType")
     @LogAnnotation(content = "获取论文类型")
     @RequiresPermissions({"approve:subjectType"})
@@ -154,32 +167,32 @@ public class SubjectApprovalController {
         return CommonResult.success(maps);
     }
 
-
-    @GetMapping(value = "/approve/singleTeacherInformation/{teacherId}")
-    @LogAnnotation(content = "查询教师个人信息")
-    @RequiresPermissions({"approve:teacherDetail"})
-    @ApiOperation(value = "查询教师个人信息")
-    public CommonResult<TeacherShortenVo> teacherShortenInformation(@PathVariable("teacherId") Integer teacherId) {
-        TeacherShortenVo teacherShortenVos;
-        try {
-            teacherShortenVos = teacherService.teacherShortenInfo(teacherId);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new GlobalException(500, "序列化异常，操作失败");
-        }
-        return CommonResult.success(teacherShortenVos);
-    }
-
+    /*
+     * @Description: 获取题目详情
+     * @Author: sinre 
+     * @Date: 2022/6/18 20:22
+     * @param subjectId
+     * @return edu.dlu.bysj.base.result.CommonResult<edu.dlu.bysj.base.model.vo.SubjectDetailInfoVo>
+     **/
     @GetMapping(value = "/approve/detail")
     @LogAnnotation(content = "获取题目详情")
     @RequiresPermissions({"approve:subjectDetail"})
     @ApiOperation(value = "获取题目详情")
-    public CommonResult<SubjectDetailInfoVo> subjectDetail(@RequestParam("subjectId") String subjectId) {
+    public CommonResult<SubjectDetailInfoVo> subjectDetail(
+            @Valid @NotBlank(message = "题目信息不能为空") String subjectId) {
         SubjectDetailInfoVo subjectDetailInfoVo = subjectService.obtainsSubjectRelationInfo(subjectId);
         return CommonResult.success(subjectDetailInfoVo);
 
     }
 
+    /*
+     * @Description: 获取教师、学生课题
+     * @Author: sinre
+     * @Date: 2022/6/18 18:49
+     * @param request
+     * @param query
+     * @return edu.dlu.bysj.base.result.CommonResult<edu.dlu.bysj.base.model.vo.TotalPackageVo<edu.dlu.bysj.base.model.vo.SubjectDetailVo>>
+     **/
     @GetMapping(value = "/approve/subjectList")
     @LogAnnotation(content = "查看教师/学生自带的题目")
     @RequiresPermissions({"approve:subjectList"})
@@ -196,11 +209,20 @@ public class SubjectApprovalController {
         return CommonResult.success(subjectVo);
     }
 
+    /*
+     * @Description: 管理员获取审批表
+     * @Author: sinre
+     * @Date: 2022/6/18 21:16
+     * @param query
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<edu.dlu.bysj.base.model.vo.TotalPackageVo<edu.dlu.bysj.base.model.vo.ApproveDetailVo>>
+     **/
     @GetMapping(value = "/approve/getListByTeacher")
     @LogAnnotation(content = "获取该教师的题目审批列表")
     @RequiresPermissions({"approve:subjectAudit"})
     @ApiOperation(value = "获取该教师的题目审批列表")
-    public CommonResult<TotalPackageVo<ApproveDetailVo>> teacherApproveList(@Valid SubjectApproveListQuery query, HttpServletRequest request) {
+    public CommonResult<TotalPackageVo<ApproveDetailVo>> teacherApproveList(
+            @Valid SubjectApproveListQuery query, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
         List<Integer> roleIds = JwtUtil.getRoleIds(jwt);
         Integer max = Collections.max(roleIds);
@@ -222,40 +244,21 @@ public class SubjectApprovalController {
         return CommonResult.success(result);
     }
 
-    @GetMapping(value = "/approve/userQueryList")
-    @LogAnnotation(content = "根据条件查询(学号/教工号, 姓名)该管理员题目审核列表")
-    @RequiresPermissions({"approve:auditEntrust"})
-    @ApiOperation(value = "根据条件查询(学号/教工号, 姓名)该管理员审批列表")
-    public CommonResult<TotalPackageVo<ApproveDetailVo>> teacherApproveListByCondition(@Valid ApproveConditionQuery query) {
-
-        log.info("开始执行 type= {}", query.getType());
-        TotalPackageVo<ApproveDetailVo> result = new TotalPackageVo<>();
-        if (ZERO.equals(query.getType())) {
-            /*学生*/
-            result = subjectService.adminApprovePaginationByStudentCondition(query);
-        } else if (ONE.equals(query.getType())) {
-            /*教师*/
-            log.info("开始执行 type= {}", query.getType());
-            result = subjectService.adminApprovePaginationByTeacherCondition(query);
-        }
-        return CommonResult.success(result);
-    }
-
-    @GetMapping(value = "/approve/createFillingNumber/{majorId}/{year}")
+    /*
+     * @Description: 生成归档序号
+     * @Author: sinre
+     * @Date: 2022/6/19 18:25
+     * @param majorFillingDto
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
+    @PostMapping(value = "/approve/createFillingNumber")
     @LogAnnotation(content = "生成归档序号")
     @RequiresPermissions({"approve:FillingNumber"})
     @ApiOperation(value = "生成归档序号")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "majorId", value = "专业id"),
-            @ApiImplicitParam(name = "year", value = "年份")
-    })
-    public CommonResult<Object> generateFillingNumber(@PathVariable("majorId")
-                                                      @NotNull Integer majorId,
-                                                      @PathVariable("year")
-                                                      @NotNull Integer year) {
+    public CommonResult<Object> generateFillingNumber(@RequestBody @Valid MajorFillingDto majorFillingDto) {
         boolean flag;
         try {
-            majorService.generateFillingNumber(majorId, year);
+            majorService.generateFillingNumber(majorFillingDto.getMajorId(), majorFillingDto.getYear());
             flag = true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -264,33 +267,14 @@ public class SubjectApprovalController {
         return flag ? CommonResult.success(null) : CommonResult.failed();
     }
 
-    @GetMapping(value = "/approve/getMajorInformation/{collegeId}")
-    @LogAnnotation(content = "根据学院id,获取学院下的专业名")
-    @RequiresPermissions({"approve:majorInformation"})
-    @ApiOperation(value = "根据学院id 获取学院下的专业")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "collegeId", value = "学院id")
-    })
-    public CommonResult<List<MajorSimpleInfoVo>> getAllCollegeMajor(@PathVariable("collegeId")
-                                                                    @NotNull Integer collegeId) {
-        List<MajorSimpleInfoVo> majorSimpleInfoVos = majorService.obtainCollegeMajor(collegeId);
-        return CommonResult.success(majorSimpleInfoVos);
-    }
-
-    @GetMapping(value = "/approve/getCollegeInforamtion")
-    @LogAnnotation(content = "获取该学校下的所学院信息")
-    @RequiresPermissions({"approve:collegeInformation"})
-    @ApiOperation(value = "获取该学校下的所有学院信息")
-    public CommonResult<List<CollegeSimpleInoVo>> getCollegeInfo(HttpServletRequest request) {
-        String jwt = request.getHeader("jwt");
-        Integer schoolId = JwtUtil.getSchoolId(jwt);
-        List<CollegeSimpleInoVo> result = null;
-        if (!StringUtils.isEmpty(jwt)) {
-            result = collegeService.obtainCollegeInfoBySchool(schoolId);
-        }
-        return CommonResult.success(result);
-    }
-
+    /*
+     * @Description: 提专业/校级题目审阅结果
+     * @Author: sinre 
+     * @Date: 2022/6/18 22:07
+     * @param source
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @PostMapping(value = "/approve/submitAuditResult")
     @LogAnnotation(content = "提专业/校级题目审阅结果")
     @RequiresPermissions({"approve:submitAudit"})
@@ -335,6 +319,14 @@ public class SubjectApprovalController {
         return flag ? CommonResult.success(null) : CommonResult.failed();
     }
 
+    /*
+     * @Description: 批量提专业/校级题目审阅结果
+     * @Author: sinre
+     * @Date: 2022/6/19 18:13
+     * @param source
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @PostMapping(value = "/approve/submitAuditResults")
     @LogAnnotation(content = "批量提专业/校级题目审阅结果")
     @RequiresPermissions({"approve:submitAudit"})
@@ -358,6 +350,8 @@ public class SubjectApprovalController {
                         value.setProgressId(currentCode);
                         value.setMajorLeadingId(JwtUtil.getUserId(jwt));
                         value.setMajorDate(LocalDate.now());
+                    } else {
+                        return CommonResult.failed("该题目不在本阶段内");
                     }
                 }
             } else if (ONE.equals(type)) {
@@ -369,6 +363,8 @@ public class SubjectApprovalController {
                         value.setProgressId(currentCode);
                         value.setCollegeLeadingId(JwtUtil.getUserId(jwt));
                         value.setCollegeDate(LocalDate.now());
+                    } else {
+                        return CommonResult.failed("该题目不在本阶段内");
                     }
                 }
             }
@@ -377,12 +373,20 @@ public class SubjectApprovalController {
         return flag ? CommonResult.success(null) : CommonResult.failed();
     }
 
+    /*
+     * @Description: 删除题目
+     * @Author: sinre
+     * @Date: 2022/6/19 18:16
+     * @param json
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @DeleteMapping(value = "/approve/deleteSubject")
     @LogAnnotation(content = "删除题目")
     @RequiresPermissions({"approve:deleteSubject"})
     @ApiOperation(value = "删除题目")
     @ApiImplicitParam(name = "subjectId", value = "题目id")
-    public CommonResult<Object> deleteSubject(@RequestBody String json) {
+    public CommonResult<Object> deleteSubject(
+            @Valid @NotBlank(message = "题目信息不能为空") @RequestBody String json) {
         String subjectId = JSONUtil.parseObj(json).get("id", String.class);
         return subjectService.removeSubjectById(subjectId) ? CommonResult.success(null) : CommonResult.failed();
     }

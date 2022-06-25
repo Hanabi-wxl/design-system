@@ -19,6 +19,7 @@ import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.base.util.SimpleHashUtil;
 import edu.dlu.bysj.common.mapper.TeacherMapper;
 import edu.dlu.bysj.common.service.TeacherService;
+import edu.dlu.bysj.system.mapper.CollegeMapper;
 import edu.dlu.bysj.system.mapper.TeacherRoleMapper;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,17 +39,26 @@ import java.util.concurrent.TimeUnit;
 public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher>
         implements TeacherService {
 
-    @Autowired
-    private TeacherMapper teacherMapper;
+    private final TeacherMapper teacherMapper;
 
-    @Autowired
-    private RedisTemplate redisTemplate;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final RedisTemplate redisTemplate;
 
-    @Autowired
-    private TeacherRoleMapper teacherRoleMapper;
+    private final ObjectMapper objectMapper;
+
+    private final TeacherRoleMapper teacherRoleMapper;
+
+    private final CollegeMapper collegeMapper;
+
+    public TeacherServiceImpl(TeacherMapper teacherMapper,RedisTemplate redisTemplate,
+        ObjectMapper objectMapper,TeacherRoleMapper teacherRoleMapper,CollegeMapper collegeMapper){
+        this.teacherMapper = teacherMapper;
+        this.redisTemplate = redisTemplate;
+        this.objectMapper = objectMapper;
+        this.teacherRoleMapper = teacherRoleMapper;
+        this.collegeMapper = collegeMapper;
+    }
+
 
     @Override
     public List<Integer> getTeacherRoles(Integer teacherId) {
@@ -79,7 +89,7 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher>
     }
 
     @Override
-    public Map<String, Object> teacherHeadDetail(String teacherId) throws JsonProcessingException {
+    public Map<String, Object> teacherHeadDetail(Integer teacherId) throws JsonProcessingException {
         final String key = this.getClass().getName() + ":DegreeAndTile:" + teacherId;
         DegreeAndTileConvey degreeAndTileConvey = null;
 
@@ -87,7 +97,6 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher>
             Object res = redisTemplate.opsForValue().get(key);
             degreeAndTileConvey = objectMapper.readValue(res.toString(), DegreeAndTileConvey.class);
         } else {
-
             degreeAndTileConvey = teacherMapper.teacherDegreeAndTitle(teacherId);
             String value = objectMapper.writeValueAsString(degreeAndTileConvey);
             // 设置10天过期时间
@@ -140,7 +149,8 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher>
         map.put("teacherName", teacher.getName());
         map.put("roleIds", teacherRoles);
         map.put("majorId", teacher.getMajorId());
-        map.put("collegeId", schoolId);
+        map.put("collegeId", collegeMapper.getCollegeId(teacher.getMajorId()));
+        map.put("schoolId", schoolId);
         return map;
     }
 
