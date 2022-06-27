@@ -1,7 +1,7 @@
 package edu.dlu.bysj.common.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import edu.dlu.bysj.base.model.entity.Title;
+import edu.dlu.bysj.base.model.entity.TeacherTitle;
 
 import java.util.List;
 import java.util.Map;
@@ -10,7 +10,7 @@ import java.util.Map;
  * @author XiangXinGang
  * @date 2021/10/24 22:24
  */
-public interface TitleService extends IService<Title> {
+public interface TitleService extends IService<TeacherTitle> {
   /**
    * 查询所有的职称,id ,name
    *

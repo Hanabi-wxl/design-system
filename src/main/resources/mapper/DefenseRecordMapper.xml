@@ -17,7 +17,7 @@
             subject.id,
             subject.subject_name,
             teacher.name as teachername,
-            title.name as titlename,
+            teacher_title.name as titlename,
             s.name as studentname,
             s.phone_number as phone,
             s.student_number as number,
@@ -52,8 +52,8 @@
                           on s.subject_id = subject.id
                 left join teacher
                           on subject.first_teacher_id = teacher.id
-                left join title
-                          on teacher.id = title.id
+                left join teacher_title
+                          on teacher.id = teacher_title.id
                 left join progress
                           on subject.progress_id = progress.id
         limit #{start}, #{pageSize}

@@ -99,6 +99,8 @@ public class MiddleCheckController {
                 subjectValue.setProgressId(processCode);
                 subjectService.saveOrUpdate(subjectValue);
                 message = "操作成功";
+            } else {
+                return CommonResult.failed("该题目不在本阶段内");
             }
         }
         return CommonResult.success(message);

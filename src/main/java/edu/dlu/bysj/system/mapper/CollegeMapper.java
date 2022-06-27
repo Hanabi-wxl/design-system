@@ -3,6 +3,7 @@ package edu.dlu.bysj.system.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import edu.dlu.bysj.base.model.entity.College;
 import edu.dlu.bysj.base.model.vo.CollegeSimpleInoVo;
+import edu.dlu.bysj.document.entity.CollegeAnalysisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -38,5 +39,7 @@ public interface CollegeMapper extends BaseMapper<College> {
      * @return java.lang.Integer
      **/
     Integer getCollegeId(Integer majorId);
+
+    Integer selectStudentCount(Integer collegeId);
 
 }

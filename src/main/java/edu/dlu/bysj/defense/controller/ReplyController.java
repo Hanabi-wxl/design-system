@@ -13,7 +13,6 @@ import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.StudentService;
 import edu.dlu.bysj.common.service.SubjectService;
 import edu.dlu.bysj.defense.service.ProgressService;
-import edu.dlu.bysj.defense.service.TeamConfigService;
 import edu.dlu.bysj.defense.service.TeamService;
 import edu.dlu.bysj.defense.service.TeamUserService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
@@ -43,7 +42,6 @@ import java.util.List;
 @Slf4j
 public class ReplyController {
 
-    private final TeamConfigService teamConfigService;
 
     private final TeamUserService teamUserService;
 
@@ -60,13 +58,11 @@ public class ReplyController {
                            ProgressService progressService,
                            StudentService studentService,
                            TeamUserService teamUserService,
-                           TeamConfigService teamConfigService,
                            SubjectService subjectService) {
         this.progressService = progressService;
         this.studentService = studentService;
         this.teamService = teamService;
         this.teamUserService = teamUserService;
-        this.teamConfigService = teamConfigService;
         this.subjectService = subjectService;
     }
 

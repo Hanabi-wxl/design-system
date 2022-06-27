@@ -19,7 +19,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
@@ -193,7 +192,7 @@ public class InformationController {
         String userNumber = JwtUtil.getUserNumber(jwt);
         Teacher teacher = teacherService.getOne(new QueryWrapper<Teacher>().eq("teacher_number",userNumber));
         Major major = majorService.getById(teacher.getMajorId());
-        Title title = titleService.getById(teacher.getTitleId());
+        TeacherTitle title = titleService.getById(teacher.getTitleId());
         Office office = officeService.getById(teacher.getOfficeId());
         Integer collegeId = collegeService.getCollegeIdByMajorId(teacher.getMajorId());
         College college = collegeService.getById(collegeId);

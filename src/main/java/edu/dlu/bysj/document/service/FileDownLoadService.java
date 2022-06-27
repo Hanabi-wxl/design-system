@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import edu.dlu.bysj.document.entity.PaperCoverTemplate;
 import edu.dlu.bysj.document.entity.SubjectApproveFormTemplate;
+import io.swagger.models.auth.In;
 
 /**
  * @author XiangXinGang
@@ -38,9 +39,13 @@ public interface FileDownLoadService {
      * @param response
      *            返回结果
      */
-    void staticsSubjectTable(Integer majorId, HttpServletResponse response) throws IOException;
+    void staticsSubjectTable(Integer majorId, Integer year, HttpServletResponse response) throws IOException;
 
     void subjectOpenReportForm(HttpServletResponse response) throws UnsupportedEncodingException;
 
     void openReport(String subjectId, HttpServletResponse response);
+
+    void selectSubjectTable(Integer majorId, Integer year, HttpServletResponse response) throws IOException;
+
+    void selectSubjectTableAnalysis(Integer collegeId, Integer year, HttpServletResponse response) throws IOException;
 }

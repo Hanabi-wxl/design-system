@@ -7,7 +7,7 @@ import lombok.Data;
  * @date 2021/11/27 20:21
  */
 @Data
-public class TopicSelectStaticsTemplate {
+public class ReportStaticsTemplate {
 
     /**
      * 题目名称

@@ -1,6 +1,7 @@
 package edu.dlu.bysj.paper.controller;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import edu.dlu.bysj.base.model.entity.Plan;
 import edu.dlu.bysj.base.model.vo.ContentVo;
 import edu.dlu.bysj.base.model.vo.PlanSubmitVo;
@@ -12,6 +13,7 @@ import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -26,6 +28,7 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/paperManagement")
 @Api(tags = "计划管理控制器")
+@Validated
 public class PlanController {
 
     private final PlanService planService;
@@ -35,13 +38,23 @@ public class PlanController {
         this.planService = planService;
     }
 
-    /*接口的数据结构不是很好描述使用json 描述*/
+    /*
+     * @Description: 提交周计划内容
+     * @Author: sinre
+     * @Date: 2022/6/25 17:55
+     * @param weekPlans
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @Transactional(rollbackFor = Exception.class)
     @PostMapping(value = "/plan/submitContent")
     @RequiresPermissions({"plan:submitContent"})
     @ApiOperation(value = "提交周计划内容")
     public CommonResult<Object> submitWeekPlans(@RequestBody @Valid PlanSubmitVo weekPlans) {
+        boolean flag = false;
         List<Plan> plansValue = new ArrayList<>();
+        int count = planService.count(new QueryWrapper<Plan>().eq("subject_id", weekPlans.getSubjectId()));
+        if (count == 20)
+            planService.remove(new QueryWrapper<Plan>().eq("subject_id", weekPlans.getSubjectId()));
 
         if (ObjectUtil.isNotNull(weekPlans.getContent())) {
             for (ContentVo element : weekPlans.getContent()) {
@@ -52,15 +65,23 @@ public class PlanController {
                 plansValue.add(plan);
             }
         }
+        flag = planService.saveBatch(plansValue);
 
-        return planService.saveBatch(plansValue) ? CommonResult.success("执行成功") : CommonResult.failed("执行失败");
+        return flag ? CommonResult.success("执行成功") : CommonResult.failed("执行失败");
     }
 
+    /*
+     * @Description: 查看题目计划表详情
+     * @Author: sinre
+     * @Date: 2022/6/25 17:55
+     * @param subjectId
+     * @return edu.dlu.bysj.base.result.CommonResult<java.util.List<edu.dlu.bysj.base.model.vo.ContentVo>>
+     **/
     @GetMapping(value = "/plan/detail")
     @LogAnnotation(content = "查看题目计划表详情")
     @RequiresPermissions({"plan:detail"})
     @ApiOperation(value = "根据题目id查看计划表详情")
-    public CommonResult<List<ContentVo>> checkStudentPlans(Integer subjectId) {
+    public CommonResult<List<ContentVo>> checkStudentPlans(@Valid @NotNull(message = "课题信息不能为空") Integer subjectId) {
         List<ContentVo> contents = planService.checkPlans(subjectId);
         return CommonResult.success(contents);
     }

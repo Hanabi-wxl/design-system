@@ -398,14 +398,13 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public boolean addedApprove(SubjectApprovalVo subjectApprovalVo, Integer majorId) {
+    public boolean addedApprove(SubjectApprovalVo subjectApprovalVo) {
         subjectApprovalVo.setSubjectId(String.valueOf(snowflakeConfig.snowflakeId()));
         Integer studentNumber = subjectApprovalVo.getStudentNumber();
         Integer total = subjectMapper.totalSubjectListByStudent(studentService.numberToId(studentNumber),GradeUtils.getGrade(LocalDate.now().getYear()));
         if (total < 3) {
             subjectApprovalVo.setStudentId(studentService.numberToId(studentNumber));
             Subject subject = new Subject();
-            subject.setMajorId(majorId);
             this.packageSubject(subjectApprovalVo, subject);
             subject.setProgressId(ProcessEnum.AND_OR_MODIFY_TOPIC_DECLARATION.getProcessCode());
             List<SubjectMajor> subjectMajorList =
@@ -504,12 +503,12 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
     // TODO: 2022/5/6 获取题目列表
     @Override
     public TotalPackageVo<SubjectDetailVo> studentSubjectList(SubjectListQuery query, Integer userId) {
-
+        Integer grade = GradeUtils.getGrade(query.getYear());
         /*分页*/
         SubjectDetailVo subjectDetailVo = subjectMapper.studentSubjectListByStudentIdAndGrade(userId,
-                query.getYear(), (query.getPageNumber() - 1) * query.getPageSize(), query.getPageSize());
+                grade, (query.getPageNumber() - 1) * query.getPageSize(), query.getPageSize());
         /*总数*/
-        Integer total = subjectMapper.totalSubjectListByStudent(userId, query.getYear());
+        Integer total = subjectMapper.totalSubjectListByStudent(userId, grade);
         Student student = studentService.getById(userId);
         if (total != 0){
             subjectDetailVo.setStudentName(student.getName());

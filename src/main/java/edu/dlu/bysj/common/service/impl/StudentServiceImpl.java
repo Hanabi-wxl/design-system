@@ -87,8 +87,7 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student>
 
     @Override
     public TotalPackageVo<StudentInfoVo> checkAdjustedSubjectMentor(
-            Integer pageNumber, Integer pageSize, Integer majorId, Integer year, Integer type, String userName, String useNumber
-    ) {
+            Integer pageNumber, Integer pageSize, Integer majorId, Integer year, Integer type, String userName, int useNumber) {
         Integer start = (pageNumber-1) * pageSize;
         TotalPackageVo<StudentInfoVo> packageVo = new TotalPackageVo<>();
         List<StudentInfoVo> studentInfoVos = studentMapper.definiteSubjectStudentList(start, pageSize, majorId, year, type, userName, useNumber);

@@ -237,41 +237,51 @@ public class SubjectSelectionController {
     }
 
 
+    /*
+     * @Description:教师从学生报题志愿中选取学生
+     * @Author: sinre
+     * @Date: 2022/6/25 16:49
+     * @param dto
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @Transactional(rollbackFor = Exception.class)
     @PatchMapping(value = "/topics/submit")
     @LogAnnotation(content = "教师从学生报题志愿中选取学生")
     @RequiresPermissions({"topic:submit"})
     @ApiOperation(value = "教师从学生报题志愿中选取学生")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "subjectId", value = "题目id"),
-            @ApiImplicitParam(name = "studentId", value = "学生id")
-    })
     public CommonResult<Object> teacherSelectStudent(@RequestBody SelectStudentDto dto) {
         Integer studentId = dto.getStudentId();
         String subjectId = dto.getSubjectId();
         boolean flag = false;
         boolean subjectFlag = false;
         String errorMessage = "";
-        /*该题目必须到达4阶段(学生选题)，即学生选完题后才能进行该阶段操作*/
+        /*该题目必须到达(学生选题)，即学生选完题后才能进行该阶段操作*/
         /*当前subjectId 要为空否则该题目被其他专业占有*/
         Subject value = subjectService.getById(subjectId);
-        if (ObjectUtil.isNotNull(value) && ObjectUtil.isNotNull(value.getSubjectId())) {
-            //修改subject中该题的student.id, 和该学生表中的subjectId
-            Student studentValue = studentService.getById(studentId);
-            value.setStudentId(studentId);
-            studentValue.setSubjectId(Integer.parseInt(subjectId));
-            /*同时跟新题目中的学生id,和学生中的最终确定题目id*/
-            subjectFlag = subjectService.updateById(value);
-            flag = studentService.updateById(studentValue);
-        } else {
-            errorMessage = "操作错误";
-            if (ObjectUtil.isNull(value)) {
-                errorMessage = "题目Id为空";
+        Integer processCode = ProcessEnum.CHOOSE_TOPIC.getProcessCode();
+        if (value.getProgressId().equals(processCode) || value.getProgressId().equals(processCode-1)) {
+            if (ObjectUtil.isNotNull(value) && ObjectUtil.isNotNull(value.getSubjectId())) {
+                //修改subject中该题的student.id, 和该学生表中的subjectId
+                Student studentValue = studentService.getById(studentId);
+                value.setStudentId(studentId);
+                value.setProgressId(processCode);
+                studentValue.setSubjectId(Integer.parseInt(subjectId));
+                value.setMajorId(studentValue.getMajorId());
+                /*同时跟新题目中的学生id,和学生中的最终确定题目id*/
+                subjectFlag = subjectService.updateById(value);
+                flag = studentService.updateById(studentValue);
             } else {
-                if (ObjectUtil.isNotNull(value.getStudentId())) {
-                    errorMessage = "该题目已被您所报题目所属其他专业选择";
+                errorMessage = "操作错误";
+                if (ObjectUtil.isNull(value)) {
+                    errorMessage = "题目Id为空";
+                } else {
+                    if (ObjectUtil.isNotNull(value.getStudentId())) {
+                        errorMessage = "该题目已被您所报题目所属其他专业选择";
+                    }
                 }
             }
+        } else {
+            return CommonResult.failed("该题目不在本阶段内");
         }
         return (flag && subjectFlag) ? CommonResult.success("选题成功") : CommonResult.failed(errorMessage);
     }

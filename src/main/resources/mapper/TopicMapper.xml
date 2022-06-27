@@ -42,7 +42,7 @@
                  left join teacher
                            on teacher.id = s.first_teacher_id
 
-                 left join title t
+                 left join teacher_title t
                            on teacher.title_id = t.id
 
                  left join subject_type
@@ -142,6 +142,7 @@
         from subject
         where subject.status = 1
         and subject.grade = #{grade}
+        and subject.progress_id = 3
         and subject.major_id = #{majorId}) as s
 
         left join student

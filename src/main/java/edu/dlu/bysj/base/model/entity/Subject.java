@@ -38,6 +38,9 @@ public class Subject implements Serializable {
     @ApiModelProperty(value = "题目类型id")
     private Integer subjectTypeId;
 
+    @ApiModelProperty(value = "专业类型id")
+    private Integer majorId;
+
     @ApiModelProperty(value = "第一指导老师id")
     private Integer firstTeacherId;
 
@@ -70,12 +73,6 @@ public class Subject implements Serializable {
 
     @ApiModelProperty(value = "必要性")
     private String necessity;
-
-    @ApiModelProperty(value = "最终确定的专业id")
-    private Integer majorId;
-
-    @ApiModelProperty(value = "可选择的专业id")
-    private String otherMajorId;
 
     @ApiModelProperty(value = "题目提交日期")
     private LocalDate submitDate;

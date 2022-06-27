@@ -5,7 +5,6 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import edu.dlu.bysj.base.model.entity.Student;
 import edu.dlu.bysj.base.model.entity.Team;
-import edu.dlu.bysj.base.model.entity.TeamConfig;
 import edu.dlu.bysj.base.model.entity.TeamUser;
 import edu.dlu.bysj.base.model.vo.*;
 import edu.dlu.bysj.base.result.CommonResult;
@@ -13,7 +12,6 @@ import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.StudentService;
 import edu.dlu.bysj.defense.model.vo.TeamUserVo;
-import edu.dlu.bysj.defense.service.TeamConfigService;
 import edu.dlu.bysj.defense.service.TeamService;
 import edu.dlu.bysj.defense.service.TeamUserService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
@@ -55,17 +53,14 @@ public class GroupController {
 
     private final StudentService studentService;
 
-    private final TeamConfigService teamConfigService;
 
     @Autowired
     public GroupController(TeamService teamService,
                            TeamUserService teamUserService,
-                           StudentService studentService,
-                           TeamConfigService teamConfigService) {
+                           StudentService studentService) {
         this.teamService = teamService;
         this.teamUserService = teamUserService;
         this.studentService = studentService;
-        this.teamConfigService = teamConfigService;
     }
 
     @GetMapping(value = "/defence/group/list")

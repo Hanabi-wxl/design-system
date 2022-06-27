@@ -378,7 +378,8 @@
             </when>
         </choose>
 
-        select subject.subject_name,
+        select
+        subject.subject_name,
         subject.id,
         subject.first_teacher_id,
         student.name,
@@ -395,29 +396,16 @@
         where subject.status = 1
         and subject.major_id = #{majorId}
         and subject.grade = #{grade}
-        <choose>
-            <when test="type != null and  type == 1">
-                # 学生
-                <if test="userName != null and userName != ''">
-                    and student.name like #{name_pattern}
-                </if>
+        <if test="type != null and  type == 0">
+            # 教师
+            <if test="userName != null and userName != ''">
+                and t.name like #{name_pattern}
+            </if>
 
-                <if test="userNumber != null and userNumber != ''">
-                    and student.student_number like #{number_pattern}
-                </if>
-            </when>
-
-            <when test="type != null and  type == 0">
-                # 教师
-                <if test="userName != null and userName != ''">
-                    and t.name like #{name_pattern}
-                </if>
-
-                <if test="userNumber != null and userNumber != ''">
-                    and t.teacher_number like #{number_pattern}
-                </if>
-            </when>
-        </choose>
+            <if test="userNumber != null and userNumber != ''">
+                and t.teacher_number like #{number_pattern}
+            </if>
+        </if>
         limit #{start}, #{size}
     </select>
     <select id="checkStudentInfoByNumber" resultType="edu.dlu.bysj.base.model.vo.StudentDetailVo">
@@ -481,28 +469,16 @@
             where subject.status = 1
             and subject.major_id = #{majorId}
             and subject.grade = #{grade}
-            <choose>
-                <when test="type != null and  type == 1"># 学生
-                    <if test="userName != null and userName != ''">
-                            and student.name like #{name_pattern}
-                        </if>
+            <if test="type != null and  type == 0">
+                # 教师
+                <if test="userName != null and userName != ''">
+                    and t.name like #{name_pattern}
+                </if>
 
-                        <if test="userNumber != null and userNumber != ''">
-                            and student.student_number like #{number_pattern}
-                        </if>
-                    </when>
-
-                    <when test="type != null and  type == 0">
-                        # 教师
-                        <if test="userName != null and userName != ''">
-                            and t.name like #{name_pattern}
-                        </if>
-
-                        <if test="userNumber != null and userNumber != ''">
-                            and t.teacher_number like #{number_pattern}
-                        </if>
-                    </when>
-                </choose>
+                <if test="userNumber != null and userNumber != ''">
+                    and t.teacher_number like #{number_pattern}
+                </if>
+            </if>
         ) as sspt
     </select>
     <select id="idToNumber" resultType="java.lang.Integer">

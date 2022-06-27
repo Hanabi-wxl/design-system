@@ -121,6 +121,14 @@ public class OpenReportController {
         return CommonResult.success(basicOpenReportVo);
     }
 
+    /*
+     * @Description: 提交开题报告评语
+     * @Author: sinre
+     * @Date: 2022/6/27 13:13
+     * @param comment
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @Transactional(rollbackFor = Exception.class)
     @PostMapping(value = "/openReport/submitComment")
     @LogAnnotation(content = "提交开题报告评语(开题报告自查阶段)")
@@ -149,6 +157,8 @@ public class OpenReportController {
                 /*跟新subject 所处的阶段*/
                 subjectValue.setProgressId(processCode);
                 subjectService.updateById(subjectValue);
+            } else {
+                return CommonResult.failed("该题目不在本阶段内");
             }
             /*当存在审阅意见时就采取发送消息*/
             if (!StringUtils.isEmpty(modifyOpinion)) {

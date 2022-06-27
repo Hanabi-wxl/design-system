@@ -4,6 +4,7 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import edu.dlu.bysj.base.model.vo.TotalPackageVo;
 import edu.dlu.bysj.base.util.GradeUtils;
+import edu.dlu.bysj.paper.model.dto.SelectAdjustDto;
 import edu.dlu.bysj.paper.model.dto.SelectStudentDto;
 import edu.dlu.bysj.base.model.entity.Student;
 import edu.dlu.bysj.base.model.entity.Subject;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -73,28 +75,52 @@ public class SelectApproveController {
     @LogAnnotation(content = "获取未选题学生列表")
     @RequiresPermissions({"topic:UnselectList"})
     @ApiOperation(value = "获取未选题学生列表")
-    public CommonResult<List<UnselectStudentVo>> unChooseTopicStudent(@Valid UnselectStudentQuery query, HttpServletRequest request) {
+    public CommonResult<List<UnselectStudentVo>> unChooseTopicStudent(UnselectStudentQuery query, HttpServletRequest request) {
+        String jwt = request.getHeader("jwt");
         Integer majorId = query.getMajorId();
+        Integer year = query.getYear();
         if (ObjectUtil.isNull(majorId))
-            majorId = JwtUtil.getMajorId(request.getHeader("jwt"));
-        Integer grade = GradeUtils.getGrade(query.getYear());
+            majorId = JwtUtil.getMajorId(jwt);
+        if (ObjectUtil.isNull(year))
+            year = LocalDate.now().getYear();
+        Integer grade = GradeUtils.getGrade(year);
         List<UnselectStudentVo> unselectStudentVos =
                 topicService.unChooseStudentList(query.getStudentNumber(), query.getStudentName(), grade, majorId);
         return CommonResult.success(unselectStudentVos);
     }
 
+    /*
+     * @Description:管理员获取未选题学生列表
+     * @Author: sinre
+     * @Date: 2022/6/25 17:04
+     * @param query
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<java.util.List<edu.dlu.bysj.base.model.vo.UnSelectTopicVo>>
+     **/
     @GetMapping(value = "topics/queryRestSubjectList")
     @LogAnnotation(content = "查询未被选择的题目")
     @RequiresPermissions({"topic:ResultList"})
     @ApiOperation(value = "未被选择题目列表")
     public CommonResult<List<UnSelectTopicVo>> remainingSubject(@Valid UnTopicListQuery query, HttpServletRequest request) {
+        String jwt = request.getHeader("jwt");
         Integer majorId = query.getMajorId();
+        Integer year = query.getYear();
         if (ObjectUtil.isNull(majorId))
-            majorId = JwtUtil.getMajorId(request.getHeader("jwt"));
-        List<UnSelectTopicVo> unSelectTopicVos = topicService.unChooseSubjectList(query.getTeacherNumber(), query.getTeacherName(), query.getYear(), majorId);
+            majorId = JwtUtil.getMajorId(jwt);
+        if (ObjectUtil.isNull(year))
+            year = LocalDate.now().getYear();
+        Integer grade = GradeUtils.getGrade(year);
+        List<UnSelectTopicVo> unSelectTopicVos = topicService.unChooseSubjectList(query.getTeacherNumber(), query.getTeacherName(), grade, majorId);
         return CommonResult.success(unSelectTopicVos);
     }
 
+    /*
+     * @Description: 专业管理员调配题目和学生
+     * @Author: sinre
+     * @Date: 2022/6/25 21:36
+     * @param dto
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @Transactional(rollbackFor = Exception.class)
     @PatchMapping(value = "/topics/majorSubmit")
     @LogAnnotation(content = "专业管理员调配题目和学生")
@@ -120,52 +146,59 @@ public class SelectApproveController {
                     studentFlag = studentService.updateById(value);
                     flag = subjectService.updateById(subjectValue);
                 }
+            } else {
+                return CommonResult.failed("该题目不在本阶段内");
             }
         }
         return (flag && studentFlag) ? CommonResult.success("操作成功") : CommonResult.failed("操作失败请检查题目和学生是否符合条件");
     }
 
-
+    /*
+     * @Description: 获取调配题目的指导教师题目信息列表
+     * @Author: sinre
+     * @Date: 2022/6/25 17:12
+     * @param dto
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<edu.dlu.bysj.base.model.vo.TotalPackageVo<edu.dlu.bysj.base.model.vo.StudentInfoVo>>
+     **/
     @GetMapping(value = "/topics/majorAdjustList")
     @LogAnnotation(content = "专业管理员调配题目的指导教师题目信息列表")
     @RequiresPermissions({"topic:majorAdjusts"})
     @ApiOperation(value = "专业管理员调配题目的指导教师,题目信息列表")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "year", value = "年级"),
-            @ApiImplicitParam(name = "majorId", value = "专业"),
-            @ApiImplicitParam(name = "type", value = "类型(1:学生, 0 教师)"),
-            @ApiImplicitParam(name = "userName", value = "用户名"),
-            @ApiImplicitParam(name = "userNumber", value = "学号/教工号")
-    })
-    public CommonResult<TotalPackageVo<StudentInfoVo>> adjustFirstTeacherAboutSubject(SubjectAdjustDto dto, HttpServletRequest request) {
+    public CommonResult<TotalPackageVo<StudentInfoVo>> adjustFirstTeacherAboutSubject(@Valid SelectAdjustDto dto, HttpServletRequest request) {
         Integer majorId = dto.getMajorId();
-        String type = dto.getType();
-        Integer year = dto.getYear();
-        String userName = dto.getUserName();
-        String userNumber = dto.getUserNumber();
+        Integer year = GradeUtils.getGrade(dto.getYear());
+        String searchContent = dto.getSearchContent();
         Integer pageNumber = dto.getPageNumber();
         Integer pageSize = dto.getPageSize();
-        majorId = ObjectUtil.isNull(majorId) ? JwtUtil.getMajorId(request.getHeader("jwt")) : majorId;
-        TotalPackageVo<StudentInfoVo> studentInfoVos;
-        /*sql 中 type 1:学生, 0 教师*/
-        /*解决由于type String 为 "" 直接转换会出现异常*/
-        if (NumberUtil.isNumber(type)) {
-            studentInfoVos = studentService.checkAdjustedSubjectMentor(pageNumber, pageSize, majorId, year, Integer.valueOf(type), userName, userNumber);
+        int type = 0;
+        String userName = "";
+        int userNumber = 0;
+        if (searchContent.equals("")){
+            type = 1;
         } else {
-            /*当不为数字时，使用数字 3代码不进行模糊查询*/
-            studentInfoVos = studentService.checkAdjustedSubjectMentor(pageNumber, pageSize, majorId, year, 3, userName, userNumber);
+            try {
+                userNumber = Integer.parseInt(searchContent);
+            } catch (NumberFormatException e) {
+                userName = searchContent;
+            }
         }
+        TotalPackageVo<StudentInfoVo> studentInfoVos;
+        studentInfoVos = studentService.checkAdjustedSubjectMentor(pageNumber, pageSize, majorId, year, type, userName, userNumber);
         return CommonResult.success(studentInfoVos);
     }
 
+    /*
+     * @Description: 专业管理修改题目的第一指导教师
+     * @Author: sinre
+     * @Date: 2022/6/25 21:38
+     * @param dto
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @PatchMapping(value = "/topics/majorSubmitAdjust")
     @LogAnnotation(content = "专业管理修改题目的第一指导教师")
     @RequiresPermissions({"topic:AdjustTeacher"})
     @ApiOperation(value = "专业管理员修改题目的第一指导教师")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "subjectId", value = "题目id"),
-            @ApiImplicitParam(name = "firstTeacherId", value = "第一指导教师id")
-    })
     public CommonResult<Object> modifySubjectMentor(@RequestBody SubjectAdjustDto dto) {
         String subjectId = dto.getSubjectId();
         Integer firstTeacherId = dto.getFirstTeacherId();

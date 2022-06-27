@@ -19,11 +19,11 @@ import java.time.LocalDate;
 @ApiModel(description = "教师提交任务书返回类")
 public class TaskBookVo {
     @ApiModelProperty(value = "题目id")
-    @NotNull
+    @NotNull(message = "课题信息不能为空")
     private Integer subjectId;
 
     @ApiModelProperty(value = "开始时间")
-    @Future
+    @NotNull(message = "开始时间不能为空")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate startTime;
 

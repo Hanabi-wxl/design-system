@@ -103,7 +103,7 @@ public interface SubjectService extends IService<Subject> {
      * @param subjectApprovalVo 插入信息
      * @return
      */
-    boolean addedApprove(SubjectApprovalVo subjectApprovalVo, Integer majorId);
+    boolean addedApprove(SubjectApprovalVo subjectApprovalVo);
 
 
     /**

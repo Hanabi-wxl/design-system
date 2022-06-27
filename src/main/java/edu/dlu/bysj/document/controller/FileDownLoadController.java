@@ -1,11 +1,14 @@
 package edu.dlu.bysj.document.controller;
 
+import cn.afterturn.easypoi.entity.ImageEntity;
 import cn.afterturn.easypoi.excel.ExcelExportUtil;
 import cn.afterturn.easypoi.excel.entity.TemplateExportParams;
 import cn.afterturn.easypoi.word.WordExportUtil;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.extra.qrcode.QrCodeUtil;
+import com.google.zxing.qrcode.QRCodeWriter;
 import edu.dlu.bysj.base.exception.GlobalException;
 import edu.dlu.bysj.base.model.entity.Major;
 import edu.dlu.bysj.base.model.entity.Student;
@@ -25,8 +28,12 @@ import io.swagger.annotations.ApiParam;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperRunManager;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.iherus.codegen.qrcode.QrcodeGenerator;
+import org.iherus.codegen.qrcode.SimpleQrcodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Controller;
@@ -37,13 +44,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.imageio.ImageIO;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URLEncoder;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -55,6 +65,7 @@ import java.util.Map;
  */
 @Controller
 @Validated
+@RequestMapping("/paperManagement/fileDownload")
 public class FileDownLoadController {
 
     private final FileDownLoadService fileDownLoadService;
@@ -75,6 +86,164 @@ public class FileDownLoadController {
     }
 
     /*
+     * @Description: 下载题目审批表
+     * @Author: sinre
+     * @Date: 2022/6/19 17:23
+     * @param subjectId
+     * @param request
+     * @param response
+     * @return void
+     **/
+    @LogAnnotation(content = "下载题目审批表")
+    @RequiresPermissions({"approve:download"})
+    @GetMapping(value = "/subjectAuditTable")
+    public void subjectApproveFormDownLoad(
+            @NotNull(message = "课题信息不能为空") @Valid String subjectId,
+            HttpServletRequest request,
+            HttpServletResponse response) throws IOException {
+        String jwt = request.getHeader("jwt");
+        List<Integer> roleIds = JwtUtil.getRoleIds(jwt);
+        boolean isStudent = roleIds.contains(1);
+        SubjectApproveFormTemplate result = fileDownLoadService.packPageSubjectApproveFormData(subjectId);
+        Subject subject = subjectService.getBySubjectId(subjectId);
+        String studentNumber = "";
+        String studentName = "";
+        if (ObjectUtil.isNotNull(subject)) {
+            Student student = studentService.getById(subject.getStudentId());
+            if (ObjectUtil.isNotNull(student)) {
+                studentNumber = student.getStudentNumber();
+                studentName = student.getName();
+            }
+        }
+
+        Map<String, Object> objectMap = BeanUtil.beanToMap(result);
+
+        ClassPathResource resource = null;
+
+        ByteArrayOutputStream byteArrayOut = new ByteArrayOutputStream();
+        QrcodeGenerator generate = new SimpleQrcodeGenerator().generate(subject.getSubjectId());
+        BufferedImage image = generate.getImage();
+        ImageIO.write(image, "png", byteArrayOut);
+
+        /*加载模板填充数据*/
+        if (isStudent)
+            resource = new ClassPathResource("template/excel/SubjectApproveFormStudent.xlsx");
+        else
+            resource = new ClassPathResource("template/excel/SubjectApproveFormTeacher.xlsx");
+
+        String fileName = "题目审批表_" + GradeUtils.getGrade() + "_TMSPB_" + studentNumber + ".xlsx";
+        TemplateExportParams params = new TemplateExportParams(resource.getPath(), true);
+
+        Workbook workbook = null;
+        try {
+            workbook = ExcelExportUtil.exportExcel(params, objectMap);
+            workbook.setSheetName(0, studentName + "的审题统计表");
+
+            Sheet sheetAt = workbook.getSheetAt(0);
+            XSSFClientAnchor xssfClientAnchor = new XSSFClientAnchor(0, 0, 500000, 500000, (short) 0, 0, (short) 0, 0);
+            xssfClientAnchor.setAnchorType(ClientAnchor.AnchorType.byId(1));
+            //插入图片
+            Drawing<?> patriarch = sheetAt.createDrawingPatriarch();
+            patriarch.createPicture(xssfClientAnchor,workbook.addPicture(byteArrayOut.toByteArray(), XSSFWorkbook.PICTURE_TYPE_JPEG));
+            byteArrayOut.close();
+
+            try {
+                response.setContentType("application/vnd.ms-excel");
+                response.addHeader("Access-Control-Expose-Headers", "Content-Disposition");
+                response.addHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+                workbook.write(response.getOutputStream());
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载题目审批表失败");
+            }
+        } catch (Exception e) {
+            throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "题目信息不完整");
+        }
+
+    }
+
+    @LogAnnotation(content = "下载报题统计表")
+    @RequiresPermissions({"approve:downloadAll"})
+    @GetMapping(value = "/reportTable")
+    public void subjectReportStaticsTable(
+            @Valid @NotNull(message = "专业信息不能为空") Integer majorId,
+            @Valid @NotNull(message = "年份不能为空") Integer year,
+            HttpServletResponse response) {
+        try {
+            fileDownLoadService.staticsSubjectTable(majorId, year, response);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载报题统计表失败");
+        }
+    }
+
+    /*
+     * @Description: 选题统计表
+     * @Author: sinre
+     * @Date: 2022/6/26 1:16
+     * @param request
+     * @param response
+     * @return void
+     **/
+    @LogAnnotation(content = "下载选题统计表")
+    @RequiresPermissions({"approve:downloadAll"})
+    @GetMapping(value = "/selectTable")
+    public void subjectSelectStaticsTable(
+            @Valid @NotNull(message = "专业信息不能为空") Integer majorId,
+            @Valid @NotNull(message = "年份不能为空") Integer year,
+            HttpServletResponse response) {
+        try {
+            fileDownLoadService.selectSubjectTable(majorId, year, response);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载选题统计表失败");
+        }
+    }
+
+    /*
+     * @Description: 选题统计表
+     * @Author: sinre
+     * @Date: 2022/6/26 1:16
+     * @param request
+     * @param response
+     * @return void
+     **/
+    @LogAnnotation(content = "下载选题分析表")
+    @RequiresPermissions({"approve:downloadAll"})
+    @GetMapping(value = "/selectTableAnalysis")
+    public void selectTableAnalysis(
+            @Valid @NotNull(message = "专业信息不能为空") Integer collegeId,
+            @Valid @NotNull(message = "年份不能为空") Integer year,
+            HttpServletResponse response) {
+        try {
+            fileDownLoadService.selectSubjectTableAnalysis(collegeId, year, response);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载选题分析表失败");
+        }
+    }
+
+
+    @LogAnnotation(content = "下载开题报告模板")
+    @RequiresPermissions({"openReport:download"})
+    @GetMapping(value = "/openReportForm")
+    public void subjectOpenReportForm(HttpServletResponse response) {
+        try {
+            fileDownLoadService.subjectOpenReportForm(response);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @LogAnnotation(content = "下载开题报告")
+    @RequiresPermissions({"openReport:download"})
+    @GetMapping("/openReport")
+    public void downloadReport(String subjectId, HttpServletResponse response){
+        Student subject = studentService.getById(subjectId);
+        fileDownLoadService.openReport(subjectId, response);
+    }
+
+    /*
      * @Description: 下载论文封面
      * @Author: sinre
      * @Date: 2022/6/20 20:18
@@ -84,10 +253,9 @@ public class FileDownLoadController {
      **/
     @LogAnnotation(content = "下载论文封面")
     @RequiresPermissions({"paper:download"})
-    @RequestMapping(value = "/paperManagement/fileDownload/paperCover", method = RequestMethod.GET)
+    @GetMapping(value = "/paperCover")
     public void paperCoverDownLoad(HttpServletRequest request, HttpServletResponse response) {
         String jwt = request.getHeader("jwt");
-
         if (!StringUtils.isEmpty(jwt)) {
             Integer majorId = JwtUtil.getMajorId(jwt);
             List<PaperCoverTemplate> result = fileDownLoadService.packPaperCoverData(majorId);
@@ -105,10 +273,10 @@ public class FileDownLoadController {
                 response.setContentType("application/octet-stream");
                 response.addHeader("Access-Control-Expose-Headers", "Content-Disposition");
                 response.addHeader("Content-Disposition",
-                    "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+                        "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
 
                 JasperRunManager.runReportToPdfStream(source, target, new HashMap<>(16),
-                    new JRBeanCollectionDataSource(result));
+                        new JRBeanCollectionDataSource(result));
             } catch (IOException | JRException e) {
                 e.printStackTrace();
                 throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "论文封皮下载失败");
@@ -122,105 +290,5 @@ public class FileDownLoadController {
                 }
             }
         }
-
-    }
-
-    /*
-     * @Description: 下载题目审批表
-     * @Author: sinre
-     * @Date: 2022/6/19 17:23
-     * @param subjectId
-     * @param request
-     * @param response
-     * @return void
-     **/
-    @LogAnnotation(content = "下载题目审批表")
-    @RequiresPermissions({"approve:download"})
-    @GetMapping(value = "/paperManagement/fileDownload/subjectAuditTable")
-    public void subjectApproveFormDownLoad(
-            @NotNull(message = "课题信息不能为空") @Valid String subjectId,
-            HttpServletRequest request,
-            HttpServletResponse response) {
-        String jwt = request.getHeader("jwt");
-        List<Integer> roleIds = JwtUtil.getRoleIds(jwt);
-        boolean isStudent = roleIds.contains(1);
-        SubjectApproveFormTemplate result = fileDownLoadService.packPageSubjectApproveFormData(subjectId);
-        Subject subject = subjectService.getBySubjectId(subjectId);
-        String studentNumber = null;
-        String studentName = "";
-        if (ObjectUtil.isNotNull(subject)) {
-            Student student = studentService.getById(subject.getStudentId());
-            studentNumber = student.getStudentNumber();
-            studentName = student.getName();
-        }
-
-        Map<String, Object> objectMap = BeanUtil.beanToMap(result);
-
-        /*生成二维码*/
-        /*
-         byte[] bytes = QrCodeUtil.generatePng(subject.getSubjectId(), 60, 60);
-         ImageEntity image = new ImageEntity();
-         image.setData(bytes);
-         image.setColspan(1);
-         image.setColspan(1);
-         objectMap.put("qrCode", image);
-         */
-        ClassPathResource resource = null;
-
-        /*加载模板填充数据*/
-        if (isStudent)
-            resource = new ClassPathResource("template/excel/SubjectApproveFormStudent.xls");
-        else
-            resource = new ClassPathResource("template/excel/SubjectApproveFormTeacher.xls");
-
-        String fileName = "题目审批表_" + GradeUtils.getGrade() + "_TMSPB_" + studentNumber + ".xls";
-        TemplateExportParams params = new TemplateExportParams(resource.getPath(), true);
-
-        Workbook workbook = ExcelExportUtil.exportExcel(params, objectMap);
-        workbook.setSheetName(0, studentName + "的审题统计表");
-        try {
-            response.setContentType("application/vnd.ms-excel");
-            response.addHeader("Access-Control-Expose-Headers", "Content-Disposition");
-            response.addHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
-            workbook.write(response.getOutputStream());
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载题目审批表失败");
-        }
-    }
-
-    @LogAnnotation(content = "下载报题统计表")
-    @RequiresPermissions({"approve:downloadAll"})
-    @RequestMapping(value = "/paperManagement/fileDownload/reportTable", method = RequestMethod.GET)
-    public void subjectSelectStaticsTable(HttpServletRequest request, HttpServletResponse response) {
-        String jwt = request.getHeader("jwt");
-        if (!StringUtils.isEmpty(jwt)) {
-            Integer majorId = JwtUtil.getMajorId(jwt);
-            try {
-                fileDownLoadService.staticsSubjectTable(majorId, response);
-            } catch (IOException e) {
-                e.printStackTrace();
-                throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载报题统计表失败");
-            }
-        }
-    }
-
-    @LogAnnotation(content = "下载开题报告模板")
-    @RequiresPermissions({"openReport:download"})
-    @RequestMapping(value = "/paperManagement/fileDownload/openReportForm", method = RequestMethod.GET)
-    public void subjectOpenReportForm(HttpServletResponse response) {
-        try {
-            fileDownLoadService.subjectOpenReportForm(response);
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @LogAnnotation(content = "下载开题报告")
-    @RequiresPermissions({"openReport:download"})
-    @GetMapping("/paperManagement/fileDownload/openReport")
-    public void downloadReport(String subjectId, HttpServletResponse response){
-        Student subject = studentService.getById(subjectId);
-        fileDownLoadService.openReport(subjectId, response);
     }
 }

@@ -152,7 +152,7 @@
             ) as t
                  inner join degree
                             on degree.id = t.degreeId
-                 inner join title
+                 inner join teacher_title title
                             on title.id = t.titleId
                  inner join major
                             on major.id = t.majorId
@@ -196,7 +196,7 @@
                             on o.id = teacher.office_id
                  left join degree d
                             on teacher.degree_id = d.id
-                 left join title t
+                 left join teacher_title t
                             on teacher.title_id = t.id
         where teacher.major_id = #{majorId}
           and teacher.status = 1
@@ -259,7 +259,7 @@
                     where teacher.status = 1
                       and teacher.id = #{teacherId}) as t
 
-                       inner join title
+                       inner join teacher_title title
                                   on title.id = t.title_id
 
                        inner join major
@@ -301,7 +301,7 @@
                  left join major
                            on major.id = t.major_id
 
-                 left join title
+                 left join teacher_title title
                            on title.id = t.title_id
                  left join office
                            on office.id = t.office_id
@@ -330,7 +330,7 @@
         </if>
 
         ) as t
-        left join title
+        left join teacher_title title
         on title.id = t.title_id
     </select>
 
@@ -453,7 +453,7 @@
         </if>
     </select>
     <select id="ApprovelFormTeacherInfo" resultType="java.util.Map">
-        select t.id, t.name as teacherName, title.name as titleName, major.name as majorName
+        select t.id, t.name as teacherName, title.name as titleName, major.name as majorName, t.major_id as majorId
 
         from (select teacher.id, teacher.name, teacher.title_id, teacher.major_id
         from teacher
@@ -473,7 +473,7 @@
         left join major
         on t.major_id = major.id
 
-        left join title
+        left join teacher_title title
         on t.title_id = title.id
     </select>
     <select id="AllRelativeTeacherInfo" resultType="java.util.Map">
@@ -492,7 +492,7 @@
                  left join major
                            on major.id = t.major_id
 
-                 left join title
+                 left join teacher_title title
                            on title.id = t.title_id
                  left join office
                            on office.id = t.office_id
@@ -516,13 +516,71 @@
                             on m.id = o.major_id
                  inner join degree d
                             on teacher.degree_id = d.id
-                 inner join title t
+                 inner join teacher_title t
                             on teacher.title_id = t.id
         where teacher.major_id in (
             select id from major m where m.college_id=#{collegeId}
         )
         and teacher.status = 1
 
+    </select>
+    <select id="selectAnalysisCount" resultType="edu.dlu.bysj.document.entity.SubjectSelectAnalysis">
+        SELECT
+            SUM(
+                    IF(
+                            teacher.title_id=4 OR teacher.title_id=7 OR teacher.title_id=13,1,0
+                        )
+                ) AS gj,
+            SUM(
+                    IF(
+                                teacher.title_id=3 OR teacher.title_id=6 OR teacher.title_id=10 OR teacher.title_id=12,1,0
+                        )
+                ) AS fgj,
+            SUM(
+                    IF(
+                                teacher.title_id=2 OR teacher.title_id=5 OR teacher.title_id=9 OR teacher.title_id=11,1,0
+                        )
+                ) AS zj,
+            SUM(
+                    IF(
+                            teacher.title_id=1 OR teacher.title_id=8,1,0
+                        )
+                ) AS cj,
+            SUM(
+                    IF(
+                            teacher.title_id=14,1,0
+                        )
+                ) AS qt3,
+            SUM(
+                    IF(
+                            teacher.degree_id=1,1,0
+                        )
+                ) AS bs,
+            SUM(
+                    IF(
+                            teacher.degree_id=2,1,0
+                        )
+                ) AS ss,
+            SUM(
+                    IF(
+                            teacher.degree_id=3,1,0
+                        )
+                ) AS xs,
+            SUM(
+                    IF(
+                            teacher.degree_id=4,1,0
+                        )
+                ) AS qt4
+        FROM
+            teacher
+        WHERE teacher.id IN
+              (SELECT DISTINCT
+                   subject.first_teacher_id
+               FROM
+                   subject
+               WHERE subject.major_id = #{majorId}
+                 AND subject.grade = #{grade}
+                 AND subject.first_teacher_id IS NOT NULL)
     </select>
 
 

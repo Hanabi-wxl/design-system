@@ -21,7 +21,7 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ApiModel(value="Title对象", description="教师职称表")
-public class Title implements Serializable {
+public class TeacherTitle implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

@@ -58,12 +58,12 @@ public interface StudentService extends IService<Student> {
      *
      * @param majorId   专业id
      * @param year      年级
-     * @param type      类型
+     * @param role      类型
      * @param userName  用户名
      * @param useNumber 学号\教工号
      * @return
      */
-    TotalPackageVo<StudentInfoVo> checkAdjustedSubjectMentor(Integer pageNumber, Integer pageSize, Integer majorId, Integer year, Integer type, String userName, String useNumber);
+    TotalPackageVo<StudentInfoVo> checkAdjustedSubjectMentor(Integer pageNumber, Integer pageSize, Integer majorId, Integer year, Integer role, String userName, int useNumber);
 
     boolean addStudent(ModifyUserVo userVo);
 

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.dlu.bysj.document.entity.SubjectSelectAnalysis;
 import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
@@ -234,5 +235,7 @@ public interface TeacherMapper extends BaseMapper<Teacher> {
 
     @MapKey("id")
     Map<Integer, Map<String, Object>> AllRelativeTeacherInfo(Integer firstTeacherId, Integer secondTeacherId, Integer otherTeacherId);
+
+    SubjectSelectAnalysis selectAnalysisCount(Integer majorId, Integer grade);
 
 }

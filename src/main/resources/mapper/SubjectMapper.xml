@@ -45,7 +45,7 @@
         <result column="content" property="progress"/>
     </resultMap>
 
-    <resultMap id="topicSelectStatics" type="edu.dlu.bysj.document.entity.TopicSelectStaticsTemplate">
+    <resultMap id="topicSelectStatics" type="edu.dlu.bysj.document.entity.ReportStaticsTemplate">
         <result column="subject_name" property="topicName"/>
         <result column="studentName" property="studentName"/>
         <result column="className" property="className"/>
@@ -115,7 +115,7 @@
         inner join teacher as t2
         on t2.id = t.first_teacher_id
 
-        inner join title as t3
+        inner join teacher_title as t3
         on t3.id = t2.title_id
         <choose>
             <when test="type  != 1">
@@ -179,7 +179,7 @@
         inner join teacher as t2
         on t2.id = t.first_teacher_id
 
-        inner join title as t3
+        inner join teacher_title as t3
         on t3.id = t2.title_id
         <choose>
             <when test="type  != 1">
@@ -387,7 +387,7 @@
         left join progress
         on progress.id = s.progress_id
 
-        left join title t
+        left join teacher_title t
         on teacher.title_id = t.id
 
         limit #{start} ,#{pageSize}
@@ -446,7 +446,7 @@
 
         left join teacher
         on teacher.id = s.first_teacher_id
-        left join title t
+        left join teacher_title t
         on teacher.title_id = t.id
         <where>
             <if test="teacherName != null and teacherName != '' ">
@@ -564,7 +564,7 @@
           and student.major_id = #{majorId}
     </select>
 
-    <select id="selectAllSelectStaticsByMajorId"
+    <select id="selectAllReportStaticsByMajorId"
             resultMap="topicSelectStatics">
 
         select s.subject_name,
@@ -589,19 +589,19 @@
               from subject
               where subject.major_id = #{majorId}) as s
 
-                 inner join student
+                 left join student
                             on s.student_id = student.id
 
-                 inner join class
+                 left join class
                             on student.class_id = class.id
 
-                 inner join teacher
+                 left join teacher
                             on s.first_teacher_id = teacher.id
 
-                 inner join source
+                 left join source
                             on s.source_id = source.id
 
-                 inner join subject_type
+                 left join subject_type
                             on s.subject_type_id = subject_type.id
 
 
@@ -825,6 +825,117 @@
             </foreach>
             and s.grade=#{year}
         ) s
+    </select>
+    <select id="selectAllSelectStaticsByMajorId"
+            resultType="edu.dlu.bysj.document.entity.SelectStaticsTemplate">
+
+        select s.subject_name    as topicName,
+               student.name      as studentName,
+               class.name        as className,
+               teacher.name      as guideName,
+               title.name        as guideTitle,
+               source.name       as sourceName,
+               subject_type.name as typeName,
+               s.filing_number   as fillingNumber
+        from (select subject.id,
+                     subject.subject_name,
+                     subject.student_id,
+                     subject.first_teacher_id,
+                     subject.subject_type_id,
+                     subject.source_id,
+                     subject.filing_number
+              from subject
+              where subject.major_id = #{majorId} and subject.student_id is not null) as s
+
+                 left join student
+                           on s.student_id = student.id
+
+                 left join class
+                           on student.class_id = class.id
+
+                 left join teacher
+                           on s.first_teacher_id = teacher.id
+                 left join teacher_title title
+                           on title.id = teacher.title_id
+
+                 left join source
+                           on s.source_id = source.id
+
+                 left join subject_type
+                           on s.subject_type_id = subject_type.id
+
+
+    </select>
+    <select id="selectAnalysisCount" resultType="edu.dlu.bysj.document.entity.SubjectSelectAnalysis">
+        SELECT
+            SUM(
+                    IF(
+                            subject.subject_type_id=3,1,0
+                        )
+                ) AS gcsj,
+            SUM(
+                    IF(
+                            subject.subject_type_id=2,1,0
+                        )
+                ) AS kxsy,
+            SUM(
+                    IF(
+                            subject.subject_type_id=1,1,0
+                        )
+                ) AS rjkf,
+            SUM(
+                    IF(
+                            subject.subject_type_id=4,1,0
+                        )
+                ) AS llyj,
+            SUM(
+                    IF(
+                            subject.subject_type_id=5,1,0
+                        )
+                ) AS zh1,
+            SUM(
+                    IF(
+                            subject.subject_type_id=10,1,0
+                        )
+                ) AS qt1,
+            SUM(
+                    IF(
+                            subject.subject_type_id=6,1,0
+                        )
+                ) AS llxyj,
+            SUM(
+                    IF(
+                            subject.subject_type_id=7,1,0
+                        )
+                ) AS yyxyj,
+            SUM(
+                    IF(
+                            subject.subject_type_id=8,1,0
+                        )
+                ) AS yyrjsj,
+            SUM(
+                    IF(
+                            subject.subject_type_id=9,1,0
+                        )
+                ) AS dcbg,
+            SUM(
+                    IF(
+                            subject.subject_type_id=10,1,0
+                        )
+                ) AS zh2,
+            SUM(
+                    IF(
+                            subject.subject_type_id=11,1,0
+                        )
+                ) AS qt2,
+            SUM(
+                    IF(
+                            subject.first_teacher_id IS NOT NULL,1,0
+                        )
+                ) AS guideTotal
+        FROM
+            subject
+        WHERE subject.major_id = #{majorId} AND subject.grade = #{grade} and subject.student_id is not null and subject.first_teacher_id is not null
     </select>
 
 </mapper>

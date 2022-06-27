@@ -56,7 +56,7 @@
         left join major
         on teacher.major_id = major.id
 
-        left join title
+        left join teacher_title title
         on teacher.title_id = title.id
 
         left join student
@@ -101,7 +101,7 @@
         left join major
         on teacher.major_id = major.id
 
-        left join title
+        left join teacher_title title
         on teacher.title_id = title.id
 
         left join student

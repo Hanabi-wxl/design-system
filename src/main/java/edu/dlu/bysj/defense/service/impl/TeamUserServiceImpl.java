@@ -8,9 +8,7 @@ import edu.dlu.bysj.base.model.entity.*;
 import edu.dlu.bysj.base.model.vo.ReplyInformationVo;
 import edu.dlu.bysj.common.service.StudentService;
 import edu.dlu.bysj.common.service.SubjectService;
-import edu.dlu.bysj.defense.mapper.TeamConfigMapper;
 import edu.dlu.bysj.defense.mapper.TeamUserMapper;
-import edu.dlu.bysj.defense.service.TeamConfigService;
 import edu.dlu.bysj.defense.service.TeamService;
 import edu.dlu.bysj.defense.service.TeamUserService;
 import edu.dlu.bysj.grade.service.ScoreService;
@@ -20,7 +18,6 @@ import edu.dlu.bysj.paper.service.OpenReportService;
 import edu.dlu.bysj.paper.service.TaskBookService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -30,7 +27,6 @@ import java.util.*;
  */
 @Service
 public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> implements TeamUserService {
-    private final TeamConfigService teamConfigService;
 
     private final ScoreService scoreService;
 
@@ -46,7 +42,6 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
 
     private final StudentService studentService;
 
-    private final TeamConfigMapper teamConfigMapper;
 
     private final TeamService teamService;
 
@@ -59,8 +54,6 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
                                MiddleCheckService middleCheckService,
                                FileInformationService fileInformationService,
                                ScoreService scoreService,
-                               TeamConfigService teamConfigService,
-                               TeamConfigMapper teamConfigMapper,
                                TeamService teamService) {
         this.subjectService = subjectService;
         this.studentService = studentService;
@@ -69,8 +62,6 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
         this.middleCheckService = middleCheckService;
         this.fileInformationService = fileInformationService;
         this.scoreService = scoreService;
-        this.teamConfigService = teamConfigService;
-        this.teamConfigMapper = teamConfigMapper;
         this.teamService = teamService;
     }
 
@@ -231,20 +222,20 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
         teamUser.setResposiblity(resposiblity);
         if (configRule.equals(0)) {
             /*与指导教师同组*/
-            List<Integer> teamIds = teamConfigMapper.similarGuideOrOtherTeacher(subject.getFirstTeacherId(), grade, majorId);
-            this.fillingSerialAndTeamId(teamUser, teamIds);
+//            List<Integer> teamIds = teamConfigMapper.similarGuideOrOtherTeacher(subject.getFirstTeacherId(), grade, majorId);
+//            this.fillingSerialAndTeamId(teamUser, teamIds);
 
         } else if (configRule.equals(1)) {
             /*互评教师与学生同组*/
             Score score = scoreService.getOne(new QueryWrapper<Score>().eq("subject_id", subjectId));
             Integer otherPersonId = score.getOtherPersonId();
-            List<Integer> teamIds = teamConfigMapper.similarGuideOrOtherTeacher(otherPersonId, grade, majorId);
-            this.fillingSerialAndTeamId(teamUser, teamIds);
+//            List<Integer> teamIds = teamConfigMapper.similarGuideOrOtherTeacher(otherPersonId, grade, majorId);
+//            this.fillingSerialAndTeamId(teamUser, teamIds);
 
         } else if (configRule.equals(2)) {
             /*不与指导教师同组*/
-            List<Integer> teamIds = teamConfigMapper.differentGuideTeacher(subject.getFirstTeacherId(), grade, majorId);
-            this.fillingSerialAndTeamId(teamUser, teamIds);
+//            List<Integer> teamIds = teamConfigMapper.differentGuideTeacher(subject.getFirstTeacherId(), grade, majorId);
+//            this.fillingSerialAndTeamId(teamUser, teamIds);
 
         } else {
             /*随机分配*/

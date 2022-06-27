@@ -24,6 +24,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -41,7 +42,7 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/paperManagement")
 @Api(tags = "任务书控制器")
-@Valid
+@Validated
 @Slf4j
 public class TaskBookController {
     private final SubjectService subjectService;
@@ -63,6 +64,13 @@ public class TaskBookController {
         this.messageService = messageService;
     }
 
+    /*
+     * @Description: 教师提交任务书
+     * @Author: sinre
+     * @Date: 2022/6/25 21:02
+     * @param taskBookVo
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @Transactional(rollbackFor = Exception.class)
     @PostMapping(value = "/taskbook/teacherSubmit")
     @LogAnnotation(content = "教师提交任务书")
@@ -95,39 +103,57 @@ public class TaskBookController {
                 taskBook.setMajorDate(subjectValue.getMajorDate());
                 taskBook.setCollegeLeadingId(subjectValue.getCollegeLeadingId());
                 taskBook.setCollegeDate(subjectValue.getCollegeDate());
-
-                taskBookService.save(taskBook);
+                taskBookService.saveOrUpdate(taskBook, new QueryWrapper<TaskBook>().eq("subject_id", taskBook.getSubjectId()));
                 subjectService.updateById(subjectValue);
+            } else {
+                return CommonResult.failed("该题目不在本阶段内");
             }
         }
         return CommonResult.success("提交成功");
     }
 
+    /*
+     * @Description: 查看任务书详情
+     * @Author: sinre
+     * @Date: 2022/6/25 21:35
+     * @param subjectId
+     * @return edu.dlu.bysj.base.result.CommonResult<edu.dlu.bysj.base.model.vo.TaskBookDetailVo>
+     **/
     @GetMapping(value = "/taskbook/detail")
     @LogAnnotation(content = "查看任务书详情")
     @RequiresPermissions({"taskBook:detail"})
     @ApiOperation(value = "查看任务书详情")
-    public CommonResult<TaskBookDetailVo> checkTaskBookDetail(@NotNull Integer subjectId) {
+    public CommonResult<TaskBookDetailVo> checkTaskBookDetail(
+            @Valid @NotNull(message = "课题信息不能为空") Integer subjectId) {
         /*查看该题目的taskBook 和 周计划信息*/
         Subject subject = subjectService.getById(subjectId);
         TaskBook taskbook = taskBookService.getOne(new QueryWrapper<TaskBook>().eq("subject_id", subjectId));
-        /*查询该题目相关的content内容*/
-        List<ContentVo> contentVos = planService.checkPlans(subjectId);
-
         TaskBookDetailVo taskBookDetailVo = new TaskBookDetailVo();
 
-        taskBookDetailVo.setContents(contentVos);
-        taskBookDetailVo.setSubjectName(subject.getSubjectName());
-        taskBookDetailVo.setStartTime(taskbook.getStartDate());
-        taskBookDetailVo.setEndTime(taskbook.getEndDate());
-        taskBookDetailVo.setAccording(taskbook.getAccording());
-        taskBookDetailVo.setDemand(taskbook.getDemand());
-        taskBookDetailVo.setEmphasis(taskbook.getEmphasis());
-        taskBookDetailVo.setReference(taskbook.getReference());
-        taskBookDetailVo.setContents(contentVos);
+        /*查询该题目相关的content内容*/
+        if (ObjectUtil.isNotNull(taskbook)) {
+            List<ContentVo> contentVos = planService.checkPlans(subjectId);
+            taskBookDetailVo.setContents(contentVos);
+            taskBookDetailVo.setSubjectName(subject.getSubjectName());
+            taskBookDetailVo.setStartTime(taskbook.getStartDate());
+            taskBookDetailVo.setEndTime(taskbook.getEndDate());
+            taskBookDetailVo.setAccording(taskbook.getAccording());
+            taskBookDetailVo.setDemand(taskbook.getDemand());
+            taskBookDetailVo.setEmphasis(taskbook.getEmphasis());
+            taskBookDetailVo.setReference(taskbook.getReference());
+            taskBookDetailVo.setContents(contentVos);
+        }
         return CommonResult.success(taskBookDetailVo);
     }
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/6/27 18:30
+     * @param agree
+ * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @Transactional(rollbackFor = Exception.class)
     @PostMapping(value = "/taskbook/submitResult")
     @LogAnnotation(content = "提交任务书审阅结果")

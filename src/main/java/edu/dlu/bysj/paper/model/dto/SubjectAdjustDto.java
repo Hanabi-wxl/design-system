@@ -2,6 +2,8 @@ package edu.dlu.bysj.paper.model.dto;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
+
 /**
  * @author sinre
  * @create 05 12, 2022

@@ -142,7 +142,7 @@ public interface StudentMapper extends BaseMapper<Student> {
                                                    @Param("grade") Integer grade,
                                                    @Param("type") Integer type,
                                                    @Param("userName") String userName,
-                                                   @Param("userNumber") String userNumber);
+                                                   @Param("userNumber") int userNumber);
 
     StudentDetailVo checkStudentInfoByNumber(Integer number);
 
@@ -152,7 +152,7 @@ public interface StudentMapper extends BaseMapper<Student> {
                                             @Param("grade") Integer grade,
                                             @Param("type") Integer type,
                                             @Param("userName") String userName,
-                                            @Param("userNumber") String userNumber);
+                                            @Param("userNumber") int userNumber);
 
     Integer idToNumber(Integer id);
 

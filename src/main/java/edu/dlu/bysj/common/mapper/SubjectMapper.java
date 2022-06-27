@@ -2,7 +2,8 @@ package edu.dlu.bysj.common.mapper;
 
 import java.util.List;
 
-import io.swagger.models.auth.In;
+import edu.dlu.bysj.document.entity.SelectStaticsTemplate;
+import edu.dlu.bysj.document.entity.SubjectSelectAnalysis;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
@@ -13,7 +14,7 @@ import edu.dlu.bysj.base.model.entity.Subject;
 import edu.dlu.bysj.base.model.query.TopicApprovalListQuery;
 import edu.dlu.bysj.base.model.vo.*;
 import edu.dlu.bysj.document.entity.PaperCoverTemplate;
-import edu.dlu.bysj.document.entity.TopicSelectStaticsTemplate;
+import edu.dlu.bysj.document.entity.ReportStaticsTemplate;
 
 /**
  * @author XiangXinGang
@@ -205,7 +206,7 @@ public interface SubjectMapper extends BaseMapper<Subject> {
      * @param majorId
      * @return
      */
-    List<TopicSelectStaticsTemplate> selectAllSelectStaticsByMajorId(Integer majorId);
+    List<ReportStaticsTemplate> selectAllReportStaticsByMajorId(Integer majorId);
 
     boolean removeSubjectById(String subjectId);
 
@@ -235,5 +236,9 @@ public interface SubjectMapper extends BaseMapper<Subject> {
     List<SubjectDetailVo> filterByYear(List<Integer> idList, Integer start, Integer pageSize, Integer year);
 
     Integer totalFilterByYear(List<Integer> idList, Integer year);
+
+    List<SelectStaticsTemplate> selectAllSelectStaticsByMajorId(Integer majorId);
+
+    SubjectSelectAnalysis selectAnalysisCount(Integer majorId, Integer grade);
 
 }

@@ -139,11 +139,10 @@ public class SubjectApprovalController {
     @ApiOperation(value = "教师提交/修改题目审批表")
     public CommonResult<Object> submitSubjectApproveTable(@Valid @RequestBody SubjectApprovalVo subjectApprovalVo, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
-        Integer majorId = JwtUtil.getMajorId(jwt);
         boolean flag = false;
         /*新增*/
         if (subjectApprovalVo.getSubjectId().equals("")) {
-            flag = subjectService.addedApprove(subjectApprovalVo, majorId);
+            flag = subjectService.addedApprove(subjectApprovalVo);
         } else {
             /*修改*/
             flag = subjectService.modifyApprove(subjectApprovalVo);
@@ -298,6 +297,8 @@ public class SubjectApprovalController {
                     value.setMajorLeadingId(JwtUtil.getUserId(jwt));
                     value.setMajorDate(LocalDate.now());
                     flag = subjectService.updateById(value);
+                } else {
+                    return CommonResult.failed("该题目不在本阶段内");
                 }
             }
         } else if (ONE.equals(source.getType())) {
@@ -313,6 +314,8 @@ public class SubjectApprovalController {
                     value.setCollegeLeadingId(JwtUtil.getUserId(jwt));
                     value.setCollegeDate(LocalDate.now());
                     flag = subjectService.updateById(value);
+                } else {
+                    return CommonResult.failed("该题目不在本阶段内");
                 }
             }
         }

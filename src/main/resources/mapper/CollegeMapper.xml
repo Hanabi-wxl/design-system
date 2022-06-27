@@ -28,4 +28,10 @@
     <select id="getCollegeId" resultType="java.lang.Integer">
         select college_id from major where major.id=#{majorId}
     </select>
+    <select id="selectStudentCount" resultType="java.lang.Integer">
+        select count(*) from student where student.major_id in (
+            select major.id from major where college_id = #{collegeId}
+        )
+    </select>
+
 </mapper>
