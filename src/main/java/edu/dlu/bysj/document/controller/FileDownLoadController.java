@@ -161,6 +161,9 @@ public class FileDownLoadController {
         }
 
     }
+/*
+
+    原版本
 
     @LogAnnotation(content = "下载报题统计表")
     @RequiresPermissions({"approve:downloadAll"})
@@ -176,6 +179,32 @@ public class FileDownLoadController {
             throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载报题统计表失败");
         }
     }
+
+ */
+
+    @LogAnnotation(content = "下载报题统计表")
+    @RequiresPermissions({"approve:downloadAll"})
+    @GetMapping(value = "/reportTable")
+    public void subjectReportStaticsTable(
+//            @Valid @NotNull(message = "专业信息不能为空") Integer majorId,
+//            @Valid @NotNull(message = "年份不能为空") Integer year,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        String jwt = request.getHeader("jwt");
+        if(!StringUtils.isEmpty(jwt)) {
+            Integer majorId = JwtUtil.getMajorId(jwt);
+            Integer year = 2022;
+            try {
+                fileDownLoadService.staticsSubjectTable(majorId, year, response);
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载报题统计表失败");
+            }
+        }
+
+    }
+
+
 
     /*
      * @Description: 选题统计表
