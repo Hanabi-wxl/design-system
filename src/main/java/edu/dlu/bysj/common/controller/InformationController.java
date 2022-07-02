@@ -235,7 +235,12 @@ public class InformationController {
     @RequiresPermissions({"common:studentSubject"})
     @ApiOperation(value = "获取学生题目信息")
     public CommonResult<SubjectTableVo> subjectDetailById(@Valid @NotNull(message = "专业id不能为空") String subjectId) {
-        return CommonResult.success(subjectService.obtainsSubjectTableInfo(subjectId));
+        SubjectTableVo subjectTableVo = subjectService.obtainsSubjectTableInfo(subjectId);
+        if (ObjectUtil.isNull(subjectTableVo)) {
+            Integer id = subjectService.getOne(new QueryWrapper<Subject>().eq("subject_id", subjectId)).getId();
+            subjectTableVo = subjectService.obtainsSubjectTableInfo(id.toString());
+        }
+        return CommonResult.success(subjectTableVo);
     }
 
     @GetMapping(value = "/taskbook/keyAndMajorList")

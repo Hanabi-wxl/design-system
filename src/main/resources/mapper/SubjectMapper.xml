@@ -679,7 +679,11 @@
         s.student_id     as studentId,
         t.id             as firstTeacherId,
         t.name           as firstTeacherName,
-        t.phone_number   as firstTeacherPhone
+        t.phone_number   as firstTeacherPhone,
+        (sc.first_quality+sc.first_ability+sc.first_complete) as teacherScore,
+        (sc.other_quality+sc.other_complete+sc.other_ability) as otherScore,
+        (sc.process_attitude+sc.process_discipline+sc.process_report+sc.process_complete) as processScore,
+        (sc.total_ability+sc.total_complete_quality+sc.total_process+sc.total_quality+sc.total_self_summary) as defenceScore
 
 
         from (select subject.id,
@@ -694,10 +698,12 @@
                 and subject.student_id = #{studentId}
                 and grade = #{grade}) as s
 
-                 left join progress
-                           on progress.id = s.progress_id
-                 left join teacher as t
-                           on t.id = s.first_teacher_id
+                left join progress
+                          on progress.id = s.progress_id
+                left join teacher as t
+                          on t.id = s.first_teacher_id
+                left join score sc
+                          on sc.subject_id = s.id
 
         limit #{start} ,#{pageSize}
     </select>

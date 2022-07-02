@@ -70,17 +70,14 @@ public class FileDownLoadController {
 
     private final FileDownLoadService fileDownLoadService;
 
-    private final MajorService majorService;
-
     private final SubjectService subjectService;
 
     private final StudentService studentService;
 
     @Autowired
-    public FileDownLoadController(FileDownLoadService fileDownLoadService, MajorService majorService,
+    public FileDownLoadController(FileDownLoadService fileDownLoadService,
         SubjectService subjectService, StudentService studentService) {
         this.fileDownLoadService = fileDownLoadService;
-        this.majorService = majorService;
         this.subjectService = subjectService;
         this.studentService = studentService;
     }
@@ -162,6 +159,15 @@ public class FileDownLoadController {
 
     }
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/6/28 19:11
+     * @param majorId
+ * @param year
+ * @param response
+     * @return void
+     **/
     @LogAnnotation(content = "下载报题统计表")
     @RequiresPermissions({"approve:downloadAll"})
     @GetMapping(value = "/reportTable")
@@ -224,6 +230,13 @@ public class FileDownLoadController {
     }
 
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/6/28 12:23
+     * @param response
+     * @return void
+     **/
     @LogAnnotation(content = "下载开题报告模板")
     @RequiresPermissions({"openReport:download"})
     @GetMapping(value = "/openReportForm")
@@ -233,14 +246,6 @@ public class FileDownLoadController {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-    }
-
-    @LogAnnotation(content = "下载开题报告")
-    @RequiresPermissions({"openReport:download"})
-    @GetMapping("/openReport")
-    public void downloadReport(String subjectId, HttpServletResponse response){
-        Student subject = studentService.getById(subjectId);
-        fileDownLoadService.openReport(subjectId, response);
     }
 
     /*
@@ -290,5 +295,50 @@ public class FileDownLoadController {
                 }
             }
         }
+    }
+
+    /*
+     * @Description:
+     * @Author: sinre
+     * @Date: 2022/6/28 12:23
+     * @param subjectId
+     * @param response
+     * @return void
+     **/
+    @LogAnnotation(content = "下载开题报告")
+    @RequiresPermissions({"openReport:download"})
+    @GetMapping("/openReport")
+    public void downloadReport(String subjectId, HttpServletResponse response){
+        fileDownLoadService.openReport(subjectId, response);
+    }
+
+    /*
+     * @Description:
+     * @Author: sinre
+     * @Date: 2022/6/28 12:23
+     * @param subjectId
+     * @param response
+     * @return void
+     **/
+    @LogAnnotation(content = "下载论文")
+    @RequiresPermissions({"paper:download"})
+    @GetMapping("/paper")
+    public void downloadPaper(String subjectId, HttpServletResponse response){
+        fileDownLoadService.paper(subjectId, response);
+    }
+
+    /*
+     * @Description:
+     * @Author: sinre
+     * @Date: 2022/6/28 12:23
+     * @param subjectId
+     * @param response
+     * @return void
+     **/
+    @LogAnnotation(content = "下载毕业设计")
+    @RequiresPermissions({"paper:download"})
+    @GetMapping("/design")
+    public void downloadDesign(String subjectId, HttpServletResponse response){
+        fileDownLoadService.design(subjectId, response);
     }
 }

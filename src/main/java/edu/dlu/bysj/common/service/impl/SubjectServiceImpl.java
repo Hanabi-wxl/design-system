@@ -500,7 +500,6 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
         return baseMapper.selectList(new QueryWrapper<Subject>().in("subject_id", Arrays.asList(subjectIds)));
     }
 
-    // TODO: 2022/5/6 获取题目列表
     @Override
     public TotalPackageVo<SubjectDetailVo> studentSubjectList(SubjectListQuery query, Integer userId) {
         Integer grade = GradeUtils.getGrade(query.getYear());
@@ -600,8 +599,11 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
             result.setFeasibility(subject.getFeasibility());
             EachMark eachMark = eachMarkMapper.selectOne(new QueryWrapper<EachMark>().eq("subject_Id", subjectId));
             /*获取第一第二互评指导教师名称，职称，专业*/
-            Map<Integer, Map<String, Object>> teacherMap =
-                    teacherMapper.AllRelativeTeacherInfo(subject.getFirstTeacherId(), subject.getSecondTeacherId(), eachMark.getTeacherId());
+            Map<Integer, Map<String, Object>> teacherMap = null;
+            if (ObjectUtil.isNotNull(eachMark))
+                teacherMap = teacherMapper.AllRelativeTeacherInfo(subject.getFirstTeacherId(), subject.getSecondTeacherId(), eachMark.getTeacherId());
+            else
+                teacherMap = teacherMapper.AllRelativeTeacherInfo(subject.getFirstTeacherId(), subject.getSecondTeacherId(), null);
             if (teacherMap != null && !teacherMap.isEmpty()) {
                 if (teacherMap.containsKey(subject.getFirstTeacherId())) {
                     Object teacherName = teacherMap.get(subject.getFirstTeacherId()).get(TEACHER_NAME);
@@ -658,8 +660,9 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
             }
             List<String> majors = majorMapper.selectMajorNameByIds(majorIds);
             result.setMajors(majors);
+        } else {
+            return null;
         }
-
         return result;
     }
 

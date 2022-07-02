@@ -45,6 +45,13 @@ public class GuideEvaluationController {
         this.subjectService = subjectService;
     }
 
+    /*
+     * @Description: 指导教师填写评语
+     * @Author: sinre
+     * @Date: 2022/7/2 17:16
+     * @param basicScoreVo
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @Transactional(rollbackFor = Exception.class)
     @PostMapping(value = "/score/firstTeacher/commentFromScore")
     @LogAnnotation(content = "指导教师填写评语,和打分")

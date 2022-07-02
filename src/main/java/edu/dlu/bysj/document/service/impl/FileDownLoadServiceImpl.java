@@ -13,6 +13,8 @@ import edu.dlu.bysj.base.model.vo.MajorSimpleInfoVo;
 import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.document.entity.*;
 import edu.dlu.bysj.document.entity.dto.OpenReportBaseInfo;
+import edu.dlu.bysj.document.mapper.SubjectFileMapper;
+import edu.dlu.bysj.paper.mapper.FileInformationMapper;
 import edu.dlu.bysj.paper.mapper.OpenReportMapper;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -56,11 +58,18 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
 
     private final OpenReportMapper openReportMapper;
 
+    private final SubjectFileMapper subjectFileMapper;
+
+    private final FileInformationMapper fileInformationMapper;
+
     private final ClassMapper classMapper;
 
     public FileDownLoadServiceImpl(SubjectMapper subjectMapper, TeacherMapper teacherMapper,
         StudentMapper studentMapper, MajorMapper majorMapper, CollegeMapper collegeMapper, ClassMapper classMapper,
-        SubjectTypeMapper subjectTypeMapper,OpenReportMapper openReportMapper) {
+        SubjectTypeMapper subjectTypeMapper,OpenReportMapper openReportMapper, SubjectFileMapper subjectFileMapper,
+        FileInformationMapper fileInformationMapper) {
+        this.fileInformationMapper = fileInformationMapper;
+        this.subjectFileMapper = subjectFileMapper;
         this.openReportMapper = openReportMapper;
         this.subjectMapper = subjectMapper;
         this.teacherMapper = teacherMapper;
@@ -494,6 +503,28 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
 
         /*将内容导出到outPutStream*/
         workbook.write(response.getOutputStream());
+    }
+
+    @Override
+    public void paper(String subjectId, HttpServletResponse response) {
+        Integer fileId = subjectFileMapper.selectOne(new QueryWrapper<SubjectFile>()
+                .eq("subject_id", subjectId)
+                .eq("file_type", 1)).getFileId();
+        FileInfomation information = fileInformationMapper.selectOne(new QueryWrapper<FileInfomation>().eq("id", fileId));
+        String fileName = information.getTitle();
+        String dir = information.getDir();
+        fileDownload(dir, fileName, response);
+    }
+
+    @Override
+    public void design(String subjectId, HttpServletResponse response) {
+        Integer fileId = subjectFileMapper.selectOne(new QueryWrapper<SubjectFile>()
+                .eq("subject_id", subjectId)
+                .eq("file_type", 2)).getFileId();
+        FileInfomation information = fileInformationMapper.selectOne(new QueryWrapper<FileInfomation>().eq("id", fileId));
+        String fileName = information.getTitle();
+        String dir = information.getDir();
+        fileDownload(dir, fileName, response);
     }
 
     private void setBorder(Sheet sheet, CellRangeAddress region) {

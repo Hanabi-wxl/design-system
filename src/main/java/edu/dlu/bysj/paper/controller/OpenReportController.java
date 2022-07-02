@@ -66,6 +66,13 @@ public class OpenReportController {
         this.messageService = messageService;
     }
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/7/2 17:22
+     * @param subjectId
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.String>
+     **/
     @GetMapping(value = "/openReport/teacherComment")
     @LogAnnotation(content = "查看开题报告教师评语")
     @RequiresPermissions({"openReport:teacherComment"})
@@ -79,46 +86,6 @@ public class OpenReportController {
         }
 
         return CommonResult.success(message);
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    @PostMapping(value = "/openReport/change")
-    @LogAnnotation(content = "修改开题报告")
-    @RequiresPermissions({"openReport:change"})
-    @ApiOperation(value = "修改开题报告")
-    public CommonResult<Object> modifyOpenReport(@Valid OpenReportVo report) {
-
-        OpenReport opeReport = openReportService.getOne(new QueryWrapper<OpenReport>().eq("subject_id", report.getSubjectId()));
-        if (ObjectUtil.isNotNull(opeReport)) {
-            /*修改数据库中的内容*/
-            opeReport.setAccording(report.getAccording());
-            opeReport.setSearchContent(report.getContent());
-            opeReport.setSchedule(report.getSchedule());
-            opeReport.setReference(report.getReference());
-            opeReport.setLiterature(report.getReview());
-            openReportService.updateById(opeReport);
-            /*无论是数据库或则生成文件有一方有问题就回滚*/
-
-            //TODO  做法1. 删除原有文件，并按照内容生成新文件 做法2. 以后每次生成新文件
-        }
-        return CommonResult.success("操作成功");
-    }
-
-    @GetMapping(value = "openReport/content/{subjectId}")
-    @LogAnnotation(content = "获取开题报告内容")
-    @RequiresPermissions({"openReport:content"})
-    @ApiOperation(value = "获取开题报告内容")
-    @ApiImplicitParam(name = "subjectId", value = "题目id")
-    public CommonResult<BasicOpenReportVo> openReportContent(@PathVariable("subjectId")
-                                                             @NotNull Integer subjectId) {
-        OpenReport opeReport = openReportService.getOne(new QueryWrapper<OpenReport>().eq("subject_id", subjectId));
-        BasicOpenReportVo basicOpenReportVo = new BasicOpenReportVo();
-        basicOpenReportVo.setAccording(opeReport.getAccording());
-        basicOpenReportVo.setContent(opeReport.getSearchContent());
-        basicOpenReportVo.setSchedule(opeReport.getSchedule());
-        basicOpenReportVo.setReview(opeReport.getLiterature());
-        basicOpenReportVo.setReference(opeReport.getReference());
-        return CommonResult.success(basicOpenReportVo);
     }
 
     /*
@@ -174,6 +141,14 @@ public class OpenReportController {
         return (messageFlag && openFlag) ? CommonResult.success("操作成功") : CommonResult.failed(message);
     }
 
+    /*
+     * @Description:
+     * @Author: sinre
+     * @Date: 2022/7/2 17:23
+     * @param commonReviewVo
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @Transactional(rollbackFor = Exception.class)
     @PatchMapping(value = "/openReport/submitResult")
     @LogAnnotation(content = "提交开题报告审阅(专业级/院级)结果")

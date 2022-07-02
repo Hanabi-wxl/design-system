@@ -103,7 +103,11 @@ public class ScoreMutualController {
             idList.add(eachMark.getSubjectId());
         }
         Integer grade = GradeUtils.getGrade(year);
-        TotalPackageVo<SubjectDetailVo> packageVo = subjectService.filterByYear(idList, pageSize, pageNumber, grade);
+        TotalPackageVo<SubjectDetailVo> packageVo = new TotalPackageVo<>();
+        if (idList.size() == 0)
+            return CommonResult.success(packageVo);
+        else
+            packageVo = subjectService.filterByYear(idList, pageSize, pageNumber, grade);
         return CommonResult.success(packageVo);
     }
 }

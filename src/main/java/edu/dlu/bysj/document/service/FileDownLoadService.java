@@ -48,4 +48,8 @@ public interface FileDownLoadService {
     void selectSubjectTable(Integer majorId, Integer year, HttpServletResponse response) throws IOException;
 
     void selectSubjectTableAnalysis(Integer collegeId, Integer year, HttpServletResponse response) throws IOException;
+
+    void paper(String subjectId, HttpServletResponse response);
+
+    void design(String subjectId, HttpServletResponse response);
 }
