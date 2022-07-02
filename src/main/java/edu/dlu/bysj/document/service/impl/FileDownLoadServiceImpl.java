@@ -208,7 +208,13 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         /*删除模板sheet(0)*/
         workbook.removeSheetAt(0);
 
-        String fileName = "报题统计表_" +  GradeUtils.getGrade(DateUtil.year(new Date())) + "_PRESUBJECT_" + majorMap.get(majorId).get("collegeId") + ".xlsx";
+        //乱码---
+        //String fileName = "报题统计表_" +  GradeUtils.getGrade(DateUtil.year(new Date())) + "_PRESUBJECT_" + majorMap.get(majorId).get("collegeId") + ".xlsx";
+
+        String fileName = "ReportTable_" +  GradeUtils.getGrade(DateUtil.year(new Date())) + "_PRESUBJECT_" + majorMap.get(majorId).get("collegeId") + ".xlsx";
+
+
+
 
         /*设置导出参数*/
         response.setContentType("application/vnd.ms-excel");
