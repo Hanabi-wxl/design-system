@@ -158,35 +158,35 @@ public class FileDownLoadController {
         }
 
     }
-/*
 
-    原版本
-
-    /*
-     * @Description:
-     * @Author: sinre 
-     * @Date: 2022/6/28 19:11
-     * @param majorId
- * @param year
- * @param response
-     * @return void
-     **/
-    @LogAnnotation(content = "下载报题统计表")
-    @RequiresPermissions({"approve:downloadAll"})
-    @GetMapping(value = "/reportTable")
-    public void subjectReportStaticsTable(
-            @Valid @NotNull(message = "专业信息不能为空") Integer majorId,
-            @Valid @NotNull(message = "年份不能为空") Integer year,
-            HttpServletResponse response) {
-        try {
-            fileDownLoadService.staticsSubjectTable(majorId, year, response);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载报题统计表失败");
-        }
-    }
-
- */
+//
+//    原版本
+//
+//    /*
+//     * @Description:
+//     * @Author: sinre
+//     * @Date: 2022/6/28 19:11
+//     * @param majorId
+// * @param year
+// * @param response
+//     * @return void
+//     **/
+//    @LogAnnotation(content = "下载报题统计表")
+//    @RequiresPermissions({"approve:downloadAll"})
+//    @GetMapping(value = "/reportTable")
+//    public void subjectReportStaticsTable(
+//            @Valid @NotNull(message = "专业信息不能为空") Integer majorId,
+//            @Valid @NotNull(message = "年份不能为空") Integer year,
+//            HttpServletResponse response) {
+//        try {
+//            fileDownLoadService.staticsSubjectTable(majorId, year, response);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载报题统计表失败");
+//        }
+//    }
+//
+//
 
     @LogAnnotation(content = "下载报题统计表")
     @RequiresPermissions({"approve:downloadAll"})

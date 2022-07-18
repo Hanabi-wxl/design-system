@@ -604,6 +604,21 @@
                  left join subject_type
                             on s.subject_type_id = subject_type.id
 
+--                  inner join student
+--                            on s.student_id = student.id
+--
+--                  inner join class
+--                            on student.class_id = class.id
+--
+--                  inner join teacher
+--                            on s.first_teacher_id = teacher.id
+--
+--                  inner join source
+--                            on s.source_id = source.id
+--
+--                  inner join subject_type
+--                            on s.subject_type_id = subject_type.id
+
 
     </select>
 
