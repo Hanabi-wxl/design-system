@@ -94,22 +94,26 @@ public class NotifyController {
     @ApiOperation(value = "新增/修改通知")
     public CommonResult<Object> modifyNotice( @RequestBody AddNoticeVo noticeVo,
                                              HttpServletRequest request) {
+
         String jwt = request.getHeader("jwt");
         boolean noticeFlag = false;
 
         if (!StringUtils.isEmpty(jwt)) {
+
             Notice notice = null;
             if (ObjectUtil.isNotNull(noticeVo.getNoticeId())) {
+
                 notice = noticeService.getById(noticeVo.getNoticeId());
             }
 
             if (ObjectUtil.isNull(notice)) {
                 notice = new Notice();
             }
+
             notice.setCollegeId(noticeVo.getCollegeId());
             notice.setMajorId(noticeVo.getMajorId());
             notice.setType(noticeVo.getType());
-            notice.setImportance(noticeVo.getType());
+            notice.setImportance(noticeVo.getImportance());
             notice.setTitle(noticeVo.getTitle());
             notice.setContent(noticeVo.getContent());
             notice.setSenderId(JwtUtil.getUserId(jwt));
@@ -119,7 +123,9 @@ public class NotifyController {
             /*若有文件则插入文件类型*/
             Integer id = notice.getId();
             if (noticeVo.getFileId() != null && !noticeVo.getFileId().isEmpty()) {
+
                 for (Integer fileId : noticeVo.getFileId()) {
+
                     /*插入新的值*/
                     NoticeFile file = new NoticeFile();
                     file.setFileId(fileId);
