@@ -1,5 +1,8 @@
 package edu.dlu.bysj.notification.service.impl;
 
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import edu.dlu.bysj.base.model.entity.Notice;
 import edu.dlu.bysj.base.model.enums.NoticeStatusEnum;
@@ -7,8 +10,11 @@ import edu.dlu.bysj.base.model.enums.NoticeTypeEnum;
 import edu.dlu.bysj.base.model.vo.NoticeVo;
 import edu.dlu.bysj.notification.mapper.NoticeMapper;
 import edu.dlu.bysj.notification.service.NoticeService;
+import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -38,16 +44,27 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
         // return allNoticeList
         List<NoticeVo> noticeVos = baseMapper.allNoticeList(majorId, collegeId);
         for (NoticeVo noticeVo : noticeVos) {
+
             String type = NoticeStatusEnum.noticeStatus(Integer.valueOf(noticeVo.getImportance()));
             String union = NoticeTypeEnum.noticeMessage(noticeVo.getType());
             String content = noticeVo.getContent();
             Integer college = noticeVo.getCollegeId();
             Integer major = noticeVo.getMajorId();
+            String time = DateUtil.now();
+            DateTime date = DateUtil.parse(time);
+            LocalDateTime of = LocalDateTimeUtil.of(date);
+
+//            LocalDateTime localDateTime = LocalDateTimeUtil.now();
+//            System.out.println(localDateTime);
+
+
             noticeVo.setTypeName(type);
             noticeVo.setImportance(union);
             noticeVo.setContent(content);
             noticeVo.setCollegeId(college);
             noticeVo.setMajorId(major);
+            noticeVo.setTime(of);
+//            noticeVo.setTime(localDateTime);
         }
 
         return noticeVos;
