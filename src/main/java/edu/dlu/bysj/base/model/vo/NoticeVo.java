@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
@@ -16,10 +17,12 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(callSuper = false)
 @ApiModel(description = "通知列表返回类")
 public class NoticeVo {
+
     @ApiModelProperty(value = "消息名称")
     private String noticeName;
     @ApiModelProperty(value = "时间")
-    @JsonFormat(pattern = "yyy-MM-dd:hh:mm:ss", timezone = "GMT+8")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+//    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime time;
     @ApiModelProperty(value = "发布单位(通知类型（0：校，1：学院通知，2：专业通知）)")
     private String unit;

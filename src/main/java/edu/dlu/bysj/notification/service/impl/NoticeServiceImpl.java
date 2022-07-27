@@ -50,9 +50,10 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
             String content = noticeVo.getContent();
             Integer college = noticeVo.getCollegeId();
             Integer major = noticeVo.getMajorId();
-            String time = DateUtil.now();
-            DateTime date = DateUtil.parse(time);
-            LocalDateTime of = LocalDateTimeUtil.of(date);
+            LocalDateTime localDateTime = noticeVo.getTime();
+//            String time = DateUtil.now();
+//            DateTime date = DateUtil.parse(time);
+//            LocalDateTime of = LocalDateTimeUtil.of(date);
 
 //            LocalDateTime localDateTime = LocalDateTimeUtil.now();
 //            System.out.println(localDateTime);
@@ -63,7 +64,8 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
             noticeVo.setContent(content);
             noticeVo.setCollegeId(college);
             noticeVo.setMajorId(major);
-            noticeVo.setTime(of);
+            noticeVo.setTime(localDateTime);
+//            noticeVo.setTime(of);
 //            noticeVo.setTime(localDateTime);
         }
 

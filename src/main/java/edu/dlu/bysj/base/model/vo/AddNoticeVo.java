@@ -18,6 +18,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = false)
 @ApiModel(description = "接受新增或修过通知的参数类")
 public class AddNoticeVo {
+
     @ApiModelProperty(value = "学院id")
     private Integer collegeId;
 
