@@ -119,8 +119,6 @@ public class NotifyController {
             notice.setSenderId(JwtUtil.getUserId(jwt));
             notice.setDate(LocalDateTime.now());
 
-//            System.out.println(LocalDateTime.now());
-
             noticeFlag = noticeService.saveOrUpdate(notice);
             /*若有文件则插入文件类型*/
             Integer id = notice.getId();

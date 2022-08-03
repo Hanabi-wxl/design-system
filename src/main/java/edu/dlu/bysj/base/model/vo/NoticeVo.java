@@ -22,7 +22,6 @@ public class NoticeVo {
     private String noticeName;
     @ApiModelProperty(value = "时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-//    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime time;
     @ApiModelProperty(value = "发布单位(通知类型（0：校，1：学院通知，2：专业通知）)")
     private String unit;
