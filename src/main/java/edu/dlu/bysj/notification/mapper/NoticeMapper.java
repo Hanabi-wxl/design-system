@@ -1,8 +1,8 @@
 package edu.dlu.bysj.notification.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import edu.dlu.bysj.base.model.entity.Notice;
 import edu.dlu.bysj.base.model.vo.NoticeVo;
+import edu.dlu.bysj.base.model.entity.Notice;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

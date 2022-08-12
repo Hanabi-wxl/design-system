@@ -60,8 +60,7 @@ public class Notice implements Serializable {
     private Integer readCount;
 
     @ApiModelProperty(value = "此条数据是否有效（1：有效，0：无效）")
-    @TableLogic
+    @TableLogic(value = "1", delval = "0")
     private Integer status;
-
-
+    
 }

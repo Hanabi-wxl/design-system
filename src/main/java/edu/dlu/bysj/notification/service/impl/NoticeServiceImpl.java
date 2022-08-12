@@ -54,6 +54,7 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
             noticeVo.setCollegeId(college);
             noticeVo.setMajorId(major);
             noticeVo.setTime(localDateTime);
+
         }
 
         return noticeVos;

@@ -13,8 +13,11 @@
             notice.college_id as collegeId,
             notice.major_id as majorId
         FROM notice
-        WHERE TYPE = 0
+        WHERE (
+                TYPE = 0
                 OR (TYPE = 2 AND major_id = #{majorId})
                 OR (TYPE = 1 AND college_id = #{collegeId})
+                )
+            AND status = 1
     </select>
 </mapper>
