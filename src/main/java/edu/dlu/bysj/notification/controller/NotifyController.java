@@ -138,22 +138,22 @@ public class NotifyController {
         return noticeFlag ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
     }
 
-//    @RequiresPermissions({"notice:list"})
-//    @GetMapping(value = "/notice/getNoticeById/{noticeId}")
-//    @ApiOperation(value = "获取已增消息用于修改")
-//    public CommonResult<Object> getNoticeById(@PathVariable("noticeId") @NotNull Integer noticeId){
-//
-////        System.out.println(noticeId);
-//
-//        QueryWrapper<Notice> queryWrapper = new QueryWrapper<>();
-//        queryWrapper.eq("id",noticeId);
-//
-//        List<Notice> list = noticeMapper.selectList(queryWrapper);
-//
-////        System.out.println(list.toString());
-//        return CommonResult.success(list);
-//
-//    }
+    @RequiresPermissions({"notice:list"})
+    @GetMapping(value = "/notice/getNoticeById/{noticeId}")
+    @ApiOperation(value = "获取已增消息用于修改")
+    public CommonResult<Object> getNoticeById(@PathVariable("noticeId") @NotNull Integer noticeId){
+
+//        System.out.println(noticeId);
+
+        QueryWrapper<Notice> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("id",noticeId);
+
+        List<Notice> list = noticeMapper.selectList(queryWrapper);
+
+//        System.out.println(list.toString());
+        return CommonResult.success(list);
+
+    }
 
     @GetMapping(value = "/notice/detail/{noticeId}")
     @LogAnnotation(content = "查看通知详情")
