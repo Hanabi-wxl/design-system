@@ -189,4 +189,26 @@ public class NotifyController {
 
         return (fileFlag && noticeFlag) ? CommonResult.success("删除成功") : CommonResult.failed("删除失败");
     }
+
+    @Transactional(rollbackFor = Exception.class)
+    @GetMapping(value = "/notice/batchDelete/{noticeIds}")
+    @LogAnnotation(content = "批量删除通知")
+    @RequiresPermissions({"notice:delete"})
+    @ApiOperation(value = "批量删除通知")
+    @ApiImplicitParam(name = "noticeId", value = "通知id")
+    public CommonResult<Object> batchDelete(@PathVariable("noticeIds") @NotNull String ids) {
+//        boolean fileFlag = noticeFileService.remove(new QueryWrapper<NoticeFile>().eq("notice_id", noticeId));
+        boolean fileFlag = true;
+
+        String[] noticeIds = ids.split(",");
+
+        boolean noticeFlag = false;
+        for (String noticeId : noticeIds) {
+            noticeFlag = noticeService.removeById(Integer.parseInt(noticeId));
+            if (!noticeFlag) {
+                return CommonResult.failed("删除失败");
+            }
+        }
+        return (fileFlag && noticeFlag) ? CommonResult.success("删除成功") : CommonResult.failed("删除失败");
+    }
 }
