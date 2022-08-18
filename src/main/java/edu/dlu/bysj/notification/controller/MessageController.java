@@ -48,6 +48,7 @@ import java.util.Map;
 @Validated
 @Slf4j
 public class MessageController {
+
     private final StudentService studentService;
 
     private final FileInformationService fileInformationService;

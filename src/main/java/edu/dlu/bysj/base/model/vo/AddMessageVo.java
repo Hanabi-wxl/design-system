@@ -17,6 +17,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = false)
 @ApiModel(description = "接收发送消息参数对象")
 public class AddMessageVo {
+
     @ApiModelProperty(value = "消息标题")
     @NotBlank
     private String messageTitle;

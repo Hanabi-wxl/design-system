@@ -195,7 +195,7 @@ public class NotifyController {
     @LogAnnotation(content = "批量删除通知")
     @RequiresPermissions({"notice:delete"})
     @ApiOperation(value = "批量删除通知")
-    @ApiImplicitParam(name = "noticeId", value = "通知id")
+    @ApiImplicitParam(name = "noticeIds", value = "通知ids")
     public CommonResult<Object> batchDelete(@PathVariable("noticeIds") @NotNull String ids) {
 //        boolean fileFlag = noticeFileService.remove(new QueryWrapper<NoticeFile>().eq("notice_id", noticeId));
         boolean fileFlag = true;

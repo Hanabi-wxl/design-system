@@ -13,6 +13,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = false)
 public class NoticeListQuery  extends CommonPage {
+
     @Builder
     public NoticeListQuery(Integer pageSize, Integer pageNumber, String search) {
         super(pageSize, pageNumber);

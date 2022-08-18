@@ -60,6 +60,4 @@ public class Message implements Serializable {
     @ApiModelProperty(value = "此条数据是否有效（1：有效，0：无效）")
     @TableLogic
     private Integer status;
-
-
 }

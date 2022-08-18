@@ -12,6 +12,7 @@ import edu.dlu.bysj.base.model.vo.TotalPackageVo;
  */
 
 public interface MessageService extends IService<Message> {
+
     /**
      * 发送消息
      *
