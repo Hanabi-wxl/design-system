@@ -84,6 +84,22 @@ public class MessageController {
         return CommonResult.success(result);
     }
 
+    @GetMapping(value = "/message/sendList")
+    @LogAnnotation(content = "获取发件消息列表")
+    @RequiresPermissions({"message:sendList"})
+    @ApiOperation(value = "获取发件消息列表")
+    public CommonResult<TotalPackageVo<ReceiveMessageVo>> obtainSenderList(@Valid CommonPage commonPage,
+                                                                           HttpServletRequest request) {
+        TotalPackageVo<ReceiveMessageVo> result = null;
+        String jwt = request.getHeader("jwt");
+        if (!StringUtils.isEmpty(jwt)) {
+            Integer userId = JwtUtil.getUserId(jwt);
+            Integer start = (commonPage.getPageNumber() - 1) * commonPage.getPageSize();
+            result = messageService.messageListAsSender(userId, start, commonPage.getPageSize());
+        }
+        return CommonResult.success(result);
+    }
+
     @GetMapping(value = "/message/readOrNot/{messageId}/{hasRead}")
     @LogAnnotation(content = "修改消息状态")
     @RequiresPermissions({"message:status"})
@@ -116,22 +132,6 @@ public class MessageController {
         return (messageFlag && fileFlag) ? CommonResult.success("删除成功") : CommonResult.failed("删除失败");
     }
 
-    @GetMapping(value = "/message/sendList")
-    @LogAnnotation(content = "获取发件消息列表")
-    @RequiresPermissions({"message:sendList"})
-    @ApiOperation(value = "获取发件消息列表")
-    public CommonResult<TotalPackageVo<ReceiveMessageVo>> obtainSenderList(@Valid CommonPage commonPage,
-                                                                           HttpServletRequest request) {
-        TotalPackageVo<ReceiveMessageVo> result = null;
-        String jwt = request.getHeader("jwt");
-        if (!StringUtils.isEmpty(jwt)) {
-            Integer userId = JwtUtil.getUserId(jwt);
-            Integer start = (commonPage.getPageNumber() - 1) * commonPage.getPageSize();
-            result = messageService.messageListAsSender(userId, start, commonPage.getPageSize());
-        }
-        return CommonResult.success(result);
-    }
-
     @GetMapping(value = "/message/detail/{messageId}")
     @LogAnnotation(content = "查看消息内容")
     @RequiresPermissions({"message:detail"})
@@ -158,10 +158,11 @@ public class MessageController {
     @LogAnnotation(content = "教师给学生发送消息")
     @RequiresPermissions({"message:send"})
     @ApiOperation(value = "教师给学生发送消息")
-    public CommonResult<Object> sendMessageOfTeacher(@Valid AddMessageVo addMessageVo,
+    public CommonResult<Object> sendMessageOfTeacher(@Valid @RequestBody AddMessageVo addMessageVo,
                                                      HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
-        boolean messageFlag = false, fileFlag = false;
+        boolean messageFlag = false;
+        boolean fileFlag = false;
         if (!StringUtils.isEmpty(jwt)) {
             Message message = new Message();
             message.setTitle(addMessageVo.getMessageTitle());
@@ -191,6 +192,7 @@ public class MessageController {
             }
 
         }
+
         return (fileFlag && messageFlag) ? CommonResult.success("操作成功") : CommonResult.failed("操作失败,请查看学生的学号是否正确，或则是否按规则填写学号");
     }
 }
