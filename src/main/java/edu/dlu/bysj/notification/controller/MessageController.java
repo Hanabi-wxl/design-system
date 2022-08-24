@@ -128,7 +128,8 @@ public class MessageController {
     @ApiImplicitParam(name = "messageId", value = "消息id")
     public CommonResult<Object> deleteMessage(@PathVariable("messageId") @NotNull Integer messageId) {
         boolean messageFlag = messageService.removeById(messageId);
-        boolean fileFlag = messageFileService.remove(new QueryWrapper<MessageFile>().eq("message_id", messageId));
+//        boolean fileFlag = messageFileService.remove(new QueryWrapper<MessageFile>().eq("message_id", messageId));
+        boolean fileFlag = true;
         return (messageFlag && fileFlag) ? CommonResult.success("删除成功") : CommonResult.failed("删除失败");
     }
 
