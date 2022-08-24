@@ -97,7 +97,7 @@ public class MessageController {
         return CommonResult.success(result);
     }
 
-        @GetMapping(value = "/message/readOrNot/{messageId}/{hasRead}")
+    @GetMapping(value = "/message/readOrNot/{messageId}/{hasRead}")
     @LogAnnotation(content = "修改消息状态")
     @RequiresPermissions({"message:status"})
     @ApiOperation(value = "改变消息已读/未读状态")
