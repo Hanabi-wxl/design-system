@@ -33,10 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author XiangXinGang
@@ -128,6 +125,19 @@ public class MessageController {
     @ApiImplicitParam(name = "messageId", value = "消息id")
     public CommonResult<Object> deleteMessage(@PathVariable("messageId") @NotNull Integer messageId) {
         boolean messageFlag = messageService.removeById(messageId);
+//        boolean fileFlag = messageFileService.remove(new QueryWrapper<MessageFile>().eq("message_id", messageId));
+        boolean fileFlag = true;
+        return (messageFlag && fileFlag) ? CommonResult.success("删除成功") : CommonResult.failed("删除失败");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @GetMapping(value = "/message/batchDelete/{messageIds}")
+    @LogAnnotation(content = "批量删除消息")
+    @RequiresPermissions({"message:delete"})
+    @ApiOperation(value = "批量删除消息")
+    @ApiImplicitParam(name = "messageId", value = "消息id")
+    public CommonResult<Object> batchDeleteMessage(@PathVariable("messageIds") @NotNull String messageIds) {
+        boolean messageFlag = messageService.removeByIds(Arrays.asList(messageIds.split(",")));
 //        boolean fileFlag = messageFileService.remove(new QueryWrapper<MessageFile>().eq("message_id", messageId));
         boolean fileFlag = true;
         return (messageFlag && fileFlag) ? CommonResult.success("删除成功") : CommonResult.failed("删除失败");
