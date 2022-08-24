@@ -97,7 +97,7 @@ public class MessageController {
         return CommonResult.success(result);
     }
 
-    @GetMapping(value = "/message/readOrNot/{messageId}/{hasRead}")
+        @GetMapping(value = "/message/readOrNot/{messageId}/{hasRead}")
     @LogAnnotation(content = "修改消息状态")
     @RequiresPermissions({"message:status"})
     @ApiOperation(value = "改变消息已读/未读状态")
@@ -110,7 +110,13 @@ public class MessageController {
         Message message = messageService.getById(messageId);
         boolean flag = false;
         if (ObjectUtil.isNotNull(message)) {
-            message.setHasRead(hasRead);
+
+            if (hasRead == 1) {
+                message.setHasRead(0);
+            } else {
+                message.setHasRead(1);
+            }
+
             flag = messageService.updateById(message);
         }
         return flag ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
