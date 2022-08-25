@@ -164,6 +164,7 @@ public class MessageController {
 
         //TODO 暂时未完成文件的地址放置,可能需要搭建自己的文件服务器
 
+        map.put("title", message.getTitle());
         map.put("fileUrl", fileUrl);
         map.put("fileName", fileName);
         return CommonResult.success(map);
