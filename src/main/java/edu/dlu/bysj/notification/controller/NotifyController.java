@@ -30,6 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -170,7 +171,12 @@ public class NotifyController {
         //TODO 暂未完成,对文件地址和名称的显示,可能需要搭建一个自己的文件服务器
 
         Map<String, Object> map = new HashMap<>(16);
+
+        LocalDateTime localDateTime = notice.getDate();
+        map.put("publishTime", localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+
         map.put("content", notice.getContent());
+        map.put("title", notice.getTitle());
         map.put("fileUrl", fileUrl);
         map.put("fileName", fileName);
         return CommonResult.success(map);
