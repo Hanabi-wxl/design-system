@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author XiangXinGang
@@ -108,5 +109,47 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             }
         }
         return result;
+    }
+
+    @Override
+    public List<Integer> similarGuideTeacher(Integer teacherId, Integer grade) {
+        List<TeamUser> teamUsers = teamUserMapper.selectList(new QueryWrapper<TeamUser>().eq("user_id", teacherId));
+        List<Integer> ids = teamUsers.stream().map(TeamUser::getTeamId).collect(Collectors.toList());
+        List<Team> teams = baseMapper.selectBatchIds(ids);
+        ids.clear();
+        teams.stream()
+                .filter(item -> item.getGrade().equals(grade))
+                .filter(item -> item.getType().equals(0))
+                .forEach(item -> ids.add(item.getId()));
+        return ids;
+    }
+
+    @Override
+    public List<Integer> differentGuideTeacher(Integer firstTeacherId, Integer grade) {
+        List<Team> teams = baseMapper.selectList(new QueryWrapper<Team>()
+                .eq("grade", grade)
+                .eq("type", 2));
+        List<Integer> ids = teams.stream().map(Team::getId).collect(Collectors.toList());
+        List<TeamUser> teamUsers = teamUserMapper.selectList(new QueryWrapper<TeamUser>().in("team_id", ids));
+        List<Integer> collect = teamUsers.stream()
+                .filter(item -> item.getUserId().equals(firstTeacherId))
+                .map(TeamUser::getTeamId)
+                .collect(Collectors.toList());
+        ids = ids.stream().filter(item -> !collect.contains(item)).collect(Collectors.toList());
+        return ids;
+    }
+
+    @Override
+    public List<Integer> similarOtherTeacher(Integer otherPersonId, Integer grade) {
+        List<TeamUser> teamUsers = teamUserMapper.selectList(new QueryWrapper<TeamUser>().eq("user_id", otherPersonId));
+        List<Integer> ids = new LinkedList<>();
+        teamUsers.forEach(item -> ids.add(item.getTeamId()));
+        List<Team> teams = baseMapper.selectBatchIds(ids);
+        ids.clear();
+        teams.stream()
+                .filter(item -> item.getGrade().equals(grade))
+                .filter(item -> item.getType().equals(1))
+                .forEach(item -> ids.add(item.getId()));
+        return ids;
     }
 }

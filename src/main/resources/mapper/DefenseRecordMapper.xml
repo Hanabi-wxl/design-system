@@ -39,7 +39,7 @@
                         team_user tuu
                     where tuu.status = 1
                       and tuu.is_student = 1
-                      and tuu.team_id =
+                      and tuu.team_id in
                           (select
                                t.id
                            from
@@ -69,7 +69,7 @@
                  team_user tuu
              where tuu.status = 1
                and tuu.is_student = 1
-               and tuu.team_id =
+               and tuu.team_id in
                    (select
                         t.id
                     from

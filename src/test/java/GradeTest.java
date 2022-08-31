@@ -1,5 +1,11 @@
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import edu.dlu.bysj.base.model.entity.Team;
+import edu.dlu.bysj.base.model.entity.TeamUser;
 import edu.dlu.bysj.base.util.GradeUtils;
 import org.junit.jupiter.api.Test;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author sinre
@@ -9,6 +15,6 @@ import org.junit.jupiter.api.Test;
 public class GradeTest {
     @Test
     public void testGrade(){
-        System.out.println(GradeUtils.getGrade());
+
     }
 }

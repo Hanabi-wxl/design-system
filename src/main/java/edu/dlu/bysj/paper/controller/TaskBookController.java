@@ -169,7 +169,7 @@ public class TaskBookController {
             Message message = new Message();
             message.setSenderId(leadingId);
             message.setReceiverId(subject.getStudentId());
-            message.setSendTime(LocalDateTime.now());
+            message.setSendTime(LocalDate.now());
             message.setContent(agree.getComment());
             if (MAJOR_REVIEW.equals(agree.getType())) {
                 /*专业级审阅任务书,task,subject 同时不为空时跟新*/

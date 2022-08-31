@@ -9,6 +9,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import edu.dlu.bysj.base.model.entity.EachMark;
+import edu.dlu.bysj.base.model.query.SubjectListQuery;
 import edu.dlu.bysj.base.model.vo.SubjectDetailVo;
 import edu.dlu.bysj.base.model.vo.TotalPackageVo;
 import edu.dlu.bysj.base.util.GradeUtils;
@@ -82,32 +83,48 @@ public class ScoreMutualController {
                     subject.setProgressId(processCode);
                     subjectFlag = subjectService.updateById(subject);
                 }
+            } else {
+                return CommonResult.failed("过程错误");
             }
         }
         return (scoreFlag && subjectFlag) ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
     }
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/7/3 14:15
+     * @param year
+     * @param pageSize
+     * @param pageNumber
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @GetMapping(value = "/score/other/list")
     @LogAnnotation(content = "获取互评列表")
     @RequiresPermissions({"each:commentFrom"})
     @ApiOperation(value = "获取互评")
-    public CommonResult<Object> listOtherEvaluation(@NotNull Integer year,
-                                                    @NotNull Integer pageSize,
-                                                    @NotNull Integer pageNumber,
-                                                    HttpServletRequest request) {
+    public CommonResult<Object> listOtherEvaluation(@Valid SubjectListQuery query, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
+        String userType = JwtUtil.getUserType(jwt);
         Integer userId = JwtUtil.getUserId(jwt);
-        List<EachMark> eachMarks = eachMarkService.list(new QueryWrapper<EachMark>().eq("teacher_id", userId));
-        List<Integer> idList = new LinkedList<>();
-        for (EachMark eachMark : eachMarks) {
-            idList.add(eachMark.getSubjectId());
-        }
-        Integer grade = GradeUtils.getGrade(year);
-        TotalPackageVo<SubjectDetailVo> packageVo = new TotalPackageVo<>();
-        if (idList.size() == 0)
+        if (userType.equals("1")) {
+            List<EachMark> eachMarks = eachMarkService.list(new QueryWrapper<EachMark>().eq("teacher_id", userId));
+            List<Integer> idList = new LinkedList<>();
+            for (EachMark eachMark : eachMarks) {
+                idList.add(eachMark.getSubjectId());
+            }
+            Integer grade = GradeUtils.getGrade(query.getYear());
+            TotalPackageVo<SubjectDetailVo> packageVo = new TotalPackageVo<>();
+            if (idList.size() == 0)
+                return CommonResult.success(packageVo);
+            else
+                packageVo = subjectService.filterByYear(idList, query.getPageSize(), query.getPageNumber(), grade);
             return CommonResult.success(packageVo);
-        else
-            packageVo = subjectService.filterByYear(idList, pageSize, pageNumber, grade);
-        return CommonResult.success(packageVo);
+        } else {
+            TotalPackageVo<SubjectDetailVo> packageVo = subjectService.studentSubjectList(query, userId);
+            return CommonResult.success(packageVo);
+        }
+
     }
 }

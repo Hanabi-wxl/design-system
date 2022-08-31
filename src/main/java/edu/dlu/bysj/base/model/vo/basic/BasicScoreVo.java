@@ -15,23 +15,18 @@ import javax.validation.constraints.NotNull;
 @ApiModel(description = "通用成绩评价提交类")
 public class BasicScoreVo {
     @ApiModelProperty(value = "选题质量")
-    @NotNull
     private Integer quality;
 
     @ApiModelProperty(value = "能力水平")
-    @NotNull
     private Integer ability;
 
     @ApiModelProperty(value = "完成质量")
-    @NotNull
     private Integer complete;
 
     @ApiModelProperty(value = "论文题目id")
-    @NotNull
+    @NotNull(message = "题目信息不能为空")
     private Integer subjectId;
 
     @ApiModelProperty(value = "评语")
-    @NotBlank
     private String comment;
-
 }

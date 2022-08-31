@@ -1,5 +1,6 @@
 package edu.dlu.bysj.defense.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import edu.dlu.bysj.base.model.dto.EachMarkConvey;
@@ -8,6 +9,7 @@ import edu.dlu.bysj.base.model.entity.SubjectMajor;
 import edu.dlu.bysj.base.model.query.MutualEvaluationQuery;
 import edu.dlu.bysj.base.model.vo.MutualEvaluationVo;
 import edu.dlu.bysj.base.model.vo.TotalPackageVo;
+import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.common.mapper.SubjectMapper;
 import edu.dlu.bysj.defense.mapper.EachMarkMapper;
 import edu.dlu.bysj.defense.service.EachMarkService;
@@ -49,6 +51,7 @@ public class EachMarkServiceImpl extends ServiceImpl<EachMarkMapper, EachMark> i
     @Override
     public TotalPackageVo<MutualEvaluationVo> eachMarkMajorInfo(MutualEvaluationQuery query) {
         Integer start = (query.getPageNumber() - 1) * query.getPageSize();
+        query.setYear(GradeUtils.getGrade(query.getYear()));
         List<MutualEvaluationVo> mutualEvaluationVos = eachMarkMapper.selectEachMarkInfoByQuery(query, start, query.getPageSize());
         Integer total = eachMarkMapper.totalEachMarkInfoByQuery(query);
         TotalPackageVo<MutualEvaluationVo> result = new TotalPackageVo<>();
@@ -65,7 +68,7 @@ public class EachMarkServiceImpl extends ServiceImpl<EachMarkMapper, EachMark> i
                 String teacherName = (String) teacherMap.get(element.getSubjectId()).get("name");
                 String majorName = (String) teacherMap.get(element.getSubjectId()).get("majorName");
                 String phone = (String) teacherMap.get(element.getSubjectId()).get("phone");
-                String teacherId = String.valueOf(teacherMap.get(element.getSubjectId()).get("teacherId"));
+                Integer teacherId = (Integer) teacherMap.get(element.getSubjectId()).get("teacherId");
                 element.setOtherTeacherName(teacherName);
                 element.setOtherTeacherMajor(majorName);
                 element.setOtherTeacherPhone(phone);
@@ -83,8 +86,9 @@ public class EachMarkServiceImpl extends ServiceImpl<EachMarkMapper, EachMark> i
     @Override
     public boolean generateEachMarkTeacher(Integer majorId, Integer grade, Integer printOut, String time, Integer leadingId) {
         /*该专业的所有教师对应的id和题目*/
+        grade = GradeUtils.getGrade(grade);
         List<EachMarkConvey> guide = eachMarkMapper.selectTeacherGuide(grade, majorId);
-        if (guide != null && guide.size() == 0) {
+        if (ObjectUtil.isNull(guide) && guide.size() == 0) {
             return false;
         }
         for (EachMarkConvey element : guide) {
@@ -124,6 +128,7 @@ public class EachMarkServiceImpl extends ServiceImpl<EachMarkMapper, EachMark> i
     @Override
     public void removeOldDate(Integer majorId) {
         List<Integer> subjectIds = subjectMapper.getIdsByMajor(majorId);
-        baseMapper.removeBySubjectIds(subjectIds);
+        if (subjectIds.size() != 0)
+            baseMapper.removeBySubjectIds(subjectIds);
     }
 }

@@ -11,6 +11,7 @@ import edu.dlu.bysj.paper.service.MessageService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -32,7 +33,7 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
             messageVo.setContent(content);
             messageVo.setSenderId(senderId);
             messageVo.setReceiverId(receiverId);
-            messageVo.setSendTime(LocalDateTime.now());
+            messageVo.setSendTime(LocalDate.now());
             messageVo.setLevel(messageLevel);
             messageFlag = this.save(messageVo);
         }

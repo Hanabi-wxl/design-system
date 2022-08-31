@@ -3,6 +3,7 @@ package edu.dlu.bysj.grade.controller;
 import java.time.LocalDate;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -95,7 +96,7 @@ public class GuideEvaluationController {
     @LogAnnotation(content = "获取该题目的所有评分信息")
     @ApiOperation(value = "获取该题目的所有评分信息")
     @ApiImplicitParam(name = "subjectId", value = "题目id")
-    public CommonResult<ScoreInformationVo> obtainAllScoreInfo(Integer subjectId) {
+    public CommonResult<ScoreInformationVo> obtainAllScoreInfo(@Valid @NotBlank(message = "课题信息不能为空") String subjectId) {
         Score score = scoreService.getOne(new QueryWrapper<Score>().eq("subject_id", subjectId));
         ScoreInformationVo info = new ScoreInformationVo();
         if (ObjectUtil.isNotNull(score)) {

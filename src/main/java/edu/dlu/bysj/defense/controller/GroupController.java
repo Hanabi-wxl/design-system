@@ -63,16 +63,20 @@ public class GroupController {
         this.studentService = studentService;
     }
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/7/3 19:50
+     * @param majorId
+     * @param isSecond
+     * @return edu.dlu.bysj.base.result.CommonResult<java.util.List<edu.dlu.bysj.base.model.vo.TeamInfoVo>>
+     **/
     @GetMapping(value = "/defence/group/list")
     @LogAnnotation(content = "教师查看专业答辩分组")
     @RequiresPermissions({"group:list"})
     @ApiOperation(value = "查看专业答辩分组")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "majorId", value = "专业id"),
-            @ApiImplicitParam(name = "isSecond", value = "是否二答")
-    })
-    public CommonResult<List<TeamInfoVo>> majorDefenseTeam(@NotNull Integer majorId,
-                                                           @NotNull Integer isSecond) {
+    public CommonResult<List<TeamInfoVo>> majorDefenseTeam(@Valid @NotNull(message = "专业信息不能为空") Integer majorId,
+                                                           @Valid @NotNull(message = "二答信息不能为空") Integer isSecond) {
         int year = LocalDateTime.now().getYear();
         Integer grade = GradeUtils.getGrade(year);
         List<Team> list = teamService.list(new QueryWrapper<Team>().eq("major_id", majorId)
@@ -97,12 +101,18 @@ public class GroupController {
         return CommonResult.success(result);
     }
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/7/3 19:50
+     * @param group
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @PostMapping(value = "/defence/group/teacherGroup")
     @LogAnnotation(content = "进行教师分组")
     @RequiresPermissions({"group:teacherGroup"})
     @ApiOperation(value = "提交教师分组")
     public CommonResult<Object> submitTeacherGroup(@Valid @RequestBody TeacherGroupVo group) {
-
         TeamUser teamUser = teamUserService.getOne(new QueryWrapper<TeamUser>()
                 .eq("user_id", group.getTeacherId())
                 .eq("team_id", group.getGroupId())
@@ -130,6 +140,14 @@ public class GroupController {
         return flag ? CommonResult.success("提交成功") : CommonResult.failed("提交失败，查看教师信息");
     }
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/7/3 19:50
+     * @param groupVo
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @PostMapping(value = "defence/group/modifyGroupInfo")
     @LogAnnotation(content = "新增/修改分组信息")
     @RequiresPermissions({"group:modify"})
@@ -157,7 +175,7 @@ public class GroupController {
             team.setGrade(GradeUtils.getGrade());
             team.setIsRepeat(groupVo.getIsRepeat());
             team.setType(groupVo.getType());
-            team.setMajorId(JwtUtil.getMajorId(jwt));
+            team.setMajorId(groupVo.getMajorId());
 
             if (ObjectUtil.isNotNull(groupVo.getId())) {
                 /*更新*/
@@ -170,6 +188,13 @@ public class GroupController {
         return flag ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
     }
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/7/3 19:50
+     * @param groupId
+     * @return edu.dlu.bysj.base.result.CommonResult<java.util.List<java.util.Map<java.lang.String,java.lang.Integer>>>
+     **/
     @GetMapping(value = "/defence/group/teacherGroupList")
     @LogAnnotation(content = "查看该组教师分配情况")
     @RequiresPermissions({"group:teacherGroup"})
@@ -192,6 +217,13 @@ public class GroupController {
         return CommonResult.success(result);
     }
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/7/3 19:50
+     * @param groupId
+     * @return edu.dlu.bysj.base.result.CommonResult<java.util.List<java.util.Map<java.lang.String,java.lang.Object>>>
+     **/
     @GetMapping(value = "/defence/group/studentGroupList")
     @LogAnnotation(content = "获取学生答辩分组情况")
     @RequiresPermissions({"group:studentGroup"})
@@ -221,6 +253,13 @@ public class GroupController {
         return CommonResult.success(resList);
     }
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/7/3 19:51
+     * @param user
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @PatchMapping(value = "/defence/group/modifyStudentGroup")
     @LogAnnotation(content = "管理员调整组内序号")
     @RequiresPermissions({"group:revision"})
@@ -236,6 +275,13 @@ public class GroupController {
         return flag ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
     }
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/7/3 19:51
+     * @param groupIdJson
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @Transactional(rollbackFor = Exception.class)
     @DeleteMapping(value = "/defence/group/delete")
     @LogAnnotation(content = "删除分组")
@@ -252,12 +298,19 @@ public class GroupController {
     }
 
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/7/3 19:51
+     * @param groupId
+     * @return edu.dlu.bysj.base.result.CommonResult<edu.dlu.bysj.base.model.vo.ModifyGroupVo>
+     **/
     @GetMapping(value = "/defence/group/teacherInfo")
     @RequiresPermissions({"group:teacherInfo"})
     @LogAnnotation(content = "查看分组信息")
     @ApiOperation(value = "查看分组信息")
-    public CommonResult<ModifyGroupVo> checkTeacherGroupInfo(@NotNull Integer groupId,HttpServletRequest request) {
-        String jwt = request.getHeader("jwt");
+    public CommonResult<ModifyGroupVo> checkTeacherGroupInfo(
+            @Valid @NotNull(message = "分组信息不能为空") Integer groupId) {
         Team team = teamService.getById(groupId);
         ModifyGroupVo groupVo = new ModifyGroupVo();
         groupVo.setAddress(team.getAddress());
@@ -270,6 +323,13 @@ public class GroupController {
         return CommonResult.success(groupVo);
     }
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/7/3 19:51
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<edu.dlu.bysj.base.model.vo.ReplyInformationVo>
+     **/
     @GetMapping(value = "/defence/group/studentInfo")
     @RequiresPermissions({"group:studentInfo"})
     @LogAnnotation(content = "查看学生分组信息")

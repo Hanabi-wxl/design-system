@@ -42,7 +42,6 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
 
     private final StudentService studentService;
 
-
     private final TeamService teamService;
 
 
@@ -197,21 +196,25 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
         List<Team> teams = teamService.list(new QueryWrapper<Team>()
                 .eq("grade", grade)
                 .eq("major_id", majorId));
-        Set<Integer> ids = new HashSet<>();
-        for (Team team : teams) {
-            ids.add(team.getType());
-        }
-        Iterator<Integer> iterator = ids.iterator();
-        List<Integer> idList = new ArrayList<>();
-        while (iterator.hasNext()){
-            idList.add(iterator.next());
-        }
-        Random random = new Random();
-        int type = idList.get(random.nextInt(idList.size()));
-        /*根据分组规则插入分组*/
-        if(ObjectUtil.isNull(teams))
+        if (teams.size() != 0) {
+            Set<Integer> ids = new HashSet<>();
+            for (Team team : teams) {
+                ids.add(team.getType());
+            }
+            Iterator<Integer> iterator = ids.iterator();
+            List<Integer> idList = new ArrayList<>();
+            while (iterator.hasNext()) {
+                idList.add(iterator.next());
+            }
+            Random random = new Random();
+            int type = idList.get(random.nextInt(idList.size()));
+            /*根据分组规则插入分组*/
+            if (ObjectUtil.isNull(teams))
+                return false;
+            return this.addRespondentByRule(studentId, type, resposiblity, subjectId, grade, majorId);
+        } else {
             return false;
-        return this.addRespondentByRule(studentId, type, resposiblity, subjectId, grade, majorId);
+        }
     }
 
     private boolean addRespondentByRule(Integer studentId, Integer configRule, Integer resposiblity, Integer subjectId, Integer grade, Integer majorId) {
@@ -222,20 +225,19 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
         teamUser.setResposiblity(resposiblity);
         if (configRule.equals(0)) {
             /*与指导教师同组*/
-//            List<Integer> teamIds = teamConfigMapper.similarGuideOrOtherTeacher(subject.getFirstTeacherId(), grade, majorId);
-//            this.fillingSerialAndTeamId(teamUser, teamIds);
-
+            List<Integer> teamIds = teamService.similarGuideTeacher(subject.getFirstTeacherId(), grade);
+            this.fillingSerialAndTeamId(teamUser, teamIds);
         } else if (configRule.equals(1)) {
             /*互评教师与学生同组*/
             Score score = scoreService.getOne(new QueryWrapper<Score>().eq("subject_id", subjectId));
             Integer otherPersonId = score.getOtherPersonId();
-//            List<Integer> teamIds = teamConfigMapper.similarGuideOrOtherTeacher(otherPersonId, grade, majorId);
-//            this.fillingSerialAndTeamId(teamUser, teamIds);
+            List<Integer> teamIds = teamService.similarOtherTeacher(otherPersonId, grade);
+            this.fillingSerialAndTeamId(teamUser, teamIds);
 
         } else if (configRule.equals(2)) {
             /*不与指导教师同组*/
-//            List<Integer> teamIds = teamConfigMapper.differentGuideTeacher(subject.getFirstTeacherId(), grade, majorId);
-//            this.fillingSerialAndTeamId(teamUser, teamIds);
+            List<Integer> teamIds = teamService.differentGuideTeacher(subject.getFirstTeacherId(), grade);
+            this.fillingSerialAndTeamId(teamUser, teamIds);
 
         } else {
             /*随机分配*/

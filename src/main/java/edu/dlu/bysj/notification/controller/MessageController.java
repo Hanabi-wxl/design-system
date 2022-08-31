@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -101,10 +102,6 @@ public class MessageController {
     @LogAnnotation(content = "修改消息状态")
     @RequiresPermissions({"message:status"})
     @ApiOperation(value = "改变消息已读/未读状态")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "messageId", value = "消息id"),
-            @ApiImplicitParam(name = "hasRead", value = "阅读标志（1：未读，0：已读）")
-    })
     public CommonResult<Object> modifyReadStatus(@PathVariable("messageId") @NotNull Integer messageId,
                                                  @PathVariable("hasRead") @NotNull Integer hasRead) {
         Message message = messageService.getById(messageId);
@@ -121,7 +118,6 @@ public class MessageController {
         }
         return flag ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
     }
-
 
     @Transactional(rollbackFor = Exception.class)
     @GetMapping(value = "/message/delete/{messageId}")
@@ -190,7 +186,7 @@ public class MessageController {
             if (ObjectUtil.isNotNull(student)) {
                 message.setReceiverId(student.getId());
                 message.setSenderId(JwtUtil.getUserId(jwt));
-                message.setSendTime(LocalDateTime.now());
+                message.setSendTime(LocalDate.now());
                 message.setLevel(addMessageVo.getLevel());
 
                 messageFlag = messageService.save(message);

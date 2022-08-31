@@ -37,8 +37,6 @@
         ) as t
         inner join functions
         on t.function_id = functions.id
-        where functions.start_time > #{currentTime}
-        and end_time > #{currentTime}
         ))
     </select>
 

@@ -1,6 +1,7 @@
 package edu.dlu.bysj.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import edu.dlu.bysj.base.model.entity.Function;
 import edu.dlu.bysj.base.model.entity.RoleFunction;
 
 import java.util.List;
@@ -16,4 +17,5 @@ public interface RoleFunctionService  extends IService<RoleFunction> {
      * @return 功能更集合;
      */
     List<Integer> ObtainFunctionIds(String roleId);
+
 }

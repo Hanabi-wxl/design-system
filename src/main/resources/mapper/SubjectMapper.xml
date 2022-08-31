@@ -817,6 +817,7 @@
     <select id="filterByYear" resultType="edu.dlu.bysj.base.model.vo.SubjectDetailVo">
         select
         s.id as id,
+        s.subject_id as subjectId,
         s.subject_name as subjectname,
         st.name as studentName,
         p.content as progress,

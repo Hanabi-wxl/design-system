@@ -16,6 +16,7 @@ import edu.dlu.bysj.defense.service.ProgressService;
 import edu.dlu.bysj.defense.service.TeamService;
 import edu.dlu.bysj.defense.service.TeamUserService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
+import edu.dlu.bysj.paper.service.MessageService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -49,17 +50,21 @@ public class ReplyController {
 
     private final TeamService teamService;
 
+    private final MessageService messageService;
+
     private final SubjectService subjectService;
 
     private final ProgressService progressService;
 
 
     public ReplyController(TeamService teamService,
+                           MessageService messageService,
                            ProgressService progressService,
                            StudentService studentService,
                            TeamUserService teamUserService,
                            SubjectService subjectService) {
         this.progressService = progressService;
+        this.messageService = messageService;
         this.studentService = studentService;
         this.teamService = teamService;
         this.teamUserService = teamUserService;
@@ -80,6 +85,24 @@ public class ReplyController {
             result = teamService.teacherReplyInfo(JwtUtil.getUserId(jwt), grade, 0);
         }
         return CommonResult.success(result);
+    }
+
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/7/3 19:44
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<edu.dlu.bysj.base.model.entity.Message>
+     **/
+    @GetMapping(value = "/defence/replyMessage")
+    @LogAnnotation(content = "获取申请答辩信息")
+    @RequiresPermissions({"defence:application"})
+    @ApiOperation(value = "获取申请答辩信息")
+    public CommonResult<Message> obtainReplyMessage(HttpServletRequest request) {
+        String jwt = request.getHeader("jwt");
+        Integer userId = JwtUtil.getUserId(jwt);
+        Message messages = messageService.getOne(new QueryWrapper<Message>().eq("sender_id", userId));
+        return CommonResult.success(messages);
     }
 
     @GetMapping(value = "/defence/selfStudentInfo")
@@ -122,32 +145,38 @@ public class ReplyController {
             // TODO 验证 1-18 环节是否完成，从开始申报题目到申请答辩
 //            need = teamUserService.undoneLink(subjectId, userId);
             /*当need中没有任何警告数据的时候执行申请答辩操作*/
-            result.setNeed(need);
+//            result.setNeed(need);
 
             if (need == null || need.isEmpty()) {
                 /*答辩角色设置未4答辩人*/
                 flag = teamUserService.addReplyStudent(JwtUtil.getUserId(jwt), JwtUtil.getMajorId(jwt), 4, subjectId);
                 /*再次查询申请答辩后此人的组信息*/
-                TeamUser teamuser = teamUserService.getOne(new QueryWrapper<TeamUser>()
-                        .eq("user_id", userId)
-                        .eq("is_student", 1)
-                        .eq("resposiblity", 4));
-                Team team = teamService.getById(teamuser.getTeamId());
-                result.setGroupNumber(team.getTeamNumber());
-                result.setSerial(teamuser.getSerial());
-                result.setStartTime(team.getStartDate());
-                result.setEndTime(team.getEndTime());
-                result.setAddress(team.getAddress());
-                result.setRoleName("答辩人");
-                result.setRequirement(team.getRequest());
+                if (flag) {
+                    TeamUser teamuser = teamUserService.getOne(new QueryWrapper<TeamUser>()
+                            .eq("user_id", userId)
+                            .eq("is_student", 1)
+                            .eq("resposiblity", 4));
+                    Team team = teamService.getById(teamuser.getTeamId());
+                    result.setGroupNumber(team.getTeamNumber());
+                    result.setSerial(teamuser.getSerial());
+                    result.setStartTime(team.getStartDate());
+                    result.setEndTime(team.getEndTime());
+                    result.setAddress(team.getAddress());
+                    result.setRoleName("答辩人");
+                    result.setRequirement(team.getRequest());
 
-                /*跟新题目所处阶段*/
-                subject.setProgressId(processCode);
-                subjectService.updateById(subject);
+                    /*跟新题目所处阶段*/
+                    subject.setProgressId(processCode);
+                    subjectService.updateById(subject);
+                    Student student = studentService.getById(userId);
+                    messageService.sendMessage("学生申请答辩", student.getStudentNumber()+student.getName()+": 申请答辩", userId, 0, 0);
+                } else {
+                    return CommonResult.failed("教师答辩分组未分配完成");
+                }
             }
         } else if (subject.getProgressId() == 19){
             return CommonResult.failed("已申请答辩，请等待通知！");
-        } else{
+        } else {
             progress = progressService.getOne(new QueryWrapper<Progress>().eq("id", subject.getProgressId() + 1));
         }
         return flag ? CommonResult.success(result) : CommonResult.failed(progress.getContent() + "阶段未完成！");

@@ -19,6 +19,7 @@ import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -64,7 +65,6 @@ public class JwtRealm extends AuthorizingRealm {
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
 
       // TODO 学生老师授权操作
-        /*
         String userNumber = (String) principalCollection.getPrimaryPrincipal();
         Student student = iStudentService.studentPassword(userNumber);
         Optional<Student>  studentValue = Optional.ofNullable(student);
@@ -89,13 +89,12 @@ public class JwtRealm extends AuthorizingRealm {
         //设置权限
         info.setStringPermissions(authorities);
         return info;
-         */
         // TODO 开发期间每个接口都开放权限
-        System.out.println("开始授权======================================");
-        Set<String> authirties = authorityMapper.allAuthority();
-       SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
-       info.setStringPermissions(authirties);
-       return info;
+//        System.out.println("开始授权======================================");
+//        Set<String> authirties = authorityMapper.allAuthority();
+//       SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
+//       info.setStringPermissions(authirties);
+//       return info;
 
     }
 

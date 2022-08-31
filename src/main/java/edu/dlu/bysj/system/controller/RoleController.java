@@ -2,13 +2,15 @@ package edu.dlu.bysj.system.controller;
 
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import edu.dlu.bysj.base.model.entity.Function;
 import edu.dlu.bysj.base.model.entity.Role;
 import edu.dlu.bysj.base.model.entity.RoleFunction;
 import edu.dlu.bysj.base.model.enums.RedisKeyEnum;
 import edu.dlu.bysj.base.result.CommonResult;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
-import edu.dlu.bysj.system.model.dto.RoleDto;
 import edu.dlu.bysj.system.model.dto.RoleFunctionDto;
+import edu.dlu.bysj.system.model.vo.RoleMap;
+import edu.dlu.bysj.system.service.FunctionService;
 import edu.dlu.bysj.system.service.RoleFunctionService;
 import edu.dlu.bysj.system.service.RoleService;
 import io.swagger.annotations.Api;
@@ -19,9 +21,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -41,10 +41,13 @@ public class RoleController {
 
     private final RoleFunctionService roleFunctionService;
 
-    public RoleController(RoleService roleService, RedisTemplate redisTemplate, RoleFunctionService roleFunctionService) {
+    private final FunctionService functionService;
+
+    public RoleController(RoleService roleService, RedisTemplate redisTemplate, RoleFunctionService roleFunctionService, FunctionService functionService) {
         this.roleService = roleService;
         this.redisTemplate = redisTemplate;
         this.roleFunctionService = roleFunctionService;
+        this.functionService = functionService;
     }
 
     @GetMapping(value = "system/role/list")
@@ -75,6 +78,7 @@ public class RoleController {
         return roleService.save(role) ? CommonResult.success(null) : CommonResult.failed();
     }
 
+
     @DeleteMapping(value = "/system/role/delete")
     @LogAnnotation(content = "根据roleId删除对应的角色")
     @RequiresPermissions({"role:delete"})
@@ -86,17 +90,51 @@ public class RoleController {
         return roleService.removeById(id) ? CommonResult.success(null) : CommonResult.failed();
     }
 
-    @GetMapping(value = "/system/role/hasFunction/{roleId}")
+
+    @GetMapping(value = "/system/role/hasFunction")
     @LogAnnotation(content = "获取角色已有功能")
     @RequiresPermissions({"role:function"})
-    @ApiOperation(value = "获取角色已有功能")
-    @ApiImplicitParams({@ApiImplicitParam(name = "roleId", value = "角色id", required = true)})
-    public CommonResult<Map<String, Object>> roleFunctions(@PathVariable("roleId") String roleId) {
+    public CommonResult<Map<String, Object>> roleFunctions(String roleId) {
         List<Integer> list = roleFunctionService.ObtainFunctionIds(roleId);
         Map<String, Object> result = new HashMap<>(16);
         result.put("functionId", list);
         return CommonResult.success(result);
     }
+
+    /*
+     * @Description:
+     * @Author: sinre
+     * @Date: 2022/8/31 10:43
+     * @param
+     * @return edu.dlu.bysj.base.result.CommonResult<java.util.List<java.util.List<edu.dlu.bysj.system.model.vo.RoleMap>>>
+     **/
+    @GetMapping(value = "/system/role/functionList")
+    @LogAnnotation(content = "获取全部功能")
+    @RequiresPermissions({"role:function"})
+    public CommonResult<List<List<RoleMap>>> functionsList() {
+        List<Function> functionList = functionService.list(new QueryWrapper<Function>().select("id", "name", "parent_id"));
+        List<List<RoleMap>> ans = new ArrayList<>();
+        for (Function listItem : functionList) {
+            if(listItem.getParentId() == -1) {
+                List<RoleMap> ansItemList = new ArrayList<>();
+                RoleMap ansItem = new RoleMap();
+                ansItem.setId(-1);
+                ansItem.setTitle(listItem.getName());
+                ansItemList.add(ansItem);
+                for (Function item : functionList) {
+                    if(item.getParentId().equals(listItem.getId())) {
+                        RoleMap ansItem1 = new RoleMap();
+                        ansItem1.setId(item.getId());
+                        ansItem1.setTitle(item.getName());
+                        ansItemList.add(ansItem1);
+                    }
+                }
+                ans.add(ansItemList);
+            }
+        }
+        return CommonResult.success(ans);
+    }
+
 
     @PatchMapping(value = "/system/role/change")
     @LogAnnotation(content = "修改角色对应的菜单")

@@ -50,6 +50,13 @@ public class MutualEvaluationController {
         this.subjectService = subjectService;
     }
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/7/2 23:06
+     * @param query
+     * @return edu.dlu.bysj.base.result.CommonResult<edu.dlu.bysj.base.model.vo.TotalPackageVo<edu.dlu.bysj.base.model.vo.MutualEvaluationVo>>
+     **/
     @GetMapping(value = "/defence/other/list")
     @LogAnnotation(content = "查看互评分组列表")
     @RequiresPermissions({"mutual:list"})
@@ -59,6 +66,13 @@ public class MutualEvaluationController {
         return CommonResult.success(result);
     }
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/7/3 14:15
+     * @param dto
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @PatchMapping(value = "/defence/other/changeOtherTeacher")
     @LogAnnotation(content = "修改互评教师")
     @RequiresPermissions({"mutual:change"})
@@ -80,15 +94,23 @@ public class MutualEvaluationController {
         return CommonResult.success(message);
     }
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/7/3 14:15
+     * @param majorId
+     * @param year
+     * @param printout
+     * @param time
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
+     **/
     @GetMapping(value = "/defence/other/generate")
     @LogAnnotation(content = "管理员按专业生成互评数据")
     @RequiresPermissions({"mutual:generate"})
     @ApiOperation(value = "生成互评数据")
-    public CommonResult<Object> generateEachMarkDate(Integer majorId,
-                                                     Integer year,
-                                                     Integer printout,
-                                                     String time,
-                                                     HttpServletRequest request) {
+    public CommonResult<Object> generateEachMarkDate(
+            Integer majorId, Integer year, Integer printout, String time, HttpServletRequest request) {
         //  删除上次的互评数据
         eachMarkService.removeOldDate(majorId);
         String jwt = request.getHeader("jwt");
@@ -110,6 +132,13 @@ public class MutualEvaluationController {
         return CommonResult.failed("操作失败");
     }
 
+    /*
+     * @Description:
+     * @Author: sinre 
+     * @Date: 2022/7/3 14:25
+     * @param request
+     * @return edu.dlu.bysj.base.result.CommonResult<java.util.List<java.lang.Object>>
+     **/
     @GetMapping(value = "/defence/other/studentInfo")
     @LogAnnotation(content = "学生查看该题目的互评教师信息")
     @RequiresPermissions({"mutual:studentInfo"})

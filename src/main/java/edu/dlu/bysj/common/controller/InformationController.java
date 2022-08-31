@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
@@ -234,7 +235,8 @@ public class InformationController {
     @LogAnnotation(content = "查看学生题目信息")
     @RequiresPermissions({"common:studentSubject"})
     @ApiOperation(value = "获取学生题目信息")
-    public CommonResult<SubjectTableVo> subjectDetailById(@Valid @NotNull(message = "专业id不能为空") String subjectId) {
+    public CommonResult<SubjectTableVo> subjectDetailById(
+            @Valid @NotBlank(message = "题目信息不能为空") String subjectId) {
         SubjectTableVo subjectTableVo = subjectService.obtainsSubjectTableInfo(subjectId);
         if (ObjectUtil.isNull(subjectTableVo)) {
             Integer id = subjectService.getOne(new QueryWrapper<Subject>().eq("subject_id", subjectId)).getId();

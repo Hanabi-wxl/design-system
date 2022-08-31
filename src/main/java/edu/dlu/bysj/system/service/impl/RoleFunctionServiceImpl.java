@@ -1,8 +1,11 @@
 package edu.dlu.bysj.system.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import edu.dlu.bysj.base.model.entity.Function;
 import edu.dlu.bysj.base.model.entity.RoleFunction;
 import edu.dlu.bysj.base.model.enums.RedisKeyEnum;
+import edu.dlu.bysj.system.mapper.FunctionMapper;
 import edu.dlu.bysj.system.mapper.RoleFunctionMapper;
 import edu.dlu.bysj.system.service.RoleFunctionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,22 +25,18 @@ public class RoleFunctionServiceImpl extends ServiceImpl<RoleFunctionMapper, Rol
     private RoleFunctionMapper roleFunctionMapper;
 
     @Autowired
+    private FunctionMapper functionMapper;
+
+    @Autowired
     private RedisTemplate redisTemplate;
 
     @Override
     public List<Integer> ObtainFunctionIds(String roleId) {
         List<Integer> result = null;
-        String key = RedisKeyEnum.ROLE_FUNCTION_KEY.getKeyValue() +roleId;
-        if (redisTemplate.hasKey(key)) {
-            // [0,-1] 返回所有值;
-            result = redisTemplate.opsForList().range(key,0,-1);
-        } else {
-            result = roleFunctionMapper.getRoleFunctionIds(roleId);
-            //放入redis中
-            redisTemplate.opsForList().rightPushAll(key,result);
-            //设置10天有效时间
-            redisTemplate.expire(key,10, TimeUnit.DAYS);
-        }
+
+        result = roleFunctionMapper.getRoleFunctionIds(roleId);
+
         return result;
     }
+
 }

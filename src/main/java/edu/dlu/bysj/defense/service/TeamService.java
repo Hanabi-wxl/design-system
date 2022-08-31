@@ -42,4 +42,10 @@ public interface TeamService extends IService<Team> {
      * @return 学生分组信息集合
      */
     List<StudentGroupVo> studentReplyInfoOfSimilarGroup(Integer majorId, Integer grade, Integer isSecond, Integer teacherId);
+
+    List<Integer> similarGuideTeacher(Integer firstTeacherId, Integer grade);
+
+    List<Integer> differentGuideTeacher(Integer firstTeacherId, Integer grade);
+
+    List<Integer> similarOtherTeacher(Integer otherPersonId, Integer grade);
 }

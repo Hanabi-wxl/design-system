@@ -24,7 +24,7 @@ public class MutualEvaluationVo {
     @ApiModelProperty(value = "教师专业名称")
     private String firstTeacherMajor;
     @ApiModelProperty(value = "互评教师id")
-    private String otherTeacherId;
+    private Integer otherTeacherId;
     @ApiModelProperty(value = "互评教师名称")
     private String otherTeacherName;
     @ApiModelProperty(value = "互评教师专业")

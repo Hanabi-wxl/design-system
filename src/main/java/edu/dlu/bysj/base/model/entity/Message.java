@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -43,7 +44,7 @@ public class Message implements Serializable {
     private Integer receiverId;
 
     @ApiModelProperty(value = "发送时间")
-    private LocalDateTime sendTime;
+    private LocalDate sendTime;
 
     @ApiModelProperty(value = "发送人是否删除(1:删除,0:未删除)")
     private Integer senderDelete;
