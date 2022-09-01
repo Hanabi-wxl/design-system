@@ -18,6 +18,8 @@ import lombok.NoArgsConstructor;
 public class StudentDetailVo {
     @ApiModelProperty(value = "姓名")
     private String username;
+    @ApiModelProperty(value = "id")
+    private Integer userId;
     @ApiModelProperty(value = "学号")
     private String studentNumber;
     @ApiModelProperty(value = "专业")

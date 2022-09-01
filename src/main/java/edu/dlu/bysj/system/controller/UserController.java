@@ -1,5 +1,6 @@
 package edu.dlu.bysj.system.controller;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -154,11 +155,13 @@ public class UserController {
             @ApiImplicitParam(name = "newPassword", value = "新密码", required = true),
             @ApiImplicitParam(name = "userNumber", value = "学号/工号", required = true)
     })
-    public CommonResult<Object> modifyUserPassword(@RequestBody UserInitDto user) {
+    public CommonResult<Object> modifyUserPassword(HttpServletRequest request, @RequestBody UserInitDto user) {
         // 加密;
         String newPassword = user.getNewPassword();
         String userNumber = user.getUserNumber();
         Integer userId = user.getUserId();
+        if(ObjectUtil.isNull(userId))
+            userId = JwtUtil.getUserId(request.getHeader("jwt"));
         String isStudent = user.getIsStudent();
         String password = EncryptUtil.encrypt(newPassword, userNumber);
         boolean flag = false;
@@ -278,47 +281,19 @@ public class UserController {
         return CommonResult.success(result);
     }
 
-    @PostMapping(value = "/system/user/judgeOldPassword")
-    @LogAnnotation(content = "判断密码是否正确")
-    @RequiresPermissions({"user:judge"})
-    @ApiOperation(value = "判断输入密码是否正确接口")
-    public CommonResult<Object> judgePassword(HttpServletRequest request, @RequestBody String password) {
-        String pass = JSONUtil.parseObj(password).get("password", String.class);
-        String token = request.getHeader("jwt");
-        // 获取学生/教师id;
-        String userType = JwtUtil.getUserType(token);
-        String userNumber = JwtUtil.getUserNumber(token);
-        Integer userId = JwtUtil.getUserId(token);
-        String pwd = EncryptUtil.encrypt(pass, userNumber);
-        boolean flag = false;
-        /*jwt中保存的userType 1, 教师, 0 学生*/
-        if (ONE.equals(userType)) {
-            // 教师
-            Teacher teacher = teacherService.getById(userId);
-            Optional<Teacher> teacherOptional = Optional.ofNullable(teacher);
-            if (teacherOptional.isPresent()) {
-                flag = pwd.equals(teacher.getPassword());
-            }
-        } else {
-            // 学生
-            Student student = studentService.getById(userId);
-            Optional<Student> studentOptional = Optional.ofNullable(student);
-            if (studentOptional.isPresent()) {
-                flag = pwd.equals(student.getPassword());
-            }
-        }
-        return flag ? CommonResult.success(null, "密码正确") : CommonResult.failed("密码错误");
-    }
-
     @PostMapping(value = "/system/user/judgeOldPasswordById")
     @LogAnnotation(content = "判断密码是否正确")
-    @RequiresPermissions({"user:judgex"})
+    @RequiresPermissions({"user:judge"})
     @ApiOperation(value = "判断输入他人密码是否正确接口")
     public CommonResult<Object> judgePassword(HttpServletRequest request, @RequestBody UserAccountDto accountDto) {
         // 获取学生/教师id;
         Integer userType = accountDto.getIsStudent();
         Integer userId = accountDto.getUserId();
         String pwd = accountDto.getPassword();
+        String jwt = request.getHeader("jwt");
+        List<Integer> roleIds = JwtUtil.getRoleIds(jwt);
+        if(roleIds.size() == 6)
+            return CommonResult.success(null);
         boolean flag = false;
         // isStudent: 0为教师
         if (userType == 0) {
@@ -331,12 +306,11 @@ public class UserController {
             }
         } else {
             // 学生
+            if(ObjectUtil.isNull(userId))
+                userId = JwtUtil.getUserId(jwt);
             Student student = studentService.getById(userId);
-            Optional<Student> studentOptional = Optional.ofNullable(student);
-            if (studentOptional.isPresent()) {
-                String password = SimpleHashUtil.generatePassword(pwd, student.getStudentNumber());
-                flag = password.equals(student.getPassword());
-            }
+            String password = SimpleHashUtil.generatePassword(pwd, student.getStudentNumber());
+            flag = password.equals(student.getPassword());
         }
         return flag ? CommonResult.success(null, "密码正确") : CommonResult.failed("密码错误");
     }

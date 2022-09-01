@@ -13,6 +13,5 @@ import java.io.Serializable;
  */
 @Data
 public class MajorQueryDto extends CommonPage {
-    @NotNull(message = "学院id不能为空")
     private Integer collegeId;
 }

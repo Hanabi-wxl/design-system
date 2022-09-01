@@ -77,11 +77,10 @@ public class LoginController {
         if (student == null) {
             result.put("status", 400);
             result.put("msg", "账号不存在");
-        } else if(!originPassword.equals(student.getPassword())){
+        } else if (!originPassword.equals(student.getPassword())){
             result.put("status", 400);
             result.put("msg", "密码错误");
-
-        }else {
+        } else {
             //生成token，并保存到数据库
             result = studentService.createJwt(username, student);
             result.put("status", 200);

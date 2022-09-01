@@ -82,7 +82,10 @@ public class JwtRealm extends AuthorizingRealm {
             Optional<Teacher> teacherOptional = Optional.ofNullable(teacher);
             if (teacherOptional.isPresent()) {
                 List<Integer> teacherRoleIds = iTeacherService.getTeacherRoles(teacherOptional.get().getId());
-                authorities = authorityService.teacherAuthorization(teacherRoleIds, LocalDateTime.now());
+                if(teacherRoleIds.size() == 6)
+                    authorities = authorityMapper.allAuthority();
+                else
+                    authorities = authorityService.teacherAuthorization(teacherRoleIds, LocalDateTime.now());
             }
         }
         SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();

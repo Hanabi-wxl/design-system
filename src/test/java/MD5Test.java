@@ -24,17 +24,4 @@ public class MD5Test {
         SimpleHash simpleHash = new SimpleHash(algorithmName,source,salt,hashIterations);
         System.out.println(simpleHash);//打印出经过盐值、加密次数、md5后的密码
     }
-
-    @Test
-    public void tt(){
-        List<Integer> ids = new ArrayList<>();
-        ids.add(1);ids.add(2);ids.add(3);ids.add(0);
-        int size = ids.size();
-        Random random = new Random();
-        for (int i = 0; i < 10; i++) {
-            int type = ids.get(random.nextInt() + size);
-            System.out.println(type);
-        }
-
-    }
 }

@@ -3,7 +3,7 @@
 <mapper namespace="edu.dlu.bysj.security.mapper.AuthorityMapper">
 
     <select id="studentPermissions" resultType="java.lang.String">
-        select authority.description
+        select authority.url
         from authority
         where authority.id in (
             select authority_id
@@ -11,8 +11,6 @@
                   from functions
                            inner join (select function_id as id from role_function where role_id = #{roleId}) as t
                                       on functions.id = t.id
-                  where start_time &lt; #{currentTime}
-                    and end_time &gt; #{currentTime}
                  ) as x
                      inner join function_authority
                                 on function_authority.function_id = x.id

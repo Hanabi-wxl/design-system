@@ -161,6 +161,7 @@ public class InformationController {
         StudentDetailVo detailVo = null;
         if (!StringUtils.isEmpty(jwt)) {
             detailVo = studentService.checkStudentInfo(JwtUtil.getUserId(jwt));
+            detailVo.setUserId(JwtUtil.getUserId(jwt));
         }
         return CommonResult.success(detailVo);
     }
@@ -290,8 +291,7 @@ public class InformationController {
     @LogAnnotation(content = "获取本专业的所有班级")
     @RequiresPermissions({"common:majorClass"})
     @ApiOperation(value = "获取本专业的所有班级")
-    public CommonResult<List<ClassSimplifyVo>> majorClassList(
-            @Valid @NotNull(message = "专业id不能为空") Integer majorId, HttpServletRequest request) {
+    public CommonResult<List<ClassSimplifyVo>> majorClassList(Integer majorId, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
         List<ClassSimplifyVo> result = null;
         if (!StringUtils.isEmpty(jwt)) {
