@@ -10,6 +10,7 @@ import edu.dlu.bysj.base.result.CommonResult;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.StudentService;
 import edu.dlu.bysj.common.service.SubjectService;
+import edu.dlu.bysj.common.service.TeacherService;
 import edu.dlu.bysj.document.service.FileUploadService;
 import edu.dlu.bysj.document.service.SubjectFileService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
@@ -48,12 +49,14 @@ public class FileUploadController {
     private final SubjectService subjectService;
     private final FileInformationService fileInformationService;
     private final SubjectFileService subjectFileService;
+    private final TeacherService teacherService;
 
     @Autowired
     public FileUploadController(StudentService studentService,
-                                CollegeService collegeService,FileUploadService fileUploadService,
-                                FileInformationService fileInformationService,OpenReportService openReportService,
-                                SubjectService subjectService, SubjectFileService subjectFileService){
+                                TeacherService teacherService,
+                                CollegeService collegeService, FileUploadService fileUploadService,
+                                FileInformationService fileInformationService, OpenReportService openReportService,
+                                SubjectService subjectService, SubjectFileService subjectFileService) {
         this.subjectFileService = subjectFileService;
         this.openReportService = openReportService;
         this.subjectService = subjectService;
@@ -61,6 +64,7 @@ public class FileUploadController {
         this.fileUploadService = fileUploadService;
         this.collegeService = collegeService;
         this.fileInformationService = fileInformationService;
+        this.teacherService = teacherService;
     }
 
     /**
@@ -81,12 +85,12 @@ public class FileUploadController {
         Integer userNumber = studentService.idToNumber(userId);
         Student student = studentService.getById(userId);
         // 例：2022/open-report/college1/major1/20423034
-        String url =  year + "/open-report/" + "college" + collegeId + "/" + "major" + majorId + "/" + userNumber;
+        String url = year + "/open-report/" + "college" + collegeId + "/" + "major" + majorId + "/" + userNumber;
         Map<String, String> map = fileUploadService.uploadFile(file, url);
         FileInfomation infomation = new FileInfomation();
         // 1 : 开题报告
         infomation.setType("1");
-        infomation.setTitle(userNumber+"开题报告");
+        infomation.setTitle(userNumber + "开题报告");
         infomation.setDir(map.get("dir"));
         infomation.setUserId(userId);
         infomation.setIsStudent(JwtUtil.getRoleIds(jwt).contains(1) ? 1 : 0);
@@ -102,9 +106,9 @@ public class FileUploadController {
             openReport.setFileId(Integer.parseInt(fileInfomation.getId().toString()));
             openReport.setMajorLeadingId(subject.getMajorLeadingId());
             openReport.setCollegeLeadingId(subject.getCollegeLeadingId());
-            boolean save1 = openReportService.saveOrUpdate(openReport,new QueryWrapper<OpenReport>()
-                .eq("subject_id", student.getSubjectId()));
-            if (save1){
+            boolean save1 = openReportService.saveOrUpdate(openReport, new QueryWrapper<OpenReport>()
+                    .eq("subject_id", student.getSubjectId()));
+            if (save1) {
                 Integer processCode = ProcessEnum.SUBMIT_OPEN_REPORT.getProcessCode();
                 if (processCode.equals(subject.getProgressId()) || processCode.equals(subject.getProgressId() + 1)) {
                     subject.setProgressId(processCode);
@@ -129,7 +133,7 @@ public class FileUploadController {
         Integer userNumber = studentService.idToNumber(userId);
         Student student = studentService.getById(userId);
         // 例：2022/paper/college1/major1/20423034
-        String url =  year + "/paper/" + "college" + collegeId + "/" + "major" + majorId + "/" + userNumber;
+        String url = year + "/paper/" + "college" + collegeId + "/" + "major" + majorId + "/" + userNumber;
 
         Map<String, String> map = fileUploadService.uploadFile(file, url);
         FileInfomation infomation = new FileInfomation();
@@ -137,7 +141,7 @@ public class FileUploadController {
         infomation.setType("2");
         String originalFilename = file.getOriginalFilename();
         String fileSuffix = originalFilename.substring(originalFilename.lastIndexOf("."));
-        infomation.setTitle(userNumber+"论文"+fileSuffix);
+        infomation.setTitle(userNumber + "论文" + fileSuffix);
         infomation.setDir(map.get("dir"));
         infomation.setUserId(userId);
         infomation.setIsStudent(JwtUtil.getRoleIds(jwt).contains(1) ? 1 : 0);
@@ -153,8 +157,8 @@ public class FileUploadController {
                 subjectFile.setFileId(Integer.parseInt(fileInfomation.getId().toString()));
                 subjectFile.setFileType(1);
                 boolean save1 = subjectFileService.saveOrUpdate(subjectFile, new QueryWrapper<SubjectFile>()
-                    .eq("subject_id", student.getSubjectId())
-                    .eq("file_type", 1));
+                        .eq("subject_id", student.getSubjectId())
+                        .eq("file_type", 1));
                 Subject subject = subjectService.getById(student.getSubjectId());
                 if (save1) {
                     Integer processCode = ProcessEnum.SUBMIT_PAPER.getProcessCode();
@@ -184,14 +188,14 @@ public class FileUploadController {
         Integer userNumber = studentService.idToNumber(userId);
         Student student = studentService.getById(userId);
         // 例：2022/design/college1/major1/20423034
-        String url =  year + "/design/" + "college" + collegeId + "/" + "major" + majorId + "/" + userNumber;
+        String url = year + "/design/" + "college" + collegeId + "/" + "major" + majorId + "/" + userNumber;
         Map<String, String> map = fileUploadService.uploadFile(file, url);
         FileInfomation infomation = new FileInfomation();
         // 3 : 毕设
         String originalFilename = file.getOriginalFilename();
         String fileSuffix = originalFilename.substring(originalFilename.lastIndexOf("."));
         infomation.setType("3");
-        infomation.setTitle(userNumber+"毕设"+fileSuffix);
+        infomation.setTitle(userNumber + "毕设" + fileSuffix);
         infomation.setDir(map.get("dir"));
         infomation.setUserId(userId);
         infomation.setIsStudent(JwtUtil.getRoleIds(jwt).contains(1) ? 1 : 0);
@@ -225,4 +229,32 @@ public class FileUploadController {
         }
         return flag ? CommonResult.success("提交成功") : CommonResult.failed();
     }
+
+    @RequiresPermissions("file:upload")
+    @LogAnnotation(content = "上传通知文件")
+    @PostMapping("noticeFile")
+    public CommonResult<Object> uploadNoticeFile(@RequestBody MultipartFile file, HttpServletRequest request) throws Exception {
+        String jwt = request.getHeader("jwt");
+        Integer majorId = JwtUtil.getMajorId(jwt);
+        Integer userId = JwtUtil.getUserId(jwt);
+        Integer collegeId = collegeService.getCollegeIdByMajorId(majorId);
+        int year = LocalDate.now().getYear();
+        Integer userNumber = Integer.valueOf(teacherService.idToNumber(userId));
+
+        // 例：2022/open-report/college1/major1/20423034
+        String url = year + "/notice-file/" + "college" + collegeId + "/" + "major" + majorId + "/" + userNumber;
+        Map<String, String> map = fileUploadService.uploadFile(file, url);
+
+        FileInfomation infomation = new FileInfomation();
+        //4 : 通知文件
+        infomation.setType("4");
+        infomation.setTitle(userNumber + "通知文件");
+        infomation.setDir(map.get("dir"));
+        infomation.setUserId(userId);
+        infomation.setIsStudent(JwtUtil.getRoleIds(jwt).contains(1) ? 1 : 0);
+        boolean save = fileInformationService.save(infomation);
+
+        return save ? CommonResult.success("提交成功") : CommonResult.failed();
+    }
+
 }
