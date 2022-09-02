@@ -66,6 +66,12 @@ public class MessageController {
         this.studentService = studentService;
     }
 
+    /**
+     * 收件箱为学生使用
+     * @param commonPage
+     * @param request
+     * @return
+     */
     @GetMapping(value = "/message/list")
     @LogAnnotation(content = "查看收件箱列表")
     @RequiresPermissions({"message:sendList"})
@@ -82,6 +88,12 @@ public class MessageController {
         return CommonResult.success(result);
     }
 
+    /**
+     * 发件箱为老师使用
+     * @param commonPage
+     * @param request
+     * @return
+     */
     @GetMapping(value = "/message/sendList")
     @LogAnnotation(content = "获取发件消息列表")
     @RequiresPermissions({"message:sendList"})

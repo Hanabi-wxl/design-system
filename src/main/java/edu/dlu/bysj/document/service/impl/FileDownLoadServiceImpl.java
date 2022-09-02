@@ -136,6 +136,8 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         /*获取模板*/
         Workbook workbook = new XSSFWorkbook(resource.getInputStream());
 
+        //sheetAt 是模板
+        //sheet 是需要操作的
         /*模板sheet*/
         Sheet sheetAt = workbook.getSheetAt(0);
         for (Map.Entry<Integer, Map<String, Object>> element : majorMap.entrySet()) {
@@ -143,7 +145,7 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
             Sheet sheet = workbook.createSheet(((String)element.getValue().get("majorName")));
             fillingReportStaticsSheetTitle(sheet, sheetAt, element.getValue(), year);
             /*中间内容部分*/
-            System.out.println("key" + element.getKey());
+//            System.out.println("key" + element.getKey());
 
             List<ReportStaticsTemplate> value = subjectMapper.selectAllReportStaticsByMajorId(element.getKey());
             if (ObjectUtil.isNotNull(value)) {
@@ -535,6 +537,7 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
 
     private void setBorder(Sheet sheet, CellRangeAddress region) {
 
+        // 合并单元格左边框样式
         RegionUtil.setBorderLeft(BorderStyle.THIN, region, sheet);
         RegionUtil.setLeftBorderColor(IndexedColors.BLACK.getIndex(), region, sheet);
 

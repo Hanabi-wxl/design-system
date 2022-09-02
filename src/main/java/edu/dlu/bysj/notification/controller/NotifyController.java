@@ -31,10 +31,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author XiangXinGang
@@ -80,9 +77,24 @@ public class NotifyController {
         Integer collegeId = major.getCollegeId();
         List<NoticeVo> allNoticeList = noticeService.allNoticeList(majorId,collegeId);
 
+        List<NoticeVo> list1 = new ArrayList<>();
+        List<NoticeVo> list2 = new ArrayList<>();
+        List<NoticeVo> list3 = new ArrayList<>();
+
+        for (NoticeVo noticeVo : allNoticeList) {
+            if (noticeVo.getTypeName() == "置顶") {
+                list1.add(noticeVo);
+            } else {
+                list2.add(noticeVo);
+            }
+        }
+
+        list3.addAll(list1);
+        list3.addAll(list2);
+
         TotalPackageVo<NoticeVo> noticeVoTotalPackageVo = new TotalPackageVo<>();
-        noticeVoTotalPackageVo.setTotal(allNoticeList.size());
-        noticeVoTotalPackageVo.setArrays(allNoticeList);
+        noticeVoTotalPackageVo.setTotal(list3.size());
+        noticeVoTotalPackageVo.setArrays(list3);
 
 
         return CommonResult.success(noticeVoTotalPackageVo);
@@ -119,6 +131,11 @@ public class NotifyController {
             notice.setContent(noticeVo.getContent());
             notice.setSenderId(JwtUtil.getUserId(jwt));
             notice.setDate(LocalDateTime.now());
+
+            //隐藏的童子
+            if(notice.getImportance() == 2) {
+                notice.setStatus(0);
+            }
 
             noticeFlag = noticeService.saveOrUpdate(notice);
             /*若有文件则插入文件类型*/
