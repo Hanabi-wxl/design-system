@@ -200,7 +200,7 @@ public class FileDownLoadController {
     @RequiresPermissions({"approve:downloadAll"})
     @GetMapping(value = "/selectTable")
     public void subjectSelectStaticsTable(
-            @Valid @NotNull(message = "majorId") Integer majorId,
+            @Valid @NotNull(message = "专业信息不能为空") Integer majorId,
             @Valid @NotNull(message = "年份不能为空") Integer year,
             HttpServletResponse response) {
         try {
