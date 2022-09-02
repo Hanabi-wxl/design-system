@@ -200,7 +200,7 @@ public class FileDownLoadController {
     @RequiresPermissions({"approve:downloadAll"})
     @GetMapping(value = "/selectTable")
     public void subjectSelectStaticsTable(
-            @Valid @NotNull(message = "专业信息不能为空") Integer majorId,
+            @Valid @NotNull(message = "majorId") Integer majorId,
             @Valid @NotNull(message = "年份不能为空") Integer year,
             HttpServletResponse response) {
         try {
@@ -345,5 +345,12 @@ public class FileDownLoadController {
     @GetMapping("/design")
     public void downloadDesign(String subjectId, HttpServletResponse response){
         fileDownLoadService.design(subjectId, response);
+    }
+
+    @LogAnnotation(content = "下载通知文件")
+    @RequiresPermissions({"notice:download"})
+    @GetMapping("/notice")
+    public void downloadNotice(String noticeId, HttpServletResponse response){
+        fileDownLoadService.notice(noticeId, response);
     }
 }

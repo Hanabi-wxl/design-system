@@ -52,4 +52,6 @@ public interface FileDownLoadService {
     void paper(String subjectId, HttpServletResponse response);
 
     void design(String subjectId, HttpServletResponse response);
+
+    void notice(String noticeId, HttpServletResponse response);
 }
