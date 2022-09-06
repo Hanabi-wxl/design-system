@@ -73,6 +73,7 @@ public class NotifyController {
 
         String jwt = request.getHeader("jwt");
         Integer majorId = JwtUtil.getMajorId(jwt);
+        String userType = JwtUtil.getUserType(jwt);
         Major major = majorService.getOne(new QueryWrapper<Major>().eq("id", majorId));
         Integer collegeId = major.getCollegeId();
         List<NoticeVo> allNoticeList = noticeService.allNoticeList(majorId,collegeId);
@@ -82,7 +83,17 @@ public class NotifyController {
         List<NoticeVo> list3 = new ArrayList<>();
 
         for (NoticeVo noticeVo : allNoticeList) {
-            if (noticeVo.getTypeName() == "置顶") {
+
+            String typeName = noticeVo.getTypeName();
+
+            //学生则不显示隐藏的通知
+            if (userType.equals("0")) {
+                if (typeName.equals("隐藏")) {
+                    continue;
+                }
+            }
+
+            if (typeName.equals("置顶")) {
                 list1.add(noticeVo);
             } else {
                 list2.add(noticeVo);
@@ -132,11 +143,6 @@ public class NotifyController {
             notice.setSenderId(JwtUtil.getUserId(jwt));
             notice.setDate(LocalDateTime.now());
 
-            //隐藏的童子
-            if(notice.getImportance() == 2) {
-                notice.setStatus(0);
-            }
-
             noticeFlag = noticeService.saveOrUpdate(notice);
             /*若有文件则插入文件类型*/
             Integer id = notice.getId();
@@ -161,14 +167,11 @@ public class NotifyController {
     @ApiOperation(value = "获取已增消息用于修改")
     public CommonResult<Object> getNoticeById(@PathVariable("noticeId") @NotNull Integer noticeId){
 
-//        System.out.println(noticeId);
-
         QueryWrapper<Notice> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("id",noticeId);
 
         List<Notice> list = noticeMapper.selectList(queryWrapper);
 
-//        System.out.println(list.toString());
         return CommonResult.success(list);
 
     }
