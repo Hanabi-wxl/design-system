@@ -154,12 +154,13 @@ public class NotifyController {
                     NoticeFile file = new NoticeFile();
                     file.setFileId(fileId);
                     file.setNoticeId(id);
+                    file.setStatus(1);
                     boolean flag = noticeFileService.save(file);
                 }
             }
         }
 
-        return noticeFlag ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
+        return noticeFlag && noticeFlag ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
     }
 
     @RequiresPermissions({"notice:list"})

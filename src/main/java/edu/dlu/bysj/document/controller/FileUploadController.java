@@ -31,6 +31,7 @@ import java.io.File;
 import java.net.InetAddress;
 import java.time.LocalDate;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -252,9 +253,14 @@ public class FileUploadController {
         infomation.setDir(map.get("dir"));
         infomation.setUserId(userId);
         infomation.setIsStudent(JwtUtil.getRoleIds(jwt).contains(1) ? 1 : 0);
-        boolean save = fileInformationService.save(infomation);
+        fileInformationService.save(infomation);
 
-        return save ? CommonResult.success("提交成功") : CommonResult.failed();
+        CommonResult<Object> noticeResult = new CommonResult<>();
+        noticeResult.setCode(200);
+        noticeResult.setMessage("提交成功");
+        noticeResult.setData(infomation);
+
+        return noticeResult;
     }
 
 }
