@@ -263,4 +263,35 @@ public class FileUploadController {
         return noticeResult;
     }
 
+    @RequiresPermissions("file:upload")
+    @LogAnnotation(content = "上传消息文件")
+    @PostMapping("messageFile")
+    public CommonResult<Object> uploadMessageFile(@RequestBody MultipartFile file, HttpServletRequest request) throws Exception {
+        String jwt = request.getHeader("jwt");
+        Integer majorId = JwtUtil.getMajorId(jwt);
+        Integer userId = JwtUtil.getUserId(jwt);
+        Integer collegeId = collegeService.getCollegeIdByMajorId(majorId);
+        int year = LocalDate.now().getYear();
+        Integer userNumber = Integer.valueOf(teacherService.idToNumber(userId));
+
+        // 例：2022/open-report/college1/major1/20423034
+        String url = year + "/message-file/" + "college" + collegeId + "/" + "major" + majorId + "/" + userNumber;
+        Map<String, String> map = fileUploadService.uploadFile(file, url);
+
+        FileInfomation infomation = new FileInfomation();
+        //5 : 消息文件
+        infomation.setType("5");
+        infomation.setTitle(userNumber + "消息文件");
+        infomation.setDir(map.get("dir"));
+        infomation.setUserId(userId);
+        infomation.setIsStudent(JwtUtil.getRoleIds(jwt).contains(1) ? 1 : 0);
+        fileInformationService.save(infomation);
+
+        CommonResult<Object> noticeResult = new CommonResult<>();
+        noticeResult.setCode(200);
+        noticeResult.setMessage("提交成功");
+        noticeResult.setData(infomation);
+
+        return noticeResult;
+    }
 }
