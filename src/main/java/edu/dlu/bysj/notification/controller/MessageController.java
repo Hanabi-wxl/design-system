@@ -206,6 +206,7 @@ public class MessageController {
                     List<MessageFile> messageFiles = new ArrayList<>();
                     for (int i = 0; i < addMessageVo.getFileId().size(); i++) {
                         MessageFile messageFile = new MessageFile();
+                        messageFile.setStatus(1);
                         messageFile.setMessageId(message.getId());
                         messageFile.setFileId(addMessageVo.getFileId().get(i));
                         messageFiles.add(messageFile);
