@@ -13,6 +13,7 @@ import edu.dlu.bysj.base.model.vo.MajorSimpleInfoVo;
 import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.document.entity.*;
 import edu.dlu.bysj.document.entity.dto.OpenReportBaseInfo;
+import edu.dlu.bysj.notification.mapper.MessageFileMapper;
 import edu.dlu.bysj.notification.mapper.NoticeFileMapper;
 import edu.dlu.bysj.document.mapper.SubjectFileMapper;
 import edu.dlu.bysj.paper.mapper.FileInformationMapper;
@@ -67,10 +68,14 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
 
     private final NoticeFileMapper noticeFileMapper;
 
+    private final MessageFileMapper messageFileMapper;
+
+
+
     public FileDownLoadServiceImpl(SubjectMapper subjectMapper, TeacherMapper teacherMapper,
                                    StudentMapper studentMapper, MajorMapper majorMapper, CollegeMapper collegeMapper, ClassMapper classMapper,
                                    SubjectTypeMapper subjectTypeMapper, OpenReportMapper openReportMapper, SubjectFileMapper subjectFileMapper,
-                                   FileInformationMapper fileInformationMapper, NoticeFileMapper noticeFileMapper) {
+                                   FileInformationMapper fileInformationMapper, NoticeFileMapper noticeFileMapper, MessageFileMapper messageFileMapper) {
         this.fileInformationMapper = fileInformationMapper;
         this.subjectFileMapper = subjectFileMapper;
         this.openReportMapper = openReportMapper;
@@ -82,6 +87,7 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         this.subjectTypeMapper = subjectTypeMapper;
         this.classMapper = classMapper;
         this.noticeFileMapper = noticeFileMapper;
+        this.messageFileMapper = messageFileMapper;
     }
 
     @Override
@@ -1116,6 +1122,16 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
     public void notice(String noticeId, HttpServletResponse response) {
         Integer fileId = noticeFileMapper.selectOne(new QueryWrapper<NoticeFile>()
                 .eq("notice_id", noticeId)).getFileId();
+        FileInfomation information = fileInformationMapper.selectOne(new QueryWrapper<FileInfomation>().eq("id", fileId));
+        String fileName = information.getTitle();
+        String dir = information.getDir();
+        fileDownload(dir, fileName, response);
+    }
+
+    @Override
+    public void message(String messageId, HttpServletResponse response) {
+        Integer fileId = messageFileMapper.selectOne(new QueryWrapper<MessageFile>()
+                .eq("message_id", messageId)).getFileId();
         FileInfomation information = fileInformationMapper.selectOne(new QueryWrapper<FileInfomation>().eq("id", fileId));
         String fileName = information.getTitle();
         String dir = information.getDir();

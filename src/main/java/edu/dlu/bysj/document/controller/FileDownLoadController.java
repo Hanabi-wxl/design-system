@@ -353,4 +353,11 @@ public class FileDownLoadController {
     public void downloadNotice(String noticeId, HttpServletResponse response){
         fileDownLoadService.notice(noticeId, response);
     }
+
+    @LogAnnotation(content = "下载消息文件")
+    @RequiresPermissions({"message:download"})
+    @GetMapping("/message")
+    public void downloadMessage(String messageId, HttpServletResponse response){
+        fileDownLoadService.message(messageId, response);
+    }
 }

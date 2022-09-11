@@ -54,4 +54,6 @@ public interface FileDownLoadService {
     void design(String subjectId, HttpServletResponse response);
 
     void notice(String noticeId, HttpServletResponse response);
+
+    void message(String messageId, HttpServletResponse response);
 }

@@ -231,7 +231,7 @@ public class FileUploadController {
         return flag ? CommonResult.success("提交成功") : CommonResult.failed();
     }
 
-    @RequiresPermissions("file:upload")
+    @RequiresPermissions("notice:upload")
     @LogAnnotation(content = "上传通知文件")
     @PostMapping("noticeFile")
     public CommonResult<Object> uploadNoticeFile(@RequestBody MultipartFile file, HttpServletRequest request) throws Exception {
@@ -263,7 +263,7 @@ public class FileUploadController {
         return noticeResult;
     }
 
-    @RequiresPermissions("file:upload")
+    @RequiresPermissions("message:upload")
     @LogAnnotation(content = "上传消息文件")
     @PostMapping("messageFile")
     public CommonResult<Object> uploadMessageFile(@RequestBody MultipartFile file, HttpServletRequest request) throws Exception {

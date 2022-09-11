@@ -167,7 +167,7 @@ public class MessageController {
         Message message = messageService.getById(messageId);
         map.put("content", message.getContent());
 
-        List<MessageFile> messageFile = messageFileService.list(new QueryWrapper<MessageFile>().eq("message_id", message));
+        List<MessageFile> messageFile = messageFileService.list(new QueryWrapper<MessageFile>().eq("message_id", messageId));
         List<Integer> fileIds = new ArrayList<>();
 
         for (MessageFile file : messageFile) {
