@@ -186,10 +186,10 @@ public class NotifyController {
         Notice notice = noticeService.getById(noticeId);
         List<NoticeFile> files = noticeFileService.list(new QueryWrapper<NoticeFile>().eq("notice_id", noticeId));
 
-        List<String> fileUrl = new ArrayList<>();
-        List<String> fileName = new ArrayList<>();
-
-        //TODO 暂未完成,对文件地址和名称的显示,可能需要搭建一个自己的文件服务器
+        List<Integer> fileIds = new ArrayList<>();
+        for (NoticeFile file : files) {
+            fileIds.add(file.getFileId());
+        }
 
         Map<String, Object> map = new HashMap<>(16);
 
@@ -198,8 +198,7 @@ public class NotifyController {
 
         map.put("content", notice.getContent());
         map.put("title", notice.getTitle());
-        map.put("fileUrl", fileUrl);
-        map.put("fileName", fileName);
+        map.put("fileId", fileIds);
         return CommonResult.success(map);
     }
 

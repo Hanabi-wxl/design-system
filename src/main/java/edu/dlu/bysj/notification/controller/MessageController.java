@@ -166,15 +166,17 @@ public class MessageController {
         Map<String, Object> map = new HashMap<>(16);
         Message message = messageService.getById(messageId);
         map.put("content", message.getContent());
-        List<String> fileUrl = new ArrayList<>();
-        List<String> fileName = new ArrayList<>();
-        List<MessageFile> messageFile = messageFileService.list(new QueryWrapper<MessageFile>().eq("message_id", message));
 
-        //TODO 暂时未完成文件的地址放置,可能需要搭建自己的文件服务器
+        List<MessageFile> messageFile = messageFileService.list(new QueryWrapper<MessageFile>().eq("message_id", message));
+        List<Integer> fileIds = new ArrayList<>();
+
+        for (MessageFile file : messageFile) {
+            fileIds.add(file.getFileId());
+        }
+
+        map.put("fileId", fileIds);
 
         map.put("title", message.getTitle());
-        map.put("fileUrl", fileUrl);
-        map.put("fileName", fileName);
         return CommonResult.success(map);
     }
 
