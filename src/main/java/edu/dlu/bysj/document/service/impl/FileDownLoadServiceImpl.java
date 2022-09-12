@@ -16,7 +16,9 @@ import edu.dlu.bysj.document.entity.dto.OpenReportBaseInfo;
 import edu.dlu.bysj.notification.mapper.MessageFileMapper;
 import edu.dlu.bysj.notification.mapper.NoticeFileMapper;
 import edu.dlu.bysj.document.mapper.SubjectFileMapper;
+import edu.dlu.bysj.notification.mapper.NoticeMapper;
 import edu.dlu.bysj.paper.mapper.FileInformationMapper;
+import edu.dlu.bysj.paper.mapper.MessageMapper;
 import edu.dlu.bysj.paper.mapper.OpenReportMapper;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -70,12 +72,14 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
 
     private final MessageFileMapper messageFileMapper;
 
+    private final NoticeMapper noticeMapper;
 
+    private final MessageMapper messageMapper;
 
     public FileDownLoadServiceImpl(SubjectMapper subjectMapper, TeacherMapper teacherMapper,
                                    StudentMapper studentMapper, MajorMapper majorMapper, CollegeMapper collegeMapper, ClassMapper classMapper,
                                    SubjectTypeMapper subjectTypeMapper, OpenReportMapper openReportMapper, SubjectFileMapper subjectFileMapper,
-                                   FileInformationMapper fileInformationMapper, NoticeFileMapper noticeFileMapper, MessageFileMapper messageFileMapper) {
+                                   FileInformationMapper fileInformationMapper, NoticeFileMapper noticeFileMapper, MessageFileMapper messageFileMapper, NoticeMapper noticeMapper, MessageMapper messageMapper) {
         this.fileInformationMapper = fileInformationMapper;
         this.subjectFileMapper = subjectFileMapper;
         this.openReportMapper = openReportMapper;
@@ -88,6 +92,8 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         this.classMapper = classMapper;
         this.noticeFileMapper = noticeFileMapper;
         this.messageFileMapper = messageFileMapper;
+        this.noticeMapper = noticeMapper;
+        this.messageMapper = messageMapper;
     }
 
     @Override
@@ -1123,7 +1129,8 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         Integer fileId = noticeFileMapper.selectOne(new QueryWrapper<NoticeFile>()
                 .eq("notice_id", noticeId)).getFileId();
         FileInfomation information = fileInformationMapper.selectOne(new QueryWrapper<FileInfomation>().eq("id", fileId));
-        String fileName = information.getTitle();
+        String fileName = noticeMapper.selectOne(new QueryWrapper<Notice>()
+                .eq("id",noticeId)).getTitle();
         String dir = information.getDir();
         fileDownload(dir, fileName, response);
     }
@@ -1133,7 +1140,8 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         Integer fileId = messageFileMapper.selectOne(new QueryWrapper<MessageFile>()
                 .eq("message_id", messageId)).getFileId();
         FileInfomation information = fileInformationMapper.selectOne(new QueryWrapper<FileInfomation>().eq("id", fileId));
-        String fileName = information.getTitle();
+        String fileName = messageMapper.selectOne(new QueryWrapper<Message>()
+                .eq("id", messageId)).getTitle();
         String dir = information.getDir();
         fileDownload(dir, fileName, response);
     }
