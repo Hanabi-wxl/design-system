@@ -1129,9 +1129,15 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         Integer fileId = noticeFileMapper.selectOne(new QueryWrapper<NoticeFile>()
                 .eq("notice_id", noticeId)).getFileId();
         FileInfomation information = fileInformationMapper.selectOne(new QueryWrapper<FileInfomation>().eq("id", fileId));
-        String fileName = noticeMapper.selectOne(new QueryWrapper<Notice>()
-                .eq("id",noticeId)).getTitle();
+
         String dir = information.getDir();
+
+        //获取文件的后缀名
+        String suffix = dir.substring(dir.lastIndexOf(".") + 1);
+
+        String fileName = noticeMapper.selectOne(new QueryWrapper<Notice>()
+                .eq("id",noticeId)).getTitle() + "." + suffix;
+
         fileDownload(dir, fileName, response);
     }
 
@@ -1140,9 +1146,15 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         Integer fileId = messageFileMapper.selectOne(new QueryWrapper<MessageFile>()
                 .eq("message_id", messageId)).getFileId();
         FileInfomation information = fileInformationMapper.selectOne(new QueryWrapper<FileInfomation>().eq("id", fileId));
-        String fileName = messageMapper.selectOne(new QueryWrapper<Message>()
-                .eq("id", messageId)).getTitle();
+
         String dir = information.getDir();
+
+        //获取文件的后缀名
+        String suffix = dir.substring(dir.lastIndexOf(".") + 1);
+
+        String fileName = messageMapper.selectOne(new QueryWrapper<Message>()
+                .eq("id", messageId)).getTitle() + "." + suffix;
+
         fileDownload(dir, fileName, response);
     }
 
