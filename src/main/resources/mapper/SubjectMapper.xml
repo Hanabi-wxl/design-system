@@ -440,6 +440,7 @@
                 subject_major sm on sm.subject_id = subject.subject_id
             where subject.status = 1
             and sm.major_id = #{majorId}
+            and sm.status = 1
             and subject.grade = #{grade}
             and subject.progress_id = 3
         ) as s
@@ -476,17 +477,25 @@
 
         select count(s.id)
 
-        from
-        (select subject.id, subject.first_teacher_id,subject.subject_name
+        from (
+        select
+        subject.id,
+        subject.subject_name,
+        subject.first_teacher_id
         from subject
+        left join
+        subject_major sm on sm.subject_id = subject.subject_id
         where subject.status = 1
+        and sm.major_id = #{majorId}
+        and sm.status = 1
+        and subject.grade = #{grade}
         and subject.progress_id = 3
-        and subject.major_id = #{majorId}
-        and subject.grade = #{grade}) as s
+        ) as s
 
         left join teacher
         on teacher.id = s.first_teacher_id
-
+        left join teacher_title t
+        on teacher.title_id = t.id
         <where>
             <if test="teacherName != null and teacherName != '' ">
                 teacher.name like #{teacherName_pattern}

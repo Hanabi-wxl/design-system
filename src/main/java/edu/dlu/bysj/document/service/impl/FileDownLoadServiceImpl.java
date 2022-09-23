@@ -258,10 +258,21 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         try {
             response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
             // 发送给客户端的数据
-            OutputStream outputStream = null;
+/*            OutputStream outputStream = null;
             outputStream = response.getOutputStream();
+
             byte[] bytes = FileCopyUtils.copyToByteArray(new ClassPathResource(dir).getInputStream());
-            outputStream.write(bytes);
+            outputStream.write(bytes);*/
+            File file = new File(dir);
+            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+            BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream());
+            byte[] buff = new byte[2048];
+            int bytesRead;
+            while (-1 != (bytesRead = bis.read(buff, 0, buff.length))) {
+                bos.write(buff, 0, bytesRead);
+            }
+            bis.close();
+            bos.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -270,7 +281,10 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
     @Override
     public void subjectOpenReportForm(HttpServletResponse response) {
         // 获取文件
-        String dir = "template/file/openReportForm.doc";
+        // win
+//        String dir = "template/file/openReportForm.doc";
+        // linux
+        String dir = "/usr/fileDownload/openReportForm.doc";
         String fileName = "开题报告模板_" + (DateUtil.year(new Date()) - 3) + ".doc";
         fileDownload(dir, fileName, response);
     }

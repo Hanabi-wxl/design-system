@@ -199,12 +199,16 @@ public class InformationController {
         Integer collegeId = collegeService.getCollegeIdByMajorId(teacher.getMajorId());
         College college = collegeService.getById(collegeId);
         TeacherDetailVo detailVo = new TeacherDetailVo();
+        detailVo.setSex(teacher.getSex());
+        detailVo.setCollegeId(college.getId());
+        detailVo.setUserId(teacher.getId());
         detailVo.setCollege(college.getName());
+        detailVo.setMajorId(major.getId());
         detailVo.setOffice(office.getName());
         detailVo.setTitle(title.getName());
         detailVo.setTeacherNumber(teacher.getTeacherNumber());
         detailVo.setUsername(teacher.getName());
-        detailVo.setMajor(major.getName());
+        detailVo.setMajorName(major.getName());
         detailVo.setPhone(teacher.getPhoneNumber());
         detailVo.setEmail(teacher.getEmail());
         detailVo.setCanUse(teacher.getCanUse());

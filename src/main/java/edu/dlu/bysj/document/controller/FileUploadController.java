@@ -3,6 +3,8 @@ package edu.dlu.bysj.document.controller;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import edu.dlu.bysj.base.model.entity.*;
 import edu.dlu.bysj.base.model.entity.Process;
 import edu.dlu.bysj.base.model.enums.ProcessEnum;
@@ -19,6 +21,7 @@ import edu.dlu.bysj.paper.service.OpenReportService;
 import edu.dlu.bysj.system.service.CollegeService;
 import edu.dlu.bysj.system.service.MajorService;
 import io.swagger.models.auth.In;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -88,6 +91,9 @@ public class FileUploadController {
         // 例：2022/open-report/college1/major1/20423034
         String url = year + "/open-report/" + "college" + collegeId + "/" + "major" + majorId + "/" + userNumber;
         Map<String, String> map = fileUploadService.uploadFile(file, url);
+        if(map == null) {
+            throw new Exception("上传失败: ");
+        }
         FileInfomation infomation = new FileInfomation();
         // 1 : 开题报告
         infomation.setType("1");

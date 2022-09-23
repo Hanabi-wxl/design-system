@@ -24,23 +24,32 @@ public class TeacherDetailVo implements Serializable {
   @ApiModelProperty(value = "姓名")
   private String username;
 
+  @ApiModelProperty(value = "性别")
+  private String sex;
+
   @ApiModelProperty(value = "教工号")
   private String teacherNumber;
+
+  @ApiModelProperty(value = "id号")
+  private Integer userId;
 
   @ApiModelProperty(value = "学院名称")
   private String college;
 
   @ApiModelProperty(value = "专业名称")
-  private String major;
+  private String majorName;
+
+  @ApiModelProperty(value = "专业id")
+  private Integer majorId;
+
+  @ApiModelProperty(value = "学院id")
+  private Integer collegeId;
 
   @ApiModelProperty(value = "科室名称")
   private String office;
 
   @ApiModelProperty(value = "学位名称")
   private String degree;
-
-  @ApiModelProperty(value = "性别")
-  private String sex;
 
   @ApiModelProperty(value = "手机号")
   private String phone;

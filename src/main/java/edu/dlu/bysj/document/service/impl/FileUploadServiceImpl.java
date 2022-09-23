@@ -1,10 +1,7 @@
 package edu.dlu.bysj.document.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import edu.dlu.bysj.base.model.entity.OpenReport;
-import edu.dlu.bysj.base.result.CommonResult;
 import edu.dlu.bysj.document.service.FileUploadService;
-import edu.dlu.bysj.paper.service.FileInformationService;
 import edu.dlu.bysj.paper.service.OpenReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 
 import java.net.InetAddress;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -48,8 +46,10 @@ public class FileUploadServiceImpl implements FileUploadService {
             String fileSuffix = originalFilename.substring(originalFilename.lastIndexOf("."));
             // uuid 生成文件名
             String uuid = String.valueOf(UUID.randomUUID());
-            // 根路径，在 resources/upload
-            String basePath = ResourceUtils.getURL("classpath:").getPath() + "static/upload/" + (StringUtils.isNotBlank(url) ? (url + "/") : "");
+            // win 根路径，在 resources/upload
+//            String basePath = ResourceUtils.getURL("classpath:").getPath() + "static/upload/" + (StringUtils.isNotBlank(url) ? (url + "/") : "");
+            // linux
+            String basePath = "/usr/fileUpload/" + (StringUtils.isNotBlank(url) ? (url + "/") : "");
             // 新的文件名，使用uuid生成文件名
             String fileName = uuid + fileSuffix;
             // 创建新的文件
@@ -65,11 +65,12 @@ public class FileUploadServiceImpl implements FileUploadService {
             // 返回绝对路径
             Map<String,String> res = new HashMap<>();
 
-            res.put("url", "http://" + InetAddress.getLocalHost().getHostAddress()
-                    + ":" + port + (contextPath.equals("/") ? "" : contextPath)
-                    + "/upload/" + url + "/" + fileName);
-
-            res.put("dir", "static/upload/"+ url + "/" + fileName);
+//            res.put("url", "http://" + InetAddress.getLocalHost().getHostAddress()
+//                    + ":" + port + (contextPath.equals("/") ? "" : contextPath)
+//                    + "/upload/" + url + "/" + fileName);
+            res.put("url", "");
+            res.put("dir", "/usr/fileUpload/"+ url + "/" + fileName);
+//            res.put("dir", "static/upload/"+ url + "/" + fileName);
             return res;
         } catch (Exception e) {
             e.printStackTrace();

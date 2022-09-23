@@ -138,7 +138,6 @@ public class SubjectApprovalController {
     @RequiresPermissions({"approve:subjectApprove"})
     @ApiOperation(value = "教师提交/修改题目审批表")
     public CommonResult<Object> submitSubjectApproveTable(@Valid @RequestBody SubjectApprovalVo subjectApprovalVo, HttpServletRequest request) {
-        String jwt = request.getHeader("jwt");
         boolean flag = false;
         /*新增*/
         if (subjectApprovalVo.getSubjectId().equals("")) {

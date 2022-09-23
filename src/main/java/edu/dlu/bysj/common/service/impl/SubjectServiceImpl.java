@@ -501,13 +501,19 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
     }
 
     @Override
-    public TotalPackageVo<SubjectDetailVo> studentSubjectList(SubjectListQuery query, Integer userId) {
+    public TotalPackageVo<SubjectDetailVo> studentSubjectList(SubjectListQuery query, Integer userId)  {
         Integer grade = GradeUtils.getGrade(query.getYear());
+        SubjectDetailVo subjectDetailVo = null;
+        Integer total = 0;
         /*分页*/
-        SubjectDetailVo subjectDetailVo = subjectMapper.studentSubjectListByStudentIdAndGrade(userId,
-                grade, (query.getPageNumber() - 1) * query.getPageSize(), query.getPageSize());
-        /*总数*/
-        Integer total = subjectMapper.totalSubjectListByStudent(userId, grade);
+        try {
+            subjectDetailVo = subjectMapper.studentSubjectListByStudentIdAndGrade(userId,
+                    grade, (query.getPageNumber() - 1) * query.getPageSize(), query.getPageSize());
+            /*总数*/
+            total = subjectMapper.totalSubjectListByStudent(userId, grade);
+        } catch (Exception e) {
+            return null;
+        }
         Student student = studentService.getById(userId);
         if (total != 0){
             subjectDetailVo.setStudentName(student.getName());
