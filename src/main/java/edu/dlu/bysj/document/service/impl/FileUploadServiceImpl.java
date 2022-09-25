@@ -37,6 +37,9 @@ public class FileUploadServiceImpl implements FileUploadService {
     @Autowired
     private OpenReportService reportService;
 
+    @Value("${design.system}")
+    private String sys;
+
     @Override
     public Map<String,String> uploadFile(MultipartFile file, String url) {
         try {
@@ -47,9 +50,12 @@ public class FileUploadServiceImpl implements FileUploadService {
             // uuid 生成文件名
             String uuid = String.valueOf(UUID.randomUUID());
             // win 根路径，在 resources/upload
-//            String basePath = ResourceUtils.getURL("classpath:").getPath() + "static/upload/" + (StringUtils.isNotBlank(url) ? (url + "/") : "");
+            String basePath = "";
+            if(sys.equals("win"))
+                basePath = ResourceUtils.getURL("classpath:").getPath() + "static/upload/" + (StringUtils.isNotBlank(url) ? (url + "/") : "");
             // linux
-            String basePath = "/usr/fileUpload/" + (StringUtils.isNotBlank(url) ? (url + "/") : "");
+            if(sys.equals("linux"))
+                basePath = "/usr/fileUpload/" + (StringUtils.isNotBlank(url) ? (url + "/") : "");
             // 新的文件名，使用uuid生成文件名
             String fileName = uuid + fileSuffix;
             // 创建新的文件

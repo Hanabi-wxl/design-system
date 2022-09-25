@@ -24,6 +24,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.RegionUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -95,6 +96,9 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         this.noticeMapper = noticeMapper;
         this.messageMapper = messageMapper;
     }
+
+    @Value("${design.system}")
+    private String sys;
 
     @Override
     public List<PaperCoverTemplate> packPaperCoverData(Integer majorId) {
@@ -281,10 +285,12 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
     @Override
     public void subjectOpenReportForm(HttpServletResponse response) {
         // 获取文件
-        // win
-//        String dir = "template/file/openReportForm.doc";
-        // linux
-        String dir = "/usr/fileDownload/openReportForm.doc";
+        String dir = "";
+        if(sys.equals("win")) {
+            dir = "template/file/openReportForm.doc";
+        } else if(sys.equals("linux")) {
+            dir = "/usr/fileDownload/openReportForm.doc";
+        }
         String fileName = "开题报告模板_" + (DateUtil.year(new Date()) - 3) + ".doc";
         fileDownload(dir, fileName, response);
     }

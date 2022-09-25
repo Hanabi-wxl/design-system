@@ -10,8 +10,8 @@
     </parent>
 
     <groupId>edu.dlu.bysj</groupId>
-    <artifactId>bysjproject</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <artifactId>design-system</artifactId>
+    <version>0.0.1</version>
     <name>design-system</name>
     <description>design-system-project</description>
 
