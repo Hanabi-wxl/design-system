@@ -45,4 +45,6 @@ public interface MessageService extends IService<Message> {
      * @return
      */
     TotalPackageVo<ReceiveMessageVo> messageListAsSender(Integer senderId, Integer start, Integer end);
+
+
 }

@@ -42,6 +42,9 @@ public class TeacherDetailVo implements Serializable {
   @ApiModelProperty(value = "专业id")
   private Integer majorId;
 
+  @ApiModelProperty(value = "专业名称")
+  private String major;
+
   @ApiModelProperty(value = "学院id")
   private Integer collegeId;
 

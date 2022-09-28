@@ -20,7 +20,9 @@ public class TopicsVo {
     @ApiModelProperty(value = "第一指导教师名称")
     private String firstTeacherName;
     @ApiModelProperty(value = "职称")
-    private String title;
+    private String firstTeacherTitle;
+    @ApiModelProperty(value = "职称")
+    private String firstTeacherPhone;
     @ApiModelProperty(value = "已选人数")
     private Integer selectNumber;
 }

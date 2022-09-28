@@ -8,6 +8,7 @@ import edu.dlu.bysj.base.model.enums.ProcessEnum;
 import edu.dlu.bysj.base.model.vo.MiddleCheckDetailVo;
 import edu.dlu.bysj.base.model.vo.ModifyMiddleCheckVo;
 import edu.dlu.bysj.base.model.vo.basic.CommonReviewVo;
+import edu.dlu.bysj.base.model.vo.basic.CommonReviewsVo;
 import edu.dlu.bysj.base.result.CommonResult;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.SubjectService;
@@ -27,7 +28,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author XiangXinGang
@@ -167,6 +170,63 @@ public class MiddleCheckController {
         return CommonResult.success(message);
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @PatchMapping(value = "/middleCheck/submitResults")
+    @LogAnnotation(content = "审核中期检查表")
+    @RequiresPermissions({"middleCheck:submitResult"})
+    @ApiOperation(value = "审核中期检查表")
+    public CommonResult<Object> middleCheckAudits(@Valid @RequestBody CommonReviewsVo reviewVo, HttpServletRequest request) {
+        String jwt = request.getHeader("jwt");
+        String[] subjectIds = reviewVo.getSubjectIds();
+        List<Integer> roleIds = JwtUtil.getRoleIds(jwt);
+        boolean subjectFlag = false, middleCheckFlag = false;
+        for (String subjectId : subjectIds) {
+            Subject subjectValue = subjectService.getBySubjectId(subjectId);
+            MiddleCheck middleCheckValue = middleCheckService.getOne(new QueryWrapper<MiddleCheck>().eq("subject_id", subjectValue.getId()));
+
+            if (!StringUtils.isEmpty(jwt)) {
+                if (ObjectUtil.isNotNull(subjectValue) && ObjectUtil.isNotNull(middleCheckValue)) {
+                    if (roleIds.contains(4)) {
+                        /*校级审核*/
+                        Integer processCode = ProcessEnum.MIDDLE_CHECK_COLLEGE_AUDIT.getProcessCode();
+                        if (processCode.equals(subjectValue.getProgressId()) || processCode.equals(subjectValue.getProgressId() + 1)) {
+                            subjectValue.setProgressId(processCode);
+                            /*修改题目审批表和中期检查表*/
+                            subjectValue.setProgressId(processCode);
+                            middleCheckValue.setCollegeAgree(1);
+                            middleCheckValue.setCollegeDate(LocalDate.now());
+                            middleCheckValue.setCollegeLeadingId(JwtUtil.getUserId(jwt));
+                            subjectFlag = subjectService.updateById(subjectValue);
+                            middleCheckFlag = middleCheckService.updateById(middleCheckValue);
+                            /*发送消息*/
+                            messageService.sendMessage("专业审核中期检查表意见", reviewVo.getComment(), JwtUtil.getUserId(jwt), subjectValue.getStudentId(), 0);
+                        } else {
+                            return CommonResult.failed("该题目没有到达符合的阶段");
+                        }
+                    } else if (roleIds.contains(3)) {
+                        Integer processCode = ProcessEnum.MIDDLE_CHECK_MAJOR_AUDIT.getProcessCode();
+                        if (processCode.equals(subjectValue.getProgressId()) || processCode.equals(subjectValue.getProgressId() + 1)) {
+                            /*修改题目审批表和中期检查表*/
+                            subjectValue.setProgressId(processCode);
+                            middleCheckValue.setMajorAgree(1);
+                            middleCheckValue.setMajorDate(LocalDate.now());
+                            middleCheckValue.setMajorLeadingId(JwtUtil.getUserId(jwt));
+                            subjectFlag = subjectService.updateById(subjectValue);
+                            middleCheckFlag = middleCheckService.updateById(middleCheckValue);
+                            /*发送消息*/
+                            messageService.sendMessage("专业审核中期检查表意见", reviewVo.getComment(), JwtUtil.getUserId(jwt), subjectValue.getStudentId(), 0);
+                        } else {
+                            return CommonResult.failed("该题目没有到达符合的阶段");
+                        }
+                        /*专业审核*/
+                    }
+                } else {
+                    return CommonResult.failed("题目和中期检查表不存在");
+                }
+            }
+        }
+        return subjectFlag&&middleCheckFlag?CommonResult.success("操作成功"):CommonResult.success("操作失败");
+    }
 
     @GetMapping(value = "/middleCheck/detail")
     @LogAnnotation(content = "查看中期检查表详情")

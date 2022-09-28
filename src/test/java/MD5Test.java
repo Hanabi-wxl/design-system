@@ -14,11 +14,11 @@ import java.util.Random;
 public class MD5Test {
     @Test
     public void test(){
-        String password = "111111";//明码
+        String password = "00000001";//明码
         String algorithmName = "MD5";//加密算法
         Object source = password;//要加密的密码
 
-        Object salt = "22222226";//盐值，一般都是用户名或者userid，要保证唯一
+        Object salt = "00000001";//盐值，一般都是用户名或者userid，要保证唯一
         int hashIterations = 1024;//加密次数
 
         SimpleHash simpleHash = new SimpleHash(algorithmName,source,salt,hashIterations);

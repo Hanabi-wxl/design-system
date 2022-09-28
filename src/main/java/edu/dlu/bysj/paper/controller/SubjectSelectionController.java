@@ -109,7 +109,7 @@ public class SubjectSelectionController {
         String secondSubjectId = topicDto.getSecondSubjectId();
         boolean flag = false;
         /*选题阶段操作码*/
-        Integer currentCode = ProcessEnum.CHOOSE_TOPIC.getProcessCode();
+        Integer currentCode = ProcessEnum.TOPIC_COLLEGE_AUDIT.getProcessCode();
 
         if (!StringUtils.isEmpty(jwt)) {
             Integer studentId = JwtUtil.getUserId(jwt);
@@ -117,9 +117,9 @@ public class SubjectSelectionController {
             List<Subject> subjects = subjectService.listSubjectByIds(firstSubjectId, secondSubjectId);
             for (Subject element : subjects) {
                 /*阶段为选题阶段和院审核阶段都可执行该操作*/
-                if (!currentCode.equals(element.getProgressId() + 1) && !currentCode.equals(element.getProgressId())) {
+                if (!currentCode.equals(element.getProgressId())) {
                     /*表示题目中至少有一个不在操作范围内*/
-                    return CommonResult.success("选中的题目中至少有一个未到达该阶段的题目");
+                    return CommonResult.failed("选中的题目中至少有一个未到达该阶段的题目");
                 }
             }
             /*全部都在操作阶段,判断是插入还是修改, 一个学生对于1个topic*/
@@ -142,18 +142,10 @@ public class SubjectSelectionController {
                     newTopic.setFirstChange(newTopic.getFirstChange() + 1);
                     newTopic.setSecondChange(newTopic.getSecondChange() + 1);
                 } else {
-                    return CommonResult.success("你的修改次数以到达阈值,无法再次修改");
+                    return CommonResult.failed("你的修改次数以到达阈值,无法再次修改");
                 }
             }
-
             flag = topicService.saveOrUpdate(newTopic);
-            if (flag) {
-                /*操作成功则跟新题目的状态*/
-                for (Subject element : subjects) {
-                    element.setProgressId(currentCode);
-                    subjectService.updateById(element);
-                }
-            }
         }
 
         return flag ? CommonResult.success("操作成功该题目") : CommonResult.failed("操作失败，请再次尝试");
@@ -257,28 +249,24 @@ public class SubjectSelectionController {
         String errorMessage = "";
         /*该题目必须到达(学生选题)，即学生选完题后才能进行该阶段操作*/
         /*当前subjectId 要为空否则该题目被其他专业占有*/
-        Subject value = subjectService.getById(subjectId);
+        Subject choseSubject = subjectService.getById(subjectId);
         Integer processCode = ProcessEnum.CHOOSE_TOPIC.getProcessCode();
-        if (value.getProgressId().equals(processCode) || value.getProgressId().equals(processCode-1)) {
-            if (ObjectUtil.isNotNull(value) && ObjectUtil.isNotNull(value.getSubjectId())) {
+        if (choseSubject.getProgressId().equals(processCode) || choseSubject.getProgressId().equals(processCode-1)) {
+            if (ObjectUtil.isNotNull(choseSubject) && ObjectUtil.isNotNull(choseSubject.getSubjectId())) {
                 //修改subject中该题的student.id, 和该学生表中的subjectId
                 Student studentValue = studentService.getById(studentId);
-                value.setStudentId(studentId);
-                value.setProgressId(processCode);
-                studentValue.setSubjectId(Integer.parseInt(subjectId));
-                value.setMajorId(studentValue.getMajorId());
-                /*同时跟新题目中的学生id,和学生中的最终确定题目id*/
-                subjectFlag = subjectService.updateById(value);
-                flag = studentService.updateById(studentValue);
-            } else {
-                errorMessage = "操作错误";
-                if (ObjectUtil.isNull(value)) {
-                    errorMessage = "题目Id为空";
-                } else {
-                    if (ObjectUtil.isNotNull(value.getStudentId())) {
-                        errorMessage = "该题目已被您所报题目所属其他专业选择";
-                    }
+                Integer originSubId = studentValue.getSubjectId();
+                Subject originSub = subjectService.getById(originSubId);
+                if(ObjectUtil.isNotNull(originSub) && originSub.getStudentId().equals(studentId)) {
+                    return CommonResult.failed("该学生已选中题目: " + originSub.getSubjectName());
                 }
+                choseSubject.setStudentId(studentId);
+                choseSubject.setProgressId(processCode);
+                studentValue.setSubjectId(Integer.parseInt(subjectId));
+                choseSubject.setMajorId(studentValue.getMajorId());
+                /*同时跟新题目中的学生id,和学生中的最终确定题目id*/
+                subjectFlag = subjectService.updateById(choseSubject);
+                flag = studentService.updateById(studentValue);
             }
         } else {
             return CommonResult.failed("该题目不在本阶段内");

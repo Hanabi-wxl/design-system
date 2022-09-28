@@ -18,9 +18,11 @@ import edu.dlu.bysj.base.model.vo.basic.CommonReviewsVo;
 import edu.dlu.bysj.base.result.CommonResult;
 import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.base.util.JwtUtil;
+import edu.dlu.bysj.common.service.StudentService;
 import edu.dlu.bysj.common.service.SubjectService;
 import edu.dlu.bysj.common.service.TeacherService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
+import edu.dlu.bysj.paper.service.MessageService;
 import edu.dlu.bysj.paper.service.SourceService;
 import edu.dlu.bysj.paper.service.SubjectTypeService;
 import edu.dlu.bysj.system.service.CollegeService;
@@ -44,6 +46,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.Collections;
@@ -63,21 +66,27 @@ public class SubjectApprovalController {
     private final TeacherService teacherService;
     private final SourceService sourceService;
     private final SubjectService subjectService;
+    private final StudentService studentService;
     private final SubjectTypeService subjectTypeService;
     private final MajorService majorService;
     private final CollegeService collegeService;
+    private final MessageService messageService;
 
     private static final Integer ONE = 1;
     private static final Integer ZERO = 0;
 
     @Autowired
     public SubjectApprovalController(TeacherService teacherService,
+                                     StudentService studentService,
+                                     MessageService messageService,
                                      SourceService sourceService,
                                      SubjectService subjectService,
                                      SubjectTypeService subjectTypeService,
                                      MajorService majorService,
                                      CollegeService collegeService) {
         this.teacherService = teacherService;
+        this.messageService = messageService;
+        this.studentService = studentService;
         this.sourceService = sourceService;
         this.subjectService = subjectService;
         this.subjectTypeService = subjectTypeService;
@@ -139,12 +148,32 @@ public class SubjectApprovalController {
     @ApiOperation(value = "教师提交/修改题目审批表")
     public CommonResult<Object> submitSubjectApproveTable(@Valid @RequestBody SubjectApprovalVo subjectApprovalVo, HttpServletRequest request) {
         boolean flag = false;
+        String jwt = request.getHeader("jwt");
+        Integer userId = JwtUtil.getUserId(jwt);
+        List<Integer> roleIds = JwtUtil.getRoleIds(jwt);
+        if (roleIds.get(0)==1) {
+            Integer number = studentService.idToNumber(userId);
+            if(!number.equals(subjectApprovalVo.getStudentNumber())) {
+                return CommonResult.failed("请勿给他人报题");
+            }
+        } else {
+            Integer teacherId = subjectApprovalVo.getTeacherId();
+            if(!teacherId.equals(userId)) {
+                return CommonResult.failed("请勿给他人报题");
+            }
+        }
         /*新增*/
         if (subjectApprovalVo.getSubjectId().equals("")) {
             flag = subjectService.addedApprove(subjectApprovalVo);
         } else {
             /*修改*/
-            flag = subjectService.modifyApprove(subjectApprovalVo);
+            Integer progressId = subjectService.getOne(new QueryWrapper<Subject>()
+                    .eq("subject_id", subjectApprovalVo.getSubjectId()))
+                    .getProgressId();
+            if (progressId > 2)
+                return CommonResult.failed("学院审核后无法修改题目");
+            else
+                flag = subjectService.modifyApprove(subjectApprovalVo);
         }
         return flag ? CommonResult.success("操作成功") : CommonResult.failed("操作失败");
     }
@@ -281,21 +310,24 @@ public class SubjectApprovalController {
         String jwt = request.getHeader("jwt");
 
         /*获取题目进展状况*/
-        Subject value = subjectService.getBySubjectId(source.getSubjectId());
+        Subject subject = subjectService.getBySubjectId(source.getSubjectId());
         boolean flag = false;
         /*专业级(当前阶段*/
         if (ZERO.equals(source.getType())) {
             Integer currentCode = ProcessEnum.TOPIC_MAJOR_AUDIT.getProcessCode();
             if (currentCode != null) {
-                if (currentCode.equals(value.getProgressId()) || currentCode.equals(value.getProgressId() + 1)) {
-                    value.setMajorAgree(source.getAgree());
+                if (currentCode.equals(subject.getProgressId()) || currentCode.equals(subject.getProgressId() + 1)) {
+                    subject.setMajorAgree(source.getAgree());
                     if (source.getAgree() == 1)
-                        value.setProgressId(currentCode);
+                        subject.setProgressId(currentCode);
                     else
-                        value.setProgressId(1);
-                    value.setMajorLeadingId(JwtUtil.getUserId(jwt));
-                    value.setMajorDate(LocalDate.now());
-                    flag = subjectService.updateById(value);
+                        subject.setProgressId(1);
+                    subject.setMajorLeadingId(JwtUtil.getUserId(jwt));
+                    subject.setMajorDate(LocalDate.now());
+                    flag = subjectService.updateById(subject);
+                    messageService.sendMessage("专业审核题目意见", source.getComment(), JwtUtil.getUserId(jwt), subject.getFirstTeacherId(), 0);
+                    if (subject.getStudentId() != null)
+                        messageService.sendMessage("专业审核题目意见", source.getComment(), JwtUtil.getUserId(jwt), subject.getFirstTeacherId(), 0);
                 } else {
                     return CommonResult.failed("该题目不在本阶段内");
                 }
@@ -304,15 +336,18 @@ public class SubjectApprovalController {
             /*学院级*/
             Integer currentCode = ProcessEnum.TOPIC_COLLEGE_AUDIT.getProcessCode();
             if (currentCode != null) {
-                if (currentCode.equals(value.getProgressId()) || currentCode.equals(value.getProgressId() + 1)) {
-                    value.setCollegeAgree(source.getAgree());
+                if (currentCode.equals(subject.getProgressId()) || currentCode.equals(subject.getProgressId() + 1)) {
+                    subject.setCollegeAgree(source.getAgree());
                     if (source.getAgree() == 1)
-                        value.setProgressId(currentCode);
+                        subject.setProgressId(currentCode);
                     else
-                        value.setProgressId(2);
-                    value.setCollegeLeadingId(JwtUtil.getUserId(jwt));
-                    value.setCollegeDate(LocalDate.now());
-                    flag = subjectService.updateById(value);
+                        subject.setProgressId(2);
+                    subject.setCollegeLeadingId(JwtUtil.getUserId(jwt));
+                    subject.setCollegeDate(LocalDate.now());
+                    flag = subjectService.updateById(subject);
+                    messageService.sendMessage("学院审核题目意见", source.getComment(), JwtUtil.getUserId(jwt), subject.getFirstTeacherId(), 0);
+                    if (subject.getStudentId() != null)
+                        messageService.sendMessage("学院审核题目意见", source.getComment(), JwtUtil.getUserId(jwt), subject.getFirstTeacherId(), 0);
                 } else {
                     return CommonResult.failed("该题目不在本阶段内");
                 }
@@ -337,26 +372,14 @@ public class SubjectApprovalController {
         String jwt = request.getHeader("jwt");
         List<Integer> roleIds = JwtUtil.getRoleIds(jwt);
         assert roleIds != null;
-        Integer max = Collections.max(roleIds);
-        int type = max == 3 ? 0 : 1;
         /*获取题目进展状况*/
-        List<Subject> subjects = subjectService.getBySubjectIds(source.getSubjectIds());
+        String[] subjectIds = source.getSubjectIds();
+        if(subjectIds.length == 0)
+            return CommonResult.failed("题目为空");
+        List<Subject> subjects = subjectService.getBySubjectIds(subjectIds);
         boolean flag = true;
         for (Subject value : subjects) {
-            /*专业级(当前阶段*/
-            if (ZERO.equals(type)) {
-                Integer currentCode = ProcessEnum.TOPIC_MAJOR_AUDIT.getProcessCode();
-                if (currentCode != null) {
-                    if (currentCode.equals(value.getProgressId()) || currentCode.equals(value.getProgressId() + 1)) {
-                        value.setMajorAgree(1);
-                        value.setProgressId(currentCode);
-                        value.setMajorLeadingId(JwtUtil.getUserId(jwt));
-                        value.setMajorDate(LocalDate.now());
-                    } else {
-                        return CommonResult.failed("该题目不在本阶段内");
-                    }
-                }
-            } else if (ONE.equals(type)) {
+            if (roleIds.contains(4)) {
                 /*学院级*/
                 Integer currentCode = ProcessEnum.TOPIC_COLLEGE_AUDIT.getProcessCode();
                 if (currentCode != null) {
@@ -365,6 +388,18 @@ public class SubjectApprovalController {
                         value.setProgressId(currentCode);
                         value.setCollegeLeadingId(JwtUtil.getUserId(jwt));
                         value.setCollegeDate(LocalDate.now());
+                    } else {
+                        return CommonResult.failed("该题目不在本阶段内");
+                    }
+                }
+            } else if (roleIds.contains(3)) {
+                Integer currentCode = ProcessEnum.TOPIC_MAJOR_AUDIT.getProcessCode();
+                if (currentCode != null) {
+                    if (currentCode.equals(value.getProgressId()) || currentCode.equals(value.getProgressId() + 1)) {
+                        value.setMajorAgree(1);
+                        value.setProgressId(currentCode);
+                        value.setMajorLeadingId(JwtUtil.getUserId(jwt));
+                        value.setMajorDate(LocalDate.now());
                     } else {
                         return CommonResult.failed("该题目不在本阶段内");
                     }

@@ -84,6 +84,7 @@ public class LoginController {
             //生成token，并保存到数据库
             result = studentService.createJwt(username, student);
             result.put("status", 200);
+            result.put("studentNumber", student.getStudentNumber());
             message = "登陆成功";
             List<Integer> roles = new LinkedList<>();
             roles.add(1);
@@ -130,6 +131,7 @@ public class LoginController {
         }else {
             //生成token，并保存到数据库
             result = teacherService.createJwt(username, teacher);
+            result.put("id", teacher.getId());
             result.put("status", 200);
             message = "登陆成功";
             // 更新ip地址

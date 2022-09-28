@@ -140,10 +140,13 @@
 
         from (select subject.id, subject.subject_name, subject.first_teacher_id, subject.student_id
         from subject
+        right JOIN subject_major smm
+        ON smm.major_id = #{majorId}
+        AND smm.status=1
+        AND smm.subject_id = subject.subject_id
         where subject.status = 1
         and subject.grade = #{grade}
-        and subject.progress_id = 3
-        and subject.major_id = #{majorId}) as s
+        and subject.progress_id = 3) as s
 
         left join student
         on student.subject_id = s.id

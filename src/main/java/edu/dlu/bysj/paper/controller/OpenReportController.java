@@ -8,6 +8,7 @@ import edu.dlu.bysj.base.model.entity.Subject;
 import edu.dlu.bysj.base.model.entity.Teacher;
 import edu.dlu.bysj.base.model.enums.ProcessEnum;
 import edu.dlu.bysj.base.model.vo.OpenReportReviewVo;
+import edu.dlu.bysj.base.model.vo.OpenReportReviewsVo;
 import edu.dlu.bysj.base.model.vo.OpenReportVo;
 import edu.dlu.bysj.base.model.vo.basic.BasicOpenReportVo;
 import edu.dlu.bysj.base.result.CommonResult;
@@ -35,6 +36,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author XiangXinGang
@@ -162,7 +164,6 @@ public class OpenReportController {
         Subject subject = subjectService.getById(commonReviewVo.getSubjectId());
         OpenReport opeReport = openReportService.getOne(new QueryWrapper<OpenReport>().eq("subject_id", commonReviewVo.getSubjectId()));
 
-        String message = "操作成功";
         if (!StringUtils.isEmpty(jwt)) {
             if (MAJOR_TYPE.equals(commonReviewVo.getType())) {
                 Integer processCode = ProcessEnum.OPEN_REPORT_MAJOR_AUDIT.getProcessCode();
@@ -180,10 +181,10 @@ public class OpenReportController {
                         /*发送消息*/
                         messageService.sendMessage("专业级审核开题报告", commonReviewVo.getComment(), JwtUtil.getUserId(jwt), subject.getStudentId(), 0);
                     } else {
-                        message = "题目没有到达该阶段";
+                        return CommonResult.failed("该题目不在本阶段内");
                     }
                 } else {
-                    message = "题目不存在，或则该题目还没有开题报告";
+                    return CommonResult.failed("开题报告未上传或文件失效");
                 }
             } else if (COLLEGE_TYPE.equals(commonReviewVo.getType())) {
                 Integer processCode = ProcessEnum.OPEN_REPORT_COLLEGE_AUDIT.getProcessCode();
@@ -202,17 +203,79 @@ public class OpenReportController {
                         openReportService.updateById(opeReport);
                         /*发送消息*/
                         messageService.sendMessage("专业级审核开题报告", commonReviewVo.getComment(), JwtUtil.getUserId(jwt), subject.getStudentId(), 0);
+                    } else {
+                        return CommonResult.failed("该题目不在本阶段内");
                     }
                 } else {
-                    message = "题目不存在，或则该题目还没有开题报告";
+                    return CommonResult.failed("开题报告未上传或文件失效");
                 }
-            } else {
-                throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "操作类型错误");
             }
-
         }
-        return CommonResult.success(message);
+        return CommonResult.success("操作成功");
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @PatchMapping(value = "/openReport/submitResults")
+    @LogAnnotation(content = "提交开题报告审阅(专业级/院级)结果")
+    @RequiresPermissions({"openReport:submitResult"})
+    @ApiOperation(value = "提交开题报告审阅结果")
+    public CommonResult<Object> submitOpenReportReviews(@Valid @RequestBody OpenReportReviewsVo commonReviewsVo,
+                                                       HttpServletRequest request) {
+
+        String jwt = request.getHeader("jwt");
+        List<Integer> roleIds = JwtUtil.getRoleIds(jwt);
+        String[] subjectIds = commonReviewsVo.getSubjectIds();
+        for (String subjectId : subjectIds) {
+            Subject subject = subjectService.getBySubjectId(String.valueOf(subjectId));
+            OpenReport opeReport = openReportService.getOne(new QueryWrapper<OpenReport>().eq("subject_id", subject.getId()));
+            if (roleIds.contains(4)) {
+                if (ObjectUtil.isNotNull(subject) && ObjectUtil.isNotNull(opeReport)) {
+                    Integer processCode = ProcessEnum.OPEN_REPORT_COLLEGE_AUDIT.getProcessCode();
+                    /*open report 和 subject都存在*/
+                    if (ObjectUtil.isNotNull(subject) && ObjectUtil.isNotNull(opeReport)) {
+                        /*题目处于该阶段或前一阶段*/
+                        if (processCode.equals(subject.getProgressId()) || processCode.equals(subject.getProgressId() + 1)) {
+                            /*跟新题目，跟新开题报告*/
+                            subject.setProgressId(processCode);
+                            subjectService.updateById(subject);
+                            opeReport.setCollegeAgree("1");
+                            opeReport.setCollegeLeadingId(JwtUtil.getUserId(jwt));
+                            opeReport.setCollegeDate(LocalDate.now());
+                            openReportService.updateById(opeReport);
+                            /*发送消息*/
+                            messageService.sendMessage("专业级审核开题报告", "同意", JwtUtil.getUserId(jwt), subject.getStudentId(), 0);
+                        }
+                    } else {
+                        return CommonResult.failed("题目没有到达该阶段");
+                    }
+                } else {
+                    return CommonResult.failed("开题报告未上传或文件失效");
+                }
+            } else if (roleIds.contains(3)) {
+                Integer processCode = ProcessEnum.OPEN_REPORT_MAJOR_AUDIT.getProcessCode();
+                /*open report 和 subject都存在*/
+                if (ObjectUtil.isNotNull(subject) && ObjectUtil.isNotNull(opeReport)) {
+                    /*题目处于该阶段*/
+                    if (processCode.equals(subject.getProgressId()) || processCode.equals(subject.getProgressId() + 1)) {
+                        /*跟新题目，跟新开题报告*/
+                        subject.setProgressId(processCode);
+                        subjectService.updateById(subject);
+                        opeReport.setMajorAgree("1");
+                        opeReport.setMajorLeadingId(JwtUtil.getUserId(jwt));
+                        opeReport.setMajorDate(LocalDate.now());
+                        openReportService.updateById(opeReport);
+                        /*发送消息*/
+                        messageService.sendMessage("专业级审核开题报告", "同意", JwtUtil.getUserId(jwt), subject.getStudentId(), 0);
+                    } else {
+                        return CommonResult.failed("题目没有到达该阶段");
+                    }
+                } else {
+                    return CommonResult.failed("开题报告未上传或文件失效");
+                }
+            }
+        }
+
+        return CommonResult.success("操作成功");
+    }
 
 }

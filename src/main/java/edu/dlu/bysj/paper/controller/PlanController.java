@@ -3,9 +3,11 @@ package edu.dlu.bysj.paper.controller;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import edu.dlu.bysj.base.model.entity.Plan;
+import edu.dlu.bysj.base.model.enums.ProcessEnum;
 import edu.dlu.bysj.base.model.vo.ContentVo;
 import edu.dlu.bysj.base.model.vo.PlanSubmitVo;
 import edu.dlu.bysj.base.result.CommonResult;
+import edu.dlu.bysj.common.service.SubjectService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
 import edu.dlu.bysj.paper.service.PlanService;
 import io.swagger.annotations.Api;
@@ -32,10 +34,12 @@ import java.util.List;
 public class PlanController {
 
     private final PlanService planService;
+    private final SubjectService subjectService;
 
     @Autowired
-    public PlanController(PlanService planService) {
+    public PlanController(PlanService planService, SubjectService subjectService) {
         this.planService = planService;
+        this.subjectService = subjectService;
     }
 
     /*
@@ -51,21 +55,27 @@ public class PlanController {
     @ApiOperation(value = "提交周计划内容")
     public CommonResult<Object> submitWeekPlans(@RequestBody @Valid PlanSubmitVo weekPlans) {
         boolean flag = false;
-        List<Plan> plansValue = new ArrayList<>();
-        int count = planService.count(new QueryWrapper<Plan>().eq("subject_id", weekPlans.getSubjectId()));
-        if (count == 20)
-            planService.remove(new QueryWrapper<Plan>().eq("subject_id", weekPlans.getSubjectId()));
-
-        if (ObjectUtil.isNotNull(weekPlans.getContent())) {
-            for (ContentVo element : weekPlans.getContent()) {
-                Plan plan = new Plan();
-                plan.setSubjectId(weekPlans.getSubjectId());
-                plan.setWeek(element.getWeek());
-                plan.setContent(element.getContent());
-                plansValue.add(plan);
+        Integer subjectId = weekPlans.getSubjectId();
+        Integer progressId = subjectService.getById(subjectId).getProgressId();
+        Integer processCode = ProcessEnum.CHOOSE_TOPIC.getProcessCode();
+        if(processCode.equals(progressId)) {
+            List<Plan> plansValue = new ArrayList<>();
+            int count = planService.count(new QueryWrapper<Plan>().eq("subject_id", weekPlans.getSubjectId()));
+            if (count == 20)
+                planService.remove(new QueryWrapper<Plan>().eq("subject_id", weekPlans.getSubjectId()));
+            if (ObjectUtil.isNotNull(weekPlans.getContent())) {
+                for (ContentVo element : weekPlans.getContent()) {
+                    Plan plan = new Plan();
+                    plan.setSubjectId(weekPlans.getSubjectId());
+                    plan.setWeek(element.getWeek());
+                    plan.setContent(element.getContent());
+                    plansValue.add(plan);
+                }
             }
+            flag = planService.saveBatch(plansValue);
+        } else {
+            return CommonResult.failed("该题目不在本阶段内");
         }
-        flag = planService.saveBatch(plansValue);
 
         return flag ? CommonResult.success("执行成功") : CommonResult.failed("执行失败");
     }

@@ -6,6 +6,9 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
+import edu.dlu.bysj.base.model.entity.MiddleCheck;
+import edu.dlu.bysj.base.model.vo.SubjectTableVo;
+import edu.dlu.bysj.document.entity.MiddleCheckTemplate;
 import edu.dlu.bysj.document.entity.PaperCoverTemplate;
 import edu.dlu.bysj.document.entity.SubjectApproveFormTemplate;
 import io.swagger.models.auth.In;
@@ -43,7 +46,7 @@ public interface FileDownLoadService {
 
     void subjectOpenReportForm(HttpServletResponse response) throws UnsupportedEncodingException;
 
-    void openReport(String subjectId, HttpServletResponse response);
+    void openReport(String subjectId, HttpServletResponse response) throws Exception;
 
     void selectSubjectTable(Integer majorId, Integer year, HttpServletResponse response) throws IOException;
 
@@ -56,4 +59,7 @@ public interface FileDownLoadService {
     void notice(String noticeId, HttpServletResponse response);
 
     void message(String messageId, HttpServletResponse response);
+
+
+    MiddleCheckTemplate packPageMiddleCheckInfo(MiddleCheck middleCheck, SubjectTableVo subjectTableVo);
 }

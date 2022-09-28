@@ -8,20 +8,26 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.qrcode.QrCodeUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.google.zxing.qrcode.QRCodeWriter;
 import edu.dlu.bysj.base.exception.GlobalException;
 import edu.dlu.bysj.base.model.entity.Major;
+import edu.dlu.bysj.base.model.entity.MiddleCheck;
 import edu.dlu.bysj.base.model.entity.Student;
 import edu.dlu.bysj.base.model.entity.Subject;
+import edu.dlu.bysj.base.model.vo.SubjectTableVo;
+import edu.dlu.bysj.base.result.CommonResult;
 import edu.dlu.bysj.base.result.ResultCodeEnum;
 import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.StudentService;
 import edu.dlu.bysj.common.service.SubjectService;
+import edu.dlu.bysj.document.entity.MiddleCheckTemplate;
 import edu.dlu.bysj.document.entity.PaperCoverTemplate;
 import edu.dlu.bysj.document.entity.SubjectApproveFormTemplate;
 import edu.dlu.bysj.document.service.FileDownLoadService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
+import edu.dlu.bysj.paper.service.MiddleCheckService;
 import edu.dlu.bysj.system.service.MajorService;
 import io.jsonwebtoken.Jwt;
 import io.swagger.annotations.ApiParam;
@@ -72,11 +78,15 @@ public class FileDownLoadController {
 
     private final SubjectService subjectService;
 
+    private final MiddleCheckService middleCheckService;
+
     private final StudentService studentService;
 
     @Autowired
     public FileDownLoadController(FileDownLoadService fileDownLoadService,
+                                  MiddleCheckService middleCheckService,
         SubjectService subjectService, StudentService studentService) {
+        this.middleCheckService = middleCheckService;
         this.fileDownLoadService = fileDownLoadService;
         this.subjectService = subjectService;
         this.studentService = studentService;
@@ -310,8 +320,62 @@ public class FileDownLoadController {
     @LogAnnotation(content = "下载开题报告")
     @RequiresPermissions({"openReport:download"})
     @GetMapping("/openReport")
-    public void downloadReport(String subjectId, HttpServletResponse response){
+    public void downloadReport(String subjectId, HttpServletResponse response) throws Exception {
         fileDownLoadService.openReport(subjectId, response);
+    }
+
+
+    @LogAnnotation(content = "下载中期检查表")
+    @RequiresPermissions({"approve:download"})
+    @GetMapping(value = "/middleCheck")
+    public void downloadMiddleCheck(String subjectId, HttpServletResponse response, HttpServletRequest request) throws IOException {
+        String jwt = request.getHeader("jwt");
+
+        MiddleCheck middleCheck = middleCheckService.getOne(new QueryWrapper<MiddleCheck>().eq("subject_id", subjectId));
+        SubjectTableVo subjectTableVo = subjectService.obtainsSubjectTableInfo(subjectId);
+        MiddleCheckTemplate template = fileDownLoadService.packPageMiddleCheckInfo(middleCheck, subjectTableVo);
+
+        Map<String, Object> objectMap = BeanUtil.beanToMap(template);
+
+        ClassPathResource resource = null;
+
+        ByteArrayOutputStream byteArrayOut = new ByteArrayOutputStream();
+        QrcodeGenerator generate = new SimpleQrcodeGenerator().generate(subjectId);
+        BufferedImage image = generate.getImage();
+        ImageIO.write(image, "png", byteArrayOut);
+
+        /*加载模板填充数据*/
+        resource = new ClassPathResource("template/excel/middleCheckForm.xlsx");
+
+        String fileName = "MiddleCheck_" + GradeUtils.getGrade() + "_ZQJCB_" + subjectId + ".xlsx";
+        TemplateExportParams params = new TemplateExportParams(resource.getPath(), true);
+
+        Workbook workbook = null;
+        try {
+            workbook = ExcelExportUtil.exportExcel(params, objectMap);
+            workbook.setSheetName(0, subjectId + "中期检查表");
+
+            Sheet sheetAt = workbook.getSheetAt(0);
+            XSSFClientAnchor xssfClientAnchor = new XSSFClientAnchor(0, 0, 500000, 500000, (short) 0, 0, (short) 0, 0);
+            xssfClientAnchor.setAnchorType(ClientAnchor.AnchorType.byId(1));
+            //插入图片
+            Drawing<?> patriarch = sheetAt.createDrawingPatriarch();
+            patriarch.createPicture(xssfClientAnchor,workbook.addPicture(byteArrayOut.toByteArray(), XSSFWorkbook.PICTURE_TYPE_JPEG));
+            byteArrayOut.close();
+
+            try {
+                response.setContentType("application/vnd.ms-excel");
+                response.addHeader("Access-Control-Expose-Headers", "Content-Disposition");
+                response.addHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+                workbook.write(response.getOutputStream());
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载中期检查表失败");
+            }
+        } catch (Exception e) {
+            throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "题目信息不完整");
+        }
+
     }
 
     /*

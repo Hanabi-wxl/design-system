@@ -241,4 +241,6 @@ public interface SubjectMapper extends BaseMapper<Subject> {
 
     SubjectSelectAnalysis selectAnalysisCount(Integer majorId, Integer grade);
 
+    List<ReportStaticsTemplate> selectReportByMajorId(Integer key);
+
 }

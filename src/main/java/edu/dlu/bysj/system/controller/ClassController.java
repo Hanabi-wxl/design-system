@@ -6,6 +6,7 @@ import edu.dlu.bysj.base.model.entity.Class;
 import edu.dlu.bysj.base.model.vo.ModifyClass;
 import edu.dlu.bysj.base.model.vo.TotalPackageVo;
 import edu.dlu.bysj.base.result.CommonResult;
+import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
 import edu.dlu.bysj.system.service.ClassService;
 import io.swagger.annotations.Api;
@@ -52,7 +53,7 @@ public class ClassController {
         boolean flag;
         Class classInfo = new Class();
         classInfo.setId(modifyClass.getClassId());
-        classInfo.setGrade(modifyClass.getGrade());
+        classInfo.setGrade(GradeUtils.getGrade(modifyClass.getGrade()));
         classInfo.setName(modifyClass.getName());
         classInfo.setMajorId(modifyClass.getMajorId());
         flag = classService.saveOrUpdate(classInfo);

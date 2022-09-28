@@ -10,6 +10,7 @@ import edu.dlu.bysj.base.model.vo.ContentVo;
 import edu.dlu.bysj.base.model.vo.TaskBookDetailVo;
 import edu.dlu.bysj.base.model.vo.TaskBookVo;
 import edu.dlu.bysj.base.model.vo.basic.CommonReviewVo;
+import edu.dlu.bysj.base.model.vo.basic.CommonReviewsVo;
 import edu.dlu.bysj.base.result.CommonResult;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.SubjectService;
@@ -164,8 +165,13 @@ public class TaskBookController {
         boolean taskFlag = false, subjectFlag = false;
         if (!StringUtils.isEmpty(jwt)) {
             Integer leadingId = JwtUtil.getUserId(jwt);
+            // 传入id
             Subject subject = subjectService.getById(agree.getSubjectId());
+            if(ObjectUtil.isNull(subject))
+                subject = subjectService.getBySubjectId(agree.getSubjectId());
             TaskBook task = taskBookService.getOne(new QueryWrapper<TaskBook>().eq("subject_id", agree.getSubjectId()));
+            if(ObjectUtil.isNull(task))
+                task = taskBookService.getOne(new QueryWrapper<TaskBook>().eq("subject_id", subjectService.getBySubjectId(agree.getSubjectId()).getId()));
             Message message = new Message();
             message.setSenderId(leadingId);
             message.setReceiverId(subject.getStudentId());
@@ -207,6 +213,70 @@ public class TaskBookController {
                         /*投递消息*/
                         if (!StringUtils.isEmpty(message.getContent())) {
                             messageService.save(message);
+                        }
+                    }
+                }
+            }
+        }
+        return (taskFlag && subjectFlag) ? CommonResult.success("操作成功") : CommonResult.failed("操作失败请检查该题目是否处于可操作的阶段");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @PostMapping(value = "/taskbook/submitResults")
+    @LogAnnotation(content = "批量提交任务书审阅结果")
+    @RequiresPermissions({"taskBook:submitResult"})
+    @ApiOperation(value = "提交任务书审阅结果")
+    public CommonResult<Object> submitReviewResults(@RequestBody @Valid CommonReviewsVo agree, HttpServletRequest request) {
+        String jwt = request.getHeader("jwt");
+        boolean taskFlag = false, subjectFlag = false;
+        if (!StringUtils.isEmpty(jwt)) {
+            Integer leadingId = JwtUtil.getUserId(jwt);
+            List<Integer> roleIds = JwtUtil.getRoleIds(jwt);
+            for (String subjectId : agree.getSubjectIds()) {
+                Subject subject = subjectService.getBySubjectId(subjectId);
+                TaskBook task = taskBookService.getOne(new QueryWrapper<TaskBook>().eq("subject_id", subjectService.getBySubjectId(subjectId).getId()));
+                Message message = new Message();
+                message.setSenderId(leadingId);
+                message.setReceiverId(subject.getStudentId());
+                message.setSendTime(LocalDate.now());
+                message.setContent(agree.getComment());
+                if (roleIds.contains(4)) {
+                    /*院级审核任务书*/
+                    if (ObjectUtil.isNotNull(subject) && ObjectUtil.isNotNull(task)) {
+                        Integer processCode = ProcessEnum.TASK_BOOK_COLLEGE_AUDIT.getProcessCode();
+                        /*当前阶段为修改，前一阶段为新增*/
+                        if (processCode.equals(subject.getProgressId()) || processCode.equals(subject.getProgressId() + 1)) {
+                            subject.setProgressId(processCode);
+                            subjectFlag = subjectService.updateById(subject);
+                            task.setCollegeAgree(1);
+                            task.setCollegeDate(LocalDate.now());
+                            task.setCollegeLeadingId(leadingId);
+                            taskFlag = taskBookService.updateById(task);
+                            message.setTitle("院级审核题目意见");
+                            /*投递消息*/
+                            if (!StringUtils.isEmpty(message.getContent())) {
+                                messageService.save(message);
+                            }
+                        }
+                    }
+                } else if (roleIds.contains(3)) {
+                    /*专业级审阅任务书,task,subject 同时不为空时跟新*/
+                    if (ObjectUtil.isNotNull(subject) && ObjectUtil.isNotNull(task)) {
+                        Integer processCode = ProcessEnum.TASK_BOOK_MAJOR_AUDIT.getProcessCode();
+                        /*当前阶段为修改,前一阶段为添加*/
+                        if (processCode.equals(subject.getProgressId()) || processCode.equals(subject.getProgressId() + 1)) {
+                            /*跟新题目的状态和审阅结果*/
+                            subject.setProgressId(processCode);
+                            subjectFlag = subjectService.updateById(subject);
+                            task.setMajorAgree(1);
+                            task.setMajorDate(LocalDate.now());
+                            task.setMajorLeadingId(leadingId);
+                            taskFlag = taskBookService.updateById(task);
+                            /*跟新成功后投递消息*/
+                            message.setTitle("专业审核题目的意见");
+                            if (!StringUtils.isEmpty(message.getContent())) {
+                                messageService.save(message);
+                            }
                         }
                     }
                 }

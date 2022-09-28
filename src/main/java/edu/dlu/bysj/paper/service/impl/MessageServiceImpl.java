@@ -60,4 +60,5 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
         result.setArrays(receiveMessageVos);
         return result;
     }
+
 }

@@ -181,6 +181,7 @@
         select teacher.name           as username,
                teacher.teacher_number as teacherNumber,
                m.name                 as major,
+               m.id                   as majorId,
                o.name                 as office,
                d.name                 as degree,
                teacher.sex            as sex,

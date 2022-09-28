@@ -227,7 +227,7 @@ public class FileUploadController {
                         subject.setProgressId(processCode);
                         flag = subjectService.updateById(subject);
                     } else {
-                        throw new Exception("过程错误");
+                        return CommonResult.failed("过程错误");
                     }
                 }
             } else {

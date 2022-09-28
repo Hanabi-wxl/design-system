@@ -31,7 +31,8 @@
         <id column="id" property="subjectId"/>
         <result column="subject_name" property="subjectName"/>
         <result column="teacherName" property="firstTeacherName"/>
-        <result column="titleName" property="title"/>
+        <result column="phone_number" property="firstTeacherPhone"/>
+        <result column="titleName" property="firstTeacherTitle"/>
     </resultMap>
 
     <resultMap id="SureSelectedMap" type="edu.dlu.bysj.base.model.vo.DetermineStudentVo">
@@ -429,6 +430,7 @@
                s.id,
                s.subject_name,
                teacher.name as teacherName,
+               teacher.phone_number,
                t.name as titleName
         from (
             select
@@ -612,22 +614,6 @@
 
                  left join subject_type
                             on s.subject_type_id = subject_type.id
-
---                  inner join student
---                            on s.student_id = student.id
---
---                  inner join class
---                            on student.class_id = class.id
---
---                  inner join teacher
---                            on s.first_teacher_id = teacher.id
---
---                  inner join source
---                            on s.source_id = source.id
---
---                  inner join subject_type
---                            on s.subject_type_id = subject_type.id
-
 
     </select>
 
@@ -967,6 +953,49 @@
         FROM
             subject
         WHERE subject.major_id = #{majorId} AND subject.grade = #{grade} and subject.student_id is not null and subject.first_teacher_id is not null
+    </select>
+    <select id="selectReportByMajorId" resultType="edu.dlu.bysj.document.entity.ReportStaticsTemplate">
+        select s.subject_name as topicName,
+               student.name      as studentName,
+               class.name        as className,
+               teacher.name      as guideName,
+               source.name       as topicSource,
+               subject_type.name as topicType,
+               s.title_abstract as content,
+               s.necessity as necessity,
+               s.feasibility as feasiblity
+
+        from (SELECT
+                  subject.id,
+                  subject.subject_name,
+                  subject.student_id,
+                  subject.first_teacher_id,
+                  subject.subject_type_id,
+                  subject.source_id,
+                  subject.title_abstract,
+                  subject.necessity,
+                  subject.feasibility
+              FROM
+                  subject
+                      LEFT JOIN subject_major sm
+                                ON sm.major_id = #{majorId}
+              WHERE sm.subject_id = subject.subject_id
+                AND sm.status = 1) as s
+
+                 left join student
+                           on s.student_id = student.id
+
+                 left join class
+                           on student.class_id = class.id
+
+                 left join teacher
+                           on s.first_teacher_id = teacher.id
+
+                 left join source
+                           on s.source_id = source.id
+
+                 left join subject_type
+                           on s.subject_type_id = subject_type.id
     </select>
 
 </mapper>

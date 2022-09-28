@@ -77,10 +77,8 @@ public class SelectApproveController {
     @ApiOperation(value = "获取未选题学生列表")
     public CommonResult<List<UnselectStudentVo>> unChooseTopicStudent(UnselectStudentQuery query, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
-        Integer majorId = query.getMajorId();
+        Integer majorId = JwtUtil.getMajorId(jwt);
         Integer year = query.getYear();
-        if (ObjectUtil.isNull(majorId))
-            majorId = JwtUtil.getMajorId(jwt);
         if (ObjectUtil.isNull(year))
             year = LocalDate.now().getYear();
         Integer grade = GradeUtils.getGrade(year);
@@ -103,10 +101,8 @@ public class SelectApproveController {
     @ApiOperation(value = "未被选择题目列表")
     public CommonResult<List<UnSelectTopicVo>> remainingSubject(@Valid UnTopicListQuery query, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
-        Integer majorId = query.getMajorId();
+        Integer majorId = JwtUtil.getMajorId(jwt);
         Integer year = query.getYear();
-        if (ObjectUtil.isNull(majorId))
-            majorId = JwtUtil.getMajorId(jwt);
         if (ObjectUtil.isNull(year))
             year = LocalDate.now().getYear();
         Integer grade = GradeUtils.getGrade(year);
@@ -142,6 +138,7 @@ public class SelectApproveController {
                 if (ObjectUtil.isNotNull(value) && value.getSubjectId().equals(-1) && ObjectUtil.isNull(subjectValue.getStudentId())) {
                     value.setSubjectId(Integer.parseInt(subjectId));
                     subjectValue.setStudentId(studentId);
+                    subjectValue.setMajorId(value.getMajorId());
                     subjectValue.setProgressId(processCode);
                     studentFlag = studentService.updateById(value);
                     flag = subjectService.updateById(subjectValue);

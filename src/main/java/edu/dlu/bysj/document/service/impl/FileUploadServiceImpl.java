@@ -75,8 +75,10 @@ public class FileUploadServiceImpl implements FileUploadService {
 //                    + ":" + port + (contextPath.equals("/") ? "" : contextPath)
 //                    + "/upload/" + url + "/" + fileName);
             res.put("url", "");
-            res.put("dir", "/usr/fileUpload/"+ url + "/" + fileName);
-//            res.put("dir", "static/upload/"+ url + "/" + fileName);
+            if(sys.equals("linux"))
+                res.put("dir", "/usr/fileUpload/"+ url + "/" + fileName);
+            else
+                res.put("dir", "static/upload/"+ url + "/" + fileName);
             return res;
         } catch (Exception e) {
             e.printStackTrace();

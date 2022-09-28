@@ -50,4 +50,5 @@ public interface MessageMapper extends BaseMapper<Message> {
                                                  @Param("start") Integer start,
                                                  @Param("pageSize") Integer pageSize);
 
+
 }

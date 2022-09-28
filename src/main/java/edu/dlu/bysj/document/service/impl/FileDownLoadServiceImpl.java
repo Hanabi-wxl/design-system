@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import edu.dlu.bysj.base.model.vo.MajorSimpleInfoVo;
+import edu.dlu.bysj.base.model.vo.SubjectTableVo;
 import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.document.entity.*;
 import edu.dlu.bysj.document.entity.dto.OpenReportBaseInfo;
@@ -77,6 +78,9 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
 
     private final MessageMapper messageMapper;
 
+    @Value("${design.system}")
+    private String sys;
+
     public FileDownLoadServiceImpl(SubjectMapper subjectMapper, TeacherMapper teacherMapper,
                                    StudentMapper studentMapper, MajorMapper majorMapper, CollegeMapper collegeMapper, ClassMapper classMapper,
                                    SubjectTypeMapper subjectTypeMapper, OpenReportMapper openReportMapper, SubjectFileMapper subjectFileMapper,
@@ -96,9 +100,6 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         this.noticeMapper = noticeMapper;
         this.messageMapper = messageMapper;
     }
-
-    @Value("${design.system}")
-    private String sys;
 
     @Override
     public List<PaperCoverTemplate> packPaperCoverData(Integer majorId) {
@@ -167,7 +168,7 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
             /*中间内容部分*/
 //            System.out.println("key" + element.getKey());
 
-            List<ReportStaticsTemplate> value = subjectMapper.selectAllReportStaticsByMajorId(element.getKey());
+            List<ReportStaticsTemplate> value = subjectMapper.selectReportByMajorId(element.getKey());
             if (ObjectUtil.isNotNull(value)) {
                 Row fixedRow2 = null;
                 int row = 3;
@@ -236,8 +237,6 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         String fileName = "ReportTable_" +  GradeUtils.getGrade(DateUtil.year(new Date())) + "_PRESUBJECT_" + majorMap.get(majorId).get("collegeId") + ".xlsx";
 
 
-
-
         /*设置导出参数*/
         response.setContentType("application/vnd.ms-excel");
         response.addHeader("Access-Control-Expose-Headers", "Content-Disposition");
@@ -262,21 +261,23 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         try {
             response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
             // 发送给客户端的数据
-/*            OutputStream outputStream = null;
-            outputStream = response.getOutputStream();
-
-            byte[] bytes = FileCopyUtils.copyToByteArray(new ClassPathResource(dir).getInputStream());
-            outputStream.write(bytes);*/
-            File file = new File(dir);
-            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
-            BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream());
-            byte[] buff = new byte[2048];
-            int bytesRead;
-            while (-1 != (bytesRead = bis.read(buff, 0, buff.length))) {
-                bos.write(buff, 0, bytesRead);
+            if(sys.equals("win")) {
+                OutputStream outputStream = null;
+                outputStream = response.getOutputStream();
+                byte[] bytes = FileCopyUtils.copyToByteArray(new ClassPathResource(dir).getInputStream());
+                outputStream.write(bytes);
+            } else {
+                File file = new File(dir);
+                BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+                BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream());
+                byte[] buff = new byte[2048];
+                int bytesRead;
+                while (-1 != (bytesRead = bis.read(buff, 0, buff.length))) {
+                    bos.write(buff, 0, bytesRead);
+                }
+                bis.close();
+                bos.close();
             }
-            bis.close();
-            bos.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -296,8 +297,10 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
     }
 
     @Override
-    public void openReport(String subjectId, HttpServletResponse response) {
+    public void openReport(String subjectId, HttpServletResponse response) throws Exception {
         OpenReportBaseInfo baseInfo = openReportMapper.getFileBaseInfoById(subjectId);
+        if(ObjectUtil.isNull(baseInfo))
+            throw new Exception("开题报告文件未找到");
         String fileName = baseInfo.getTitle() + ".pdf";
         String dir = baseInfo.getDir();
         fileDownload(dir, fileName, response);
@@ -1177,5 +1180,67 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
 
         fileDownload(dir, fileName, response);
     }
+
+    @Override
+    public MiddleCheckTemplate packPageMiddleCheckInfo(MiddleCheck middleCheck, SubjectTableVo subjectTableVo) {
+        MiddleCheckTemplate template = new MiddleCheckTemplate();
+        template.setGrade(GradeUtils.getGrade()+4);
+        template.setSubjectName(subjectTableVo.getSubjectName());
+        template.setTeacherName(subjectTableVo.getFirstTeacherName());
+        template.setTeacherTitle(subjectTableVo.getFirstTeacherTitle());
+        template.setStudentName(subjectTableVo.getStudentName());
+        template.setLiteratureQuantity(middleCheck.getLiteratureQuantity());
+        template.setFinishDate(middleCheck.getFinishDate().toString());
+        Integer workload = middleCheck.getWorkload();
+        Integer attitude = middleCheck.getAttitude();
+        Integer workingSpeed = middleCheck.getWorkingSpeed();
+        if (workload == 0) {
+            template.setWorkLoad0("√");
+        } else {
+            if (workload == 1) {
+                template.setWorkLoad1("√");
+            } else {
+                template.setWorkLoad2("√");
+            }
+        }
+        if (attitude == 0) {
+            template.setAttitude0("√");
+        } else {
+            if (attitude == 1) {
+                template.setAttitude1("√");
+            } else {
+                template.setAttitude2("√");
+            }
+        }
+        if (workingSpeed == 0) {
+            template.setWorkingProgress0("√");
+        } else {
+            if (workingSpeed == 1) {
+                template.setWorkingProgress1("√");
+            } else {
+                template.setWorkingProgress2("√");
+            }
+        }
+
+        template.setHasTaskBook(middleCheck.getHasTaskbook()==1?"有":"无");
+        template.setHasOpenReport(middleCheck.getHasOpenreport()==1?"有":"无");
+        Integer conclude = middleCheck.getConclude();
+        String s="";
+        if (conclude==0) s ="优";
+        if (conclude==1) s ="良";
+        if (conclude==2) s ="差";
+        template.setConclude(s);
+        template.setArrange(middleCheck.getArrange());
+        template.setMajorAgree(middleCheck.getMajorAgree()==1?"同意":"不同意");
+        String majorName = teacherMapper.selectOne(new QueryWrapper<Teacher>().eq("id", middleCheck.getMajorLeadingId())).getName();
+        String collegeName = teacherMapper.selectOne(new QueryWrapper<Teacher>().eq("id", middleCheck.getCollegeAgree())).getName();
+        template.setMajorSign(majorName);
+        template.setMajorDate(middleCheck.getMajorDate().toString());
+        template.setCollegeAgree(middleCheck.getCollegeAgree()==1?"同意":"不同意");
+        template.setCollegeSign(collegeName);
+        template.setCollegeDate(middleCheck.getCollegeDate().toString());
+        return template;
+    }
+
 
 }
