@@ -2,8 +2,7 @@ package edu.dlu.bysj.common.mapper;
 
 import java.util.List;
 
-import edu.dlu.bysj.document.entity.SelectStaticsTemplate;
-import edu.dlu.bysj.document.entity.SubjectSelectAnalysis;
+import edu.dlu.bysj.document.entity.*;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
@@ -13,8 +12,6 @@ import edu.dlu.bysj.base.model.dto.AdminApprovalConvey;
 import edu.dlu.bysj.base.model.entity.Subject;
 import edu.dlu.bysj.base.model.query.TopicApprovalListQuery;
 import edu.dlu.bysj.base.model.vo.*;
-import edu.dlu.bysj.document.entity.PaperCoverTemplate;
-import edu.dlu.bysj.document.entity.ReportStaticsTemplate;
 
 /**
  * @author XiangXinGang
@@ -243,4 +240,7 @@ public interface SubjectMapper extends BaseMapper<Subject> {
 
     List<ReportStaticsTemplate> selectReportByMajorId(Integer key);
 
+    List<EachReportTemplate> selectEachByMajorId(Integer majorId, Integer grade);
+
+    List<GroupMemberTemplate> selectGroupMenberByMajorId(Integer teamId, Integer grade);
 }

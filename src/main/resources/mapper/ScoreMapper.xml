@@ -55,7 +55,7 @@
                sum(if((score.sum_score between 60 and 69), 1, 0)) as D,
                sum(if(score.sum_score &lt; 60, 1, 0))             as F,
                sum(if(score.is_second = 1, 1, 0))                 as isSecond,
-               s.grade+4                                            as year
+               s.grade                                            as year
         from (select subject.id, subject.grade
               from subject
               where subject.status = 1

@@ -56,7 +56,10 @@
         select p.content as progress,
                (sc.total_process+sc.total_quality+sc.total_complete_quality+sc.total_ability) as defenceScore
         from progress p,score sc
-                            left join subject su on su.id=88
+                            left join subject su on su.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
         where p.id=su.progress_id and sc.subject_id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}

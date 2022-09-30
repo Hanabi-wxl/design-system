@@ -184,9 +184,9 @@
               where student.status = 1
                 and student.id = #{userId}
             ) as t
-                 inner join major as m
+                 left join major as m
                             on t.majorId = m.id
-                 inner join class c
+                 left join class c
                             on c.id = t.classId
 
     </select>

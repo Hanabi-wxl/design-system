@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @ApiModel(description = "学生")
 public class StudentGroupVo {
     @ApiModelProperty(value = "分组编号")
-    private Integer groupNumber;
+    private String groupNumber;
 
     @ApiModelProperty(value = "开始时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")

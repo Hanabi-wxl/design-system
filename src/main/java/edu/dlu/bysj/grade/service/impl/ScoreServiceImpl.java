@@ -58,12 +58,15 @@ public class ScoreServiceImpl extends ServiceImpl<ScoreMapper, Score> implements
         List<TeacherYearEvaluationVo> teacherYearEvaluationVos = baseMapper.selectStudentNumByScore(teacherId);
         for (TeacherYearEvaluationVo teacherYearEvaluationVo : teacherYearEvaluationVos) {
             Integer year = teacherYearEvaluationVo.getYear();
+            teacherYearEvaluationVo.setYear(year+4);
             GoodTeacher goodTeacher = goodTeacherMapper.selectOne(new QueryWrapper<GoodTeacher>()
                     .eq("teacher_id", teacherId)
                     .eq("college_agree",1)
                     .eq("school_year", year));
-            if (ObjectUtil.isNotNull(goodTeacher))
+            if (ObjectUtil.isNotNull(goodTeacher)) {
                 teacherYearEvaluationVo.setIsGood(1);
+            }
+
         }
         return teacherYearEvaluationVos;
     }

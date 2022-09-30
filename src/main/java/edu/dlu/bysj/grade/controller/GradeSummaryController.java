@@ -12,12 +12,14 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import edu.dlu.bysj.base.model.entity.Subject;
+import edu.dlu.bysj.base.model.entity.TeamUser;
 import edu.dlu.bysj.base.model.enums.ProcessEnum;
 import edu.dlu.bysj.base.model.query.GroupMemberQuery;
 import edu.dlu.bysj.base.model.vo.TotalPackageVo;
 import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.SubjectService;
+import edu.dlu.bysj.defense.service.TeamUserService;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -52,10 +54,13 @@ public class GradeSummaryController {
 
     private final SubjectService subjectService;
 
+    private final TeamUserService teamUserService;
+
     private final TeamService teamService;
 
-    public GradeSummaryController(ScoreService scoreService, TeamService teamService,SubjectService subjectService) {
+    public GradeSummaryController(TeamUserService teamUserService,ScoreService scoreService, TeamService teamService,SubjectService subjectService) {
         this.subjectService = subjectService;
+        this.teamUserService = teamUserService;
         this.scoreService = scoreService;
         this.teamService = teamService;
     }
@@ -90,8 +95,7 @@ public class GradeSummaryController {
     @RequiresPermissions({"summary:group"})
     @ApiOperation(value = "按答辩分组获取组内成员")
     @ApiImplicitParam(name = "groupId", value = "答辩分组id")
-    public CommonResult<TotalPackageVo<Map<String, Object>>>
-    obtainGroupMember(@Valid GroupMemberQuery query) {
+    public CommonResult<TotalPackageVo<Map<String, Object>>> obtainGroupMember(@Valid GroupMemberQuery query) {
         TotalPackageVo<Map<String, Object>> mapTotalPackageVo = scoreService.obtainGroupMember(query);
         return CommonResult.success(mapTotalPackageVo);
     }
@@ -111,16 +115,23 @@ public class GradeSummaryController {
     @ApiImplicitParams({@ApiImplicitParam(name = "majorId", value = "专业id"),
         @ApiImplicitParam(name = "grade", value = "年级")})
     public CommonResult<List<Map<String, Object>>> obtainDefenseTeamInfo(
-        @Valid @NotNull(message = "专业不能为空") Integer majorId,@Valid @NotNull(message = "年级不能为空") Integer grade) {
+        @Valid @NotNull(message = "专业不能为空") Integer majorId,@Valid @NotNull(message = "年级不能为空") Integer grade, HttpServletRequest request) {
+        String jwt = request.getHeader("jwt");
         List<Map<String, Object>> result = new ArrayList<>();
         grade = GradeUtils.getGrade(grade);
         List<Team> list = teamService.list(new QueryWrapper<Team>().eq("grade", grade).eq("major_id", majorId));
         if (list != null && !list.isEmpty()) {
             for (Team element : list) {
-                HashMap<String, Object> map = new HashMap<>();
-                map.put("groupId", element.getId());
-                map.put("groupNumber", element.getTeamNumber());
-                result.add(map);
+                TeamUser teamUser = teamUserService.getOne(new QueryWrapper<TeamUser>()
+                        .eq("team_id", element.getId())
+                        .eq("user_id", JwtUtil.getUserId(jwt))
+                        .eq("is_student", 0));
+                if(ObjectUtil.isNotNull(teamUser)) {
+                    HashMap<String, Object> map = new HashMap<>();
+                    map.put("groupId", element.getId());
+                    map.put("groupNumber", element.getTeamNumber());
+                    result.add(map);
+                }
             }
         }
         return CommonResult.success(result);

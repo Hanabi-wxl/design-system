@@ -12,6 +12,8 @@ import edu.dlu.bysj.base.model.vo.TotalPackageVo;
 import edu.dlu.bysj.base.result.CommonResult;
 import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.base.util.JwtUtil;
+import edu.dlu.bysj.common.service.StudentService;
+import edu.dlu.bysj.common.service.SubjectService;
 import edu.dlu.bysj.defense.service.DefenseRecordService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
 import io.swagger.annotations.Api;
@@ -42,10 +44,12 @@ import java.util.Map;
 @Validated
 public class DefenseRecordController {
     private final DefenseRecordService defenseRecordService;
+    private final StudentService studentService;
 
     @Autowired
-    public DefenseRecordController(DefenseRecordService defenseRecordService) {
+    public DefenseRecordController(DefenseRecordService defenseRecordService, StudentService studentService) {
         this.defenseRecordService = defenseRecordService;
+        this.studentService = studentService;
     }
 
     @PostMapping(value = "/defence/record/add")
@@ -78,6 +82,9 @@ public class DefenseRecordController {
     @ApiImplicitParam(name = "recordId", value = "答辩记录id")
     public CommonResult<Object> deleteDefenceRecord(@NotNull @RequestBody String recordId) {
         Integer id = JSONUtil.parseObj(recordId).get("recordId", Integer.class);
+        DefenceRecord record = defenseRecordService.getOne(new QueryWrapper<DefenceRecord>().eq("id", recordId));
+        if(ObjectUtil.isNull(record))
+            return CommonResult.success(null,"移除成功");
         return defenseRecordService.removeById(id) ? CommonResult.success("删除成功") : CommonResult.failed("删除失败");
     }
 
@@ -86,8 +93,13 @@ public class DefenseRecordController {
     @RequiresPermissions({"record:list"})
     @ApiOperation(value = "获取答辩记录列表")
     @ApiImplicitParam(name = "subjectId", value = "题目id")
-    public CommonResult<List<Map<String, Object>>> defenseRecordList(@NotNull Integer subjectId) {
+    public CommonResult<List<Map<String, Object>>> defenseRecordList(Integer subjectId, HttpServletRequest request) {
+        String jwt = request.getHeader("jwt");
         List<Map<String, Object>> array = new ArrayList<>();
+        if(subjectId==null) {
+            Integer userId = JwtUtil.getUserId(jwt);
+            subjectId = studentService.getById(userId).getSubjectId();
+        }
         List<DefenceRecord> records = defenseRecordService.list(new QueryWrapper<DefenceRecord>()
                 .eq("subject_id", subjectId));
         for (DefenceRecord element : records) {

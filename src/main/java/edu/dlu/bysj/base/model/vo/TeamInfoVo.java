@@ -31,7 +31,7 @@ public class TeamInfoVo {
     private String require;
 
     @ApiModelProperty(value = "分组编号")
-    private Integer teamNumber;
+    private String teamNumber;
 
     @ApiModelProperty(value = "组号id")
     private Integer groupId;

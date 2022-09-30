@@ -3,6 +3,7 @@ package edu.dlu.bysj.document.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import edu.dlu.bysj.document.service.FileUploadService;
 import edu.dlu.bysj.paper.service.OpenReportService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import java.util.UUID;
  * @since 1.0.0
  */
 @Service
+@Slf4j
 public class FileUploadServiceImpl implements FileUploadService {
 
     /**
@@ -79,6 +81,7 @@ public class FileUploadServiceImpl implements FileUploadService {
                 res.put("dir", "/usr/fileUpload/"+ url + "/" + fileName);
             else
                 res.put("dir", "static/upload/"+ url + "/" + fileName);
+            log.info(res.toString());
             return res;
         } catch (Exception e) {
             e.printStackTrace();

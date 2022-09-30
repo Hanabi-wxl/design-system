@@ -256,15 +256,14 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
 
     private Integer summaryScore(Integer s1, Integer s2, Integer s3, Integer s4){
         int sum = 0;
-        if (ObjectUtil.isNotNull(s1)){
+        if (ObjectUtil.isNotNull(s1))
             sum += s1;
-        } else if (ObjectUtil.isNotNull(s2)){
+        if (ObjectUtil.isNotNull(s2))
             sum += s2;
-        } else if (ObjectUtil.isNotNull(s3)){
+        if (ObjectUtil.isNotNull(s3))
             sum += s3;
-        } else if (ObjectUtil.isNotNull(s4)){
+        if (ObjectUtil.isNotNull(s4))
             sum += s4;
-        }
         return sum;
     }
 
@@ -516,6 +515,8 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
         }
         Student student = studentService.getById(userId);
         if (total != 0){
+            Integer summaryScore = summaryScore(subjectDetailVo.getDefenceScore(), subjectDetailVo.getOtherScore(), subjectDetailVo.getProcessScore(), subjectDetailVo.getTeacherScore());
+            subjectDetailVo.setSummaryScore(summaryScore);
             subjectDetailVo.setStudentName(student.getName());
             subjectDetailVo.setStudentNumber(student.getStudentNumber());
             subjectDetailVo.setStudentPhone(student.getPhoneNumber());

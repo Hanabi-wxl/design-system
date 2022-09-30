@@ -77,8 +77,10 @@ public class MajorServiceImpl extends ServiceImpl<MajorMapper, Major> implements
         Integer grade = GradeUtils.getGrade(year);
         List<Integer> list = majorMapper.archiveNumber(majorId, grade);
         /*归档序号从1开始*/
-        for (int i = 0; i < list.size(); i++) {
-            majorMapper.updateFillNumber(list.get(i), i + 1);
+        int count = 1;
+        for (Integer id : list) {
+            if (id != -1)
+                majorMapper.updateFillNumber(id, count++);
         }
         return true;
     }

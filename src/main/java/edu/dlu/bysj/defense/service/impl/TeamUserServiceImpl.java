@@ -73,9 +73,9 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
         if (ObjectUtil.isNotNull(teamUser)) {
             /*插入新的值*/
             TeamUser targetTeamUser = new TeamUser();
+            targetTeamUser.setTeamId(teamUser.getTeamId());
             targetTeamUser.setId(teamUser.getId());
             targetTeamUser.setUserId(studentId);
-            targetTeamUser.setTeamId(groupId);
             targetTeamUser.setSerial(serial);
             targetTeamUser.setResposiblity(4);
             targetTeamUser.setIsStudent(isStudent);

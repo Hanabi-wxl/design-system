@@ -44,7 +44,7 @@ import java.util.UUID;
  * @since 1.0.0
  */
 @RestController
-@RequestMapping("/paperManagement/fileUpload/")
+@RequestMapping("/paperManagement/fileUpload")
 public class FileUploadController {
     private final StudentService studentService;
     private final CollegeService collegeService;
@@ -79,7 +79,7 @@ public class FileUploadController {
 
     @RequiresPermissions("file:upload")
     @LogAnnotation(content = "上传开题报告")
-    @PostMapping("openReport")
+    @PostMapping("/openReport")
     public CommonResult<Object> uploadReport(@RequestBody MultipartFile file, HttpServletRequest request) throws Exception {
         String jwt = request.getHeader("jwt");
         Integer majorId = JwtUtil.getMajorId(jwt);
@@ -130,7 +130,7 @@ public class FileUploadController {
 
     @RequiresPermissions("file:upload")
     @LogAnnotation(content = "上传论文")
-    @PostMapping("paper")
+    @PostMapping("/paper")
     public CommonResult<Object> uploadPaper(@RequestBody MultipartFile file, HttpServletRequest request) throws Exception {
         String jwt = request.getHeader("jwt");
         Integer majorId = JwtUtil.getMajorId(jwt);
@@ -173,7 +173,7 @@ public class FileUploadController {
                         subject.setProgressId(processCode);
                         flag = subjectService.updateById(subject);
                     } else {
-                        throw new Exception("过程错误");
+                        CommonResult.failed("过程错误");
                     }
                 }
             } else {
@@ -184,8 +184,40 @@ public class FileUploadController {
     }
 
     @RequiresPermissions("file:upload")
+    @LogAnnotation(content = "上传答辩记录纸")
+    @PostMapping("/recordPaper")
+    public CommonResult<Object> uploadRecordPaper(@RequestBody MultipartFile file, HttpServletRequest request) throws Exception {
+        String jwt = request.getHeader("jwt");
+        Integer isStudent = JwtUtil.getRoleIds(jwt).contains(1) ? 1: 0;
+        Integer majorId = JwtUtil.getMajorId(jwt);
+        Integer userId = JwtUtil.getUserId(jwt);
+        Integer collegeId = collegeService.getCollegeIdByMajorId(majorId);
+        int year = LocalDate.now().getYear();
+        Integer userNumber;
+        if (isStudent==1)
+            userNumber = studentService.idToNumber(userId);
+        else
+            userNumber = Integer.parseInt(teacherService.idToNumber(userId));
+
+        // 例：2022/paper/college1/major1/20423034
+        String url = year + "/recordPaper/" + "college" + collegeId + "/" + "major" + majorId + "/" + userNumber;
+        Map<String, String> map = fileUploadService.uploadFile(file, url);
+        FileInfomation infomation = new FileInfomation();
+        // 6: 答辩记录纸
+        infomation.setType("6");
+        String originalFilename = file.getOriginalFilename();
+        String fileSuffix = originalFilename.substring(originalFilename.lastIndexOf("."));
+        infomation.setTitle(userNumber + "答辩记录纸" + fileSuffix);
+        infomation.setDir(map.get("dir"));
+        infomation.setUserId(userId);
+        infomation.setIsStudent(isStudent);
+        boolean save = fileInformationService.save(infomation);
+        return save ? CommonResult.success("提交成功") : CommonResult.failed();
+    }
+
+    @RequiresPermissions("file:upload")
     @LogAnnotation(content = "上传毕业设计")
-    @PostMapping("design")
+    @PostMapping("/design")
     public CommonResult<Object> uploadDesign(@RequestBody MultipartFile file, HttpServletRequest request) throws Exception {
         String jwt = request.getHeader("jwt");
         Integer majorId = JwtUtil.getMajorId(jwt);
@@ -239,7 +271,7 @@ public class FileUploadController {
 
     @RequiresPermissions("notice:upload")
     @LogAnnotation(content = "上传通知文件")
-    @PostMapping("noticeFile")
+    @PostMapping("/noticeFile")
     public CommonResult<Object> uploadNoticeFile(@RequestBody MultipartFile file, HttpServletRequest request) throws Exception {
         String jwt = request.getHeader("jwt");
         Integer majorId = JwtUtil.getMajorId(jwt);
@@ -271,7 +303,7 @@ public class FileUploadController {
 
     @RequiresPermissions("message:upload")
     @LogAnnotation(content = "上传消息文件")
-    @PostMapping("messageFile")
+    @PostMapping("/messageFile")
     public CommonResult<Object> uploadMessageFile(@RequestBody MultipartFile file, HttpServletRequest request) throws Exception {
         String jwt = request.getHeader("jwt");
         Integer majorId = JwtUtil.getMajorId(jwt);

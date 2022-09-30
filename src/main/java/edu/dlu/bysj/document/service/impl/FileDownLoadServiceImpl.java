@@ -12,6 +12,9 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import edu.dlu.bysj.base.model.vo.MajorSimpleInfoVo;
 import edu.dlu.bysj.base.model.vo.SubjectTableVo;
 import edu.dlu.bysj.base.util.GradeUtils;
+import edu.dlu.bysj.defense.mapper.TeamMapper;
+import edu.dlu.bysj.defense.mapper.TeamUserMapper;
+import edu.dlu.bysj.defense.service.TeamUserService;
 import edu.dlu.bysj.document.entity.*;
 import edu.dlu.bysj.document.entity.dto.OpenReportBaseInfo;
 import edu.dlu.bysj.notification.mapper.MessageFileMapper;
@@ -64,6 +67,8 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
 
     private final OpenReportMapper openReportMapper;
 
+    private final TeamUserMapper teamUserMapper;
+
     private final SubjectFileMapper subjectFileMapper;
 
     private final FileInformationMapper fileInformationMapper;
@@ -76,16 +81,20 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
 
     private final NoticeMapper noticeMapper;
 
+    private final TeamMapper teamMapper;
+
     private final MessageMapper messageMapper;
 
     @Value("${design.system}")
     private String sys;
 
-    public FileDownLoadServiceImpl(SubjectMapper subjectMapper, TeacherMapper teacherMapper,
+    public FileDownLoadServiceImpl(SubjectMapper subjectMapper, TeacherMapper teacherMapper,TeamMapper teamMapper,TeamUserMapper teamUserMapper,
                                    StudentMapper studentMapper, MajorMapper majorMapper, CollegeMapper collegeMapper, ClassMapper classMapper,
                                    SubjectTypeMapper subjectTypeMapper, OpenReportMapper openReportMapper, SubjectFileMapper subjectFileMapper,
                                    FileInformationMapper fileInformationMapper, NoticeFileMapper noticeFileMapper, MessageFileMapper messageFileMapper, NoticeMapper noticeMapper, MessageMapper messageMapper) {
         this.fileInformationMapper = fileInformationMapper;
+        this.teamMapper = teamMapper;
+        this.teamUserMapper = teamUserMapper;
         this.subjectFileMapper = subjectFileMapper;
         this.openReportMapper = openReportMapper;
         this.subjectMapper = subjectMapper;
@@ -536,6 +545,7 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
                 sequenceCell33.setCellStyle(sheetAt.getRow(6).getCell(1).getCellStyle());
                 sequenceCell33.setCellValue(df.format(1.0*analysis.getQt4()/countTeacher));
             }
+            row++;
         }
 
         /*删除模板sheet(0)*/
@@ -1240,6 +1250,384 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         template.setCollegeSign(collegeName);
         template.setCollegeDate(middleCheck.getCollegeDate().toString());
         return template;
+    }
+
+    @Override
+    public void staticsEachTable(Integer majorId, Integer year, HttpServletResponse response) throws IOException {
+        /*该学院下的所有专业名称*/
+        Map<Integer, Map<String, Object>> majorMap = majorMapper.selectAllMajorOfCollege(majorId);
+
+        ClassPathResource resource = new ClassPathResource("template/excel/MutualEvaluationTemplate.xlsx");
+
+        /*获取模板*/
+        Workbook workbook = new XSSFWorkbook(resource.getInputStream());
+
+        Integer grade = GradeUtils.getGrade(year);
+
+        //sheetAt 是模板
+        //sheet 是需要操作的
+        /*模板sheet*/
+        Sheet sheetAt = workbook.getSheetAt(0);
+        for (Map.Entry<Integer, Map<String, Object>> element : majorMap.entrySet()) {
+            /*创建新sheet*/
+            Sheet sheet = workbook.createSheet(((String)element.getValue().get("majorName")));
+            fillingEachReportSheetTitle(sheet, sheetAt, element.getValue(), year);
+
+            /*中间内容部分*/
+            List<EachReportTemplate> value = subjectMapper.selectEachByMajorId(element.getKey(), grade);
+            if (ObjectUtil.isNotNull(value)) {
+                Row fixedRow2 = null;
+                int row = 3;
+                for (int i = 0; i < value.size(); i++) {
+                    // 3
+                    fixedRow2 = sheet.createRow(row);
+
+                    Cell sequenceCell2 = fixedRow2.createCell(0);
+                    sequenceCell2.setCellStyle(sheetAt.getRow(3).getCell(0).getCellStyle());
+                    sequenceCell2.setCellValue(i + 1);
+
+                    Cell topicCell2 = fixedRow2.createCell(1);
+                    topicCell2.setCellStyle(sheetAt.getRow(3).getCell(1).getCellStyle());
+                    topicCell2.setCellValue(value.get(i).getEachName());
+
+                    Cell topicCell3 = fixedRow2.createCell(2);
+                    topicCell3.setCellStyle(sheetAt.getRow(3).getCell(2).getCellStyle());
+                    topicCell3.setCellValue(value.get(i).getSubjectName());
+
+                    Cell sNameCell2 = fixedRow2.createCell(3);
+                    sNameCell2.setCellStyle(sheetAt.getRow(3).getCell(2).getCellStyle());
+                    sNameCell2.setCellValue(value.get(i).getStudentName());
+
+                    Cell cNameCell2 = fixedRow2.createCell(4);
+                    cNameCell2.setCellStyle(sheetAt.getRow(3).getCell(3).getCellStyle());
+                    cNameCell2.setCellValue(value.get(i).getClassName());
+
+                    Cell gNameCell2 = fixedRow2.createCell(5);
+                    gNameCell2.setCellStyle(sheetAt.getRow(3).getCell(4).getCellStyle());
+                    gNameCell2.setCellValue(value.get(i).getFirstTeacherName());
+
+                    Cell sourceCell2 = fixedRow2.createCell(6);
+                    sourceCell2.setCellStyle(sheetAt.getRow(3).getCell(5).getCellStyle());
+                    sourceCell2.setCellValue(value.get(i).getFirstTitle());
+
+                    fixedRow2.setHeightInPoints(25);
+                    row++;
+                }
+            }
+        }
+
+        /*删除模板sheet(0)*/
+        workbook.removeSheetAt(0);
+
+        String fileName = "MutualEvaluationTable_" +  GradeUtils.getGrade(DateUtil.year(new Date())) + "_" + majorMap.get(majorId).get("collegeId") + ".xlsx";
+
+        /*设置导出参数*/
+        response.setContentType("application/vnd.ms-excel");
+        response.addHeader("Access-Control-Expose-Headers", "Content-Disposition");
+        response.addHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+
+        /*将内容导出到outPutStream*/
+        workbook.write(response.getOutputStream());
+    }
+
+    @Override
+    public void staticsGroupTable(Integer majorId, Integer year, HttpServletResponse response) throws IOException {
+        /*该专业下的所有分组*/
+        List<Team> teams = teamMapper.selectList(new QueryWrapper<Team>()
+                .eq("major_id", majorId)
+                .eq("grade", GradeUtils.getGrade(year)));
+
+        ClassPathResource resource = new ClassPathResource("template/excel/GroupTableTemplate.xlsx");
+
+        /*获取模板*/
+        Workbook workbook = new XSSFWorkbook(resource.getInputStream());
+
+        Integer grade = GradeUtils.getGrade(year);
+
+        //sheetAt 是模板
+        //sheet 是需要操作的
+        /*模板sheet*/
+        Sheet sheetAt = workbook.getSheetAt(0);
+        for (Team element: teams) {
+            /*创建新sheet*/
+            Sheet sheet = workbook.createSheet(element.getTeamNumber());
+            List<TeamUser> teamUsers = teamUserMapper.selectList(new QueryWrapper<TeamUser>()
+                    .eq("team_id", element.getId())
+                    .eq("is_student", 0));
+
+            fillingTeamReportSheetTitle(sheet, sheetAt, element, teamUsers, year);
+
+            /*中间内容部分*/
+            List<GroupMemberTemplate> value = subjectMapper.selectGroupMenberByMajorId(element.getId(), grade);
+            if (ObjectUtil.isNotNull(value)) {
+                Row fixedRow2 = null;
+                int row = 8;
+                for (int i = 0; i < value.size(); i++) {
+                    // 3
+                    fixedRow2 = sheet.createRow(row);
+                    sheet.addMergedRegion(new CellRangeAddress(row, row, 4, 7));
+
+                    Cell sequenceCell2 = fixedRow2.createCell(0);
+                    sequenceCell2.setCellStyle(sheetAt.getRow(8).getCell(0).getCellStyle());
+                    sequenceCell2.setCellValue(i + 1);
+
+                    Cell topicCell2 = fixedRow2.createCell(1);
+                    topicCell2.setCellStyle(sheetAt.getRow(8).getCell(1).getCellStyle());
+                    topicCell2.setCellValue(value.get(i).getStudentNumber());
+
+                    Cell topicCell3 = fixedRow2.createCell(2);
+                    topicCell3.setCellStyle(sheetAt.getRow(8).getCell(2).getCellStyle());
+                    topicCell3.setCellValue(value.get(i).getStudentName());
+
+                    Cell sNameCell2 = fixedRow2.createCell(3);
+                    sNameCell2.setCellStyle(sheetAt.getRow(8).getCell(3).getCellStyle());
+                    sNameCell2.setCellValue(value.get(i).getClassName());
+
+                    Cell cNameCell2 = fixedRow2.createCell(4);
+                    cNameCell2.setCellStyle(sheetAt.getRow(8).getCell(4).getCellStyle());
+                    cNameCell2.setCellValue(value.get(i).getSubjectName());
+                    setBorder(sheet, new CellRangeAddress(row, row, 4, 7));
+                    Cell gNameCell2 = fixedRow2.createCell(8);
+                    gNameCell2.setCellStyle(sheetAt.getRow(8).getCell(8).getCellStyle());
+                    gNameCell2.setCellValue(value.get(i).getFirstTeacherName());
+
+                    Cell sourceCell2 = fixedRow2.createCell(9);
+                    sourceCell2.setCellStyle(sheetAt.getRow(8).getCell(9).getCellStyle());
+                    sourceCell2.setCellValue(value.get(i).getEachName());
+                    fixedRow2.setHeightInPoints(20);
+                    row++;
+                }
+            }
+        }
+
+        /*删除模板sheet(0)*/
+        workbook.removeSheetAt(0);
+
+        String fileName = "GroupMemberTable_" +  GradeUtils.getGrade(DateUtil.year(new Date())) + "_" + majorId + ".xlsx";
+
+        /*设置导出参数*/
+        response.setContentType("application/vnd.ms-excel");
+        response.addHeader("Access-Control-Expose-Headers", "Content-Disposition");
+        response.addHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+
+        /*将内容导出到outPutStream*/
+        workbook.write(response.getOutputStream());
+    }
+
+    private void fillingTeamReportSheetTitle(Sheet sheet, Sheet sheetAt, Team element, List<TeamUser> teamUsers, Integer year) {
+        /*设置行高列宽*/
+        sheet.setColumnWidth(0, sheetAt.getColumnWidth(0));
+        sheet.setColumnWidth(1, sheetAt.getColumnWidth(1));
+        sheet.setColumnWidth(2, sheetAt.getColumnWidth(2));
+        sheet.setColumnWidth(3, sheetAt.getColumnWidth(3));
+        sheet.setColumnWidth(4, sheetAt.getColumnWidth(4));
+        sheet.setColumnWidth(5, sheetAt.getColumnWidth(5));
+        sheet.setColumnWidth(6, sheetAt.getColumnWidth(6));
+        sheet.setColumnWidth(7, sheetAt.getColumnWidth(7));
+        sheet.setColumnWidth(8, sheetAt.getColumnWidth(8));
+        sheet.setColumnWidth(9, sheetAt.getColumnWidth(9));
+
+        /**/
+        /*合并单元格，创建单元格填充数据*/
+        /*设置跨行*/
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 9));
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 2));
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 3, 5));
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 6, 9));
+        sheet.addMergedRegion(new CellRangeAddress(2, 2, 1, 9));
+        sheet.addMergedRegion(new CellRangeAddress(3, 3, 1, 9));
+        sheet.addMergedRegion(new CellRangeAddress(4, 4, 1, 9));
+        sheet.addMergedRegion(new CellRangeAddress(5, 5, 1, 9));
+        sheet.addMergedRegion(new CellRangeAddress(6, 6, 1, 9));
+        sheet.addMergedRegion(new CellRangeAddress(7, 7, 4, 7));
+
+        /*表头 (1)*/
+        Row titleRow = sheet.createRow(0);
+        Cell titleCell = titleRow.createCell(0);
+        titleCell.setCellStyle(sheetAt.getRow(0).getCell(0).getCellStyle());
+        int grade = GradeUtils.getGrade(year);
+        titleCell.setCellValue((grade + 4) + "届信息工程学院本科生毕业论文(设计)答辩委员会及分组情况表");
+        titleRow.setHeightInPoints(60);
+
+        Row printRow = sheet.createRow(1);
+        Cell collegeMajorCell = printRow.createCell(0);
+        collegeMajorCell.setCellStyle(sheetAt.getRow(1).getCell(0).getCellStyle());
+        collegeMajorCell.setCellValue(element.getTeamNumber());
+
+        Cell collegeCell = printRow.createCell(3);
+        collegeCell.setCellStyle(sheetAt.getRow(1).getCell(3).getCellStyle());
+        collegeCell.setCellValue("教学院长签字：");
+
+        Cell printDateCell = printRow.createCell(6);
+        printDateCell.setCellStyle(sheetAt.getRow(1).getCell(6).getCellStyle());
+        String name = collegeMapper.selectById(collegeMapper.getCollegeId(element.getMajorId())).getName();
+        printDateCell.setCellValue("学院公章："+name);
+        printRow.setHeightInPoints(20);
+
+        /*固定列名 (2)*/
+        Row fixedRow = sheet.createRow(2);
+        Cell sequenceCell = fixedRow.createCell(0);
+        sequenceCell.setCellStyle(sheetAt.getRow(2).getCell(0).getCellStyle());
+        sequenceCell.setCellValue("组长：");
+        Row fixedRow1 = sheet.createRow(3);
+        Cell cell = fixedRow1.createCell(0);
+        cell.setCellStyle(sheetAt.getRow(3).getCell(0).getCellStyle());
+        cell.setCellValue("秘书：");
+        Row fixedRow2 = sheet.createRow(4);
+        Cell cell1 = fixedRow2.createCell(0);
+        cell1.setCellStyle(sheetAt.getRow(3).getCell(0).getCellStyle());
+        cell1.setCellValue("成员：");
+
+        Cell topicCell = fixedRow.createCell(1);
+        topicCell.setCellStyle(sheetAt.getRow(2).getCell(1).getCellStyle());
+        // 内容已在循环中填写
+        Cell sNameCell = fixedRow1.createCell(1);
+        sNameCell.setCellStyle(sheetAt.getRow(3).getCell(1).getCellStyle());
+        Cell sNameCell1 = fixedRow2.createCell(1);
+        sNameCell1.setCellStyle(sheetAt.getRow(3).getCell(1).getCellStyle());
+
+        StringBuilder headman = new StringBuilder();
+        StringBuilder secretary = new StringBuilder();
+        StringBuilder member = new StringBuilder();
+
+        for (TeamUser teamUser : teamUsers) {
+            if(teamUser.getResposiblity()==0) {
+                headman.append(teacherMapper.selectById(teamUser.getUserId()).getName()).append(" ");
+            } else if (teamUser.getResposiblity()==1) {
+                headman.append(teacherMapper.selectById(teamUser.getUserId()).getName()).append(" ");
+            } else if (teamUser.getResposiblity()==2) {
+                secretary.append(teacherMapper.selectById(teamUser.getUserId()).getName()).append(" ");
+            } else if (teamUser.getResposiblity()==3) {
+                member.append(teacherMapper.selectById(teamUser.getUserId()).getName()).append(" ");
+            }
+        }
+        Cell cell13 = fixedRow.createCell(1);
+        Cell cell14 = fixedRow1.createCell(1);
+        Cell cell15 = fixedRow2.createCell(1);
+        cell13.setCellValue(headman.toString());
+        cell14.setCellValue(secretary.toString());
+        cell15.setCellValue(member.toString());
+
+        Row row5 = sheet.createRow(5);
+        Cell cell2 = row5.createCell(0);
+        cell2.setCellStyle(sheetAt.getRow(3).getCell(0).getCellStyle());
+        cell2.setCellValue("时间：");
+        Cell cell3 = row5.createCell(1);
+        cell3.setCellStyle(sheetAt.getRow(3).getCell(1).getCellStyle());
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        cell3.setCellValue(element.getStartDate().format(dateTimeFormatter) + " - " + element.getEndTime().format(dateTimeFormatter));
+
+        Row row6 = sheet.createRow(6);
+        Cell cell4 = row6.createCell(0);
+        cell4.setCellStyle(sheetAt.getRow(3).getCell(0).getCellStyle());
+        cell4.setCellValue("地点：");
+        Cell cell5 = row6.createCell(1);
+        cell5.setCellStyle(sheetAt.getRow(3).getCell(1).getCellStyle());
+        cell5.setCellValue(element.getAddress());
+
+        Row row7 = sheet.createRow(7);
+        Cell cell6 = row7.createCell(0);
+        cell6.setCellStyle(sheetAt.getRow(7).getCell(0).getCellStyle());
+        cell6.setCellValue("答辩序号");
+        Cell cell7 = row7.createCell(1);
+        cell7.setCellStyle(sheetAt.getRow(7).getCell(1).getCellStyle());
+        cell7.setCellValue("学号");
+        Cell cell8 = row7.createCell(2);
+        cell8.setCellStyle(sheetAt.getRow(7).getCell(2).getCellStyle());
+        cell8.setCellValue("姓名");
+        Cell cell9 = row7.createCell(3);
+        cell9.setCellStyle(sheetAt.getRow(7).getCell(3).getCellStyle());
+        cell9.setCellValue("班级");
+        Cell cell10 = row7.createCell(4);
+        cell10.setCellStyle(sheetAt.getRow(7).getCell(4).getCellStyle());
+        cell10.setCellValue("题目");
+        Cell cell11 = row7.createCell(8);
+        cell11.setCellStyle(sheetAt.getRow(7).getCell(8).getCellStyle());
+        cell11.setCellValue("指导教师");
+        Cell cell12 = row7.createCell(9);
+        cell12.setCellStyle(sheetAt.getRow(7).getCell(9).getCellStyle());
+        cell12.setCellValue("互评教师");
+        setBorder(sheet, new CellRangeAddress(7,7,4,7));
+        fixedRow.setHeightInPoints(20);
+        fixedRow1.setHeightInPoints(20);
+        fixedRow2.setHeightInPoints(20);
+        row5.setHeightInPoints(20);
+        row6.setHeightInPoints(20);
+        row7.setHeightInPoints(20);
+    }
+
+    private void fillingEachReportSheetTitle(Sheet sheet, Sheet sheetAt, Map<String, Object> element, Integer year) {
+        /*设置行高列宽*/
+        sheet.setColumnWidth(0, sheetAt.getColumnWidth(0));
+        sheet.setColumnWidth(1, sheetAt.getColumnWidth(1));
+        sheet.setColumnWidth(2, sheetAt.getColumnWidth(2));
+        sheet.setColumnWidth(3, sheetAt.getColumnWidth(3));
+        sheet.setColumnWidth(4, sheetAt.getColumnWidth(4));
+        sheet.setColumnWidth(5, sheetAt.getColumnWidth(5));
+        sheet.setColumnWidth(6, sheetAt.getColumnWidth(6));
+
+        /**/
+        /*合并单元格，创建单元格填充数据*/
+        /*设置跨行*/
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 2));
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 3, 4));
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 5, 6));
+
+        /*表头 (1)*/
+        Row titleRow = sheet.createRow(0);
+        Cell titleCell = titleRow.createCell(0);
+        titleCell.setCellStyle(sheetAt.getRow(0).getCell(0).getCellStyle());
+        int grade = GradeUtils.getGrade(year);
+        titleCell.setCellValue((grade+3) + "-" + (grade + 4) + "(2)学年本科生毕业论文(设计)互评统计表");
+        titleRow.setHeightInPoints(25);
+
+        /*学院专业打印时间*/
+        Row printRow = sheet.createRow(1);
+        Cell collegeMajorCell = printRow.createCell(0);
+        collegeMajorCell.setCellStyle(sheetAt.getRow(1).getCell(0).getCellStyle());
+        collegeMajorCell.setCellValue("学院: " + element.get("collegeName") + "  " + "专业: " + element.get("majorName"));
+
+        Cell collegeCell = printRow.createCell(5);
+        collegeCell.setCellStyle(sheetAt.getRow(1).getCell(0).getCellStyle());
+        collegeCell.setCellValue("教学院长签字：");
+
+        Cell printDateCell = printRow.createCell(5);
+        printDateCell.setCellStyle(sheetAt.getRow(1).getCell(0).getCellStyle());
+        printDateCell.setCellValue("打印时间:" + DateUtil.format(new Date(), "yyyy-MM-dd"));
+        printRow.setHeightInPoints(20);
+
+        /*固定列名 (2)*/
+        Row fixedRow = sheet.createRow(2);
+        Cell sequenceCell = fixedRow.createCell(0);
+        sequenceCell.setCellStyle(sheetAt.getRow(2).getCell(0).getCellStyle());
+        sequenceCell.setCellValue("序号");
+
+        Cell topicCell = fixedRow.createCell(1);
+        topicCell.setCellStyle(sheetAt.getRow(2).getCell(1).getCellStyle());
+        topicCell.setCellValue("互评教师");
+
+        Cell topicCell1 = fixedRow.createCell(2);
+        topicCell1.setCellStyle(sheetAt.getRow(2).getCell(2).getCellStyle());
+        topicCell1.setCellValue("毕业论文(设计)选题");
+
+        Cell sNameCell = fixedRow.createCell(3);
+        sNameCell.setCellStyle(sheetAt.getRow(2).getCell(2).getCellStyle());
+        sNameCell.setCellValue("学生姓名");
+
+        Cell cNameCell = fixedRow.createCell(4);
+        cNameCell.setCellStyle(sheetAt.getRow(2).getCell(3).getCellStyle());
+        cNameCell.setCellValue("班级");
+
+        Cell gNameCell = fixedRow.createCell(5);
+        gNameCell.setCellStyle(sheetAt.getRow(2).getCell(4).getCellStyle());
+        gNameCell.setCellValue("指导教师");
+
+        Cell sourceCell = fixedRow.createCell(6);
+        sourceCell.setCellStyle(sheetAt.getRow(2).getCell(5).getCellStyle());
+        sourceCell.setCellValue("指导教师职称");
+
+        fixedRow.setHeightInPoints(30);
     }
 
 

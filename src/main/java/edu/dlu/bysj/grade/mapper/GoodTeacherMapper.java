@@ -23,10 +23,11 @@ public interface GoodTeacherMapper extends BaseMapper<GoodTeacher> {
      * @return
      */
     List<MajorExcellentTeacherVo> selectGoodTeacherInfo(@Param("majorId") Integer majorId,
+                                                        @Param("grade") Integer grade,
                                                         @Param("teacherNumber") String TeacherNumber,
                                                         @Param("teacherName") String teacherName,
                                                         @Param("start") Integer start,
                                                         @Param("size") Integer size);
 
-    Integer selectTotalGoodTeacherInfo(Integer majorId, String teacherNumber, String teacherName);
+    Integer selectTotalGoodTeacherInfo(Integer majorId, Integer grade, String teacherNumber, String teacherName);
 }

@@ -39,7 +39,7 @@
         teacher.id
         from score
         inner join subject
-        on score.subject_id = subject.id
+        on score.subject_id = subject.id and subject.grade = #{grade}
         inner join teacher
         on subject.first_teacher_id = teacher.id
         inner join major
@@ -73,7 +73,7 @@
             teacher.id
             from score
             inner join subject
-            on score.subject_id = subject.id
+            on score.subject_id = subject.id and subject.grade = #{grade}
             inner join teacher
             on subject.first_teacher_id = teacher.id
             inner join major

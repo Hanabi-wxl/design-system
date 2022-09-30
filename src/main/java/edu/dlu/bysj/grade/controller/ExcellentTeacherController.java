@@ -9,6 +9,7 @@ import javax.validation.constraints.NotNull;
 
 import edu.dlu.bysj.base.model.query.MajorSearchQuery;
 import edu.dlu.bysj.base.model.vo.TotalPackageVo;
+import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.grade.model.vo.CollegeCommentVo;
 import edu.dlu.bysj.grade.model.vo.CommitGoodTeacherVo;
 import edu.dlu.bysj.grade.model.vo.TeacherCommentVo;
@@ -86,11 +87,10 @@ public class ExcellentTeacherController {
         boolean flag = false;
         if (!StringUtils.isEmpty(jwt)) {
             Integer userId = JwtUtil.getUserId(jwt);
+            Integer grade = GradeUtils.getGrade(teacherVo.getYear());
             GoodTeacher goodTeacher = goodTeacherService
-                .getOne(new QueryWrapper<GoodTeacher>().eq("teacher_id", userId).eq("school_year", teacherVo.getYear()));
+                .getOne(new QueryWrapper<GoodTeacher>().eq("teacher_id", userId).eq("school_year", grade));
             if (ObjectUtil.isNotNull(goodTeacher)) {
-                goodTeacher.setTeacherId(userId);
-                goodTeacher.setSchoolYear(teacherVo.getYear());
                 goodTeacher.setSelfComment(teacherVo.getComment());
                 flag = goodTeacherService.updateById(goodTeacher);
             }
@@ -113,13 +113,14 @@ public class ExcellentTeacherController {
     @ApiOperation(value = "确定优秀教师")
     public CommonResult<Object> sureGoodTeacher(@RequestBody @Valid CommitGoodTeacherVo teacher,HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
+        Integer grade = GradeUtils.getGrade(teacher.getYear());
         GoodTeacher goodTeacher = goodTeacherService
-            .getOne(new QueryWrapper<GoodTeacher>().eq("teacher_id", teacher.getTeacherId()).eq("school_year", teacher.getYear()));
+            .getOne(new QueryWrapper<GoodTeacher>().eq("teacher_id", teacher.getTeacherId()).eq("school_year", grade));
 
         if (ObjectUtil.isNull(goodTeacher)) {
             goodTeacher = new GoodTeacher();
             goodTeacher.setTeacherId(teacher.getTeacherId());
-            goodTeacher.setSchoolYear(teacher.getYear());
+            goodTeacher.setSchoolYear(grade);
         }
         if (teacher.getIsGood() == 1){
             goodTeacher.setCollegeAgree(1);
@@ -140,7 +141,7 @@ public class ExcellentTeacherController {
         GoodTeacher goodTeacher = goodTeacherService
             .getOne(new QueryWrapper<GoodTeacher>()
                     .eq("teacher_id", commentVo.getTeacherId())
-                    .eq("school_year", commentVo.getYear()));
+                    .eq("school_year", GradeUtils.getGrade(commentVo.getYear())));
         boolean flag = false;
         String jwt = request.getHeader("jwt");
         if (ObjectUtil.isNotNull(goodTeacher)) {

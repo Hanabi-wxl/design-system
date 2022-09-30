@@ -421,4 +421,34 @@ public class FileDownLoadController {
     public void downloadMessage(String messageId, HttpServletResponse response){
         fileDownLoadService.message(messageId, response);
     }
+
+    @LogAnnotation(content = "下载互评统计表")
+    @RequiresPermissions({"approve:downloadAll"})
+    @GetMapping(value = "/eachTable")
+    public void eachStaticsTable(
+            @Valid @NotNull(message = "专业信息不能为空") Integer majorId,
+            @Valid @NotNull(message = "专业信息不能为空") Integer year,
+            HttpServletResponse response) {
+        try {
+            fileDownLoadService.staticsEachTable(majorId, year, response);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载互评统计表失败");
+        }
+    }
+
+    @LogAnnotation(content = "下载分组统计表")
+    @RequiresPermissions({"approve:downloadAll"})
+    @GetMapping(value = "/groupStatics")
+    public void groupStaticsTable(
+            @Valid @NotNull(message = "专业信息不能为空") Integer majorId,
+            @Valid @NotNull(message = "年份不能为空") Integer year,
+            HttpServletResponse response) {
+        try {
+            fileDownLoadService.staticsGroupTable(majorId, year, response);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载分组统计表失败");
+        }
+    }
 }

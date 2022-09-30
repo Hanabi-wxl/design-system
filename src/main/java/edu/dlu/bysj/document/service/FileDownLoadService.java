@@ -62,4 +62,8 @@ public interface FileDownLoadService {
 
 
     MiddleCheckTemplate packPageMiddleCheckInfo(MiddleCheck middleCheck, SubjectTableVo subjectTableVo);
+
+    void staticsEachTable(Integer majorId, Integer year, HttpServletResponse response) throws IOException;
+
+    void staticsGroupTable(Integer majorId, Integer year, HttpServletResponse response) throws IOException;
 }

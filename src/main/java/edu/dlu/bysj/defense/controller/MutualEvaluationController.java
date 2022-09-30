@@ -77,19 +77,22 @@ public class MutualEvaluationController {
     @LogAnnotation(content = "修改互评教师")
     @RequiresPermissions({"mutual:change"})
     @ApiOperation(value = "修改互评教师")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "subjectId", value = "题目id"),
-            @ApiImplicitParam(name = "teacherId", value = "教师id")
-    })
     public CommonResult<Object> modifyEachMarkTeacher(@RequestBody SubjectDefenceDto dto) {
         Integer teacherId = dto.getTeacherId();
         String subjectId = dto.getSubjectId();
-        String message = "没有该题目";
+        String message="";
         EachMark subjectEachMark = eachMarkService.getOne(new QueryWrapper<EachMark>().eq("subject_id", subjectId));
         if (ObjectUtil.isNotNull(subjectEachMark)) {
             subjectEachMark.setTeacherId(teacherId);
             eachMarkService.updateById(subjectEachMark);
             message = "修改成功";
+        } else {
+            EachMark eachMark = new EachMark();
+            eachMark.setSubjectId(Integer.parseInt(subjectId));
+            eachMark.setTeacherId(teacherId);
+            eachMark.setNeedPrint(1);
+            eachMarkService.save(eachMark);
+            message = "操作成功";
         }
         return CommonResult.success(message);
     }

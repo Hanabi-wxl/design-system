@@ -101,7 +101,9 @@ public class ReplyController {
     public CommonResult<Message> obtainReplyMessage(HttpServletRequest request) {
         String jwt = request.getHeader("jwt");
         Integer userId = JwtUtil.getUserId(jwt);
-        Message messages = messageService.getOne(new QueryWrapper<Message>().eq("sender_id", userId));
+        Message messages = messageService.getOne(new QueryWrapper<Message>()
+                .eq("sender_id", userId)
+                .eq("receiver_id", 0));
         return CommonResult.success(messages);
     }
 
@@ -174,8 +176,8 @@ public class ReplyController {
                     return CommonResult.failed("教师答辩分组未分配完成");
                 }
             }
-        } else if (subject.getProgressId() == 19){
-            return CommonResult.failed("已申请答辩，请等待通知！");
+        } else if (subject.getProgressId() >= 19){
+            return CommonResult.failed("已申请答辩");
         } else {
             progress = progressService.getOne(new QueryWrapper<Progress>().eq("id", subject.getProgressId() + 1));
         }

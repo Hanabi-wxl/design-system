@@ -39,7 +39,7 @@ public class Team implements Serializable {
     private Integer id;
 
     @ApiModelProperty(value = "分组编号")
-    private Integer teamNumber;
+    private String teamNumber;
 
     @ApiModelProperty(value = "该组答辩地址")
     private String address;

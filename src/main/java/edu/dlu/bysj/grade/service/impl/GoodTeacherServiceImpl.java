@@ -7,6 +7,7 @@ import edu.dlu.bysj.base.model.entity.GoodTeacher;
 import edu.dlu.bysj.base.model.query.MajorSearchQuery;
 import edu.dlu.bysj.base.model.vo.MajorExcellentTeacherVo;
 import edu.dlu.bysj.base.model.vo.TotalPackageVo;
+import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.grade.mapper.GoodTeacherMapper;
 import edu.dlu.bysj.grade.service.GoodTeacherService;
 import org.springframework.stereotype.Service;
@@ -29,8 +30,9 @@ public class GoodTeacherServiceImpl extends ServiceImpl<GoodTeacherMapper, GoodT
             teacherName = query.getSearchContent();
         int start = (query.getPageNumber()-1) * query.getPageSize();
         TotalPackageVo<MajorExcellentTeacherVo> packageVo = new TotalPackageVo<>();
-        List<MajorExcellentTeacherVo> result = baseMapper.selectGoodTeacherInfo(query.getMajorId(), teacherNumber, teacherName,start,query.getPageSize());
-        Integer total = baseMapper.selectTotalGoodTeacherInfo(query.getMajorId(), teacherNumber, teacherName);
+        Integer grade = GradeUtils.getGrade(query.getYear());
+        List<MajorExcellentTeacherVo> result = baseMapper.selectGoodTeacherInfo(query.getMajorId(),grade, teacherNumber, teacherName,start,query.getPageSize());
+        Integer total = baseMapper.selectTotalGoodTeacherInfo(query.getMajorId(), grade, teacherNumber, teacherName);
         if (result != null && !result.isEmpty()) {
 
             for (MajorExcellentTeacherVo element : result) {
@@ -38,7 +40,7 @@ public class GoodTeacherServiceImpl extends ServiceImpl<GoodTeacherMapper, GoodT
                 GoodTeacher goodTeacher = baseMapper.selectOne(new QueryWrapper<GoodTeacher>()
                         .eq("college_agree",1)
                         .eq("teacher_id", element.getTeacherId())
-                        .eq("school_year", query.getYear()));
+                        .eq("school_year", grade));
                 if (ObjectUtil.isNotNull(goodTeacher)) {
                     element.setIsGood(1);
                 } else {

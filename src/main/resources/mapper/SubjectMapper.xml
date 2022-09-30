@@ -997,5 +997,57 @@
                  left join subject_type
                            on s.subject_type_id = subject_type.id
     </select>
+    <select id="selectEachByMajorId" resultType="edu.dlu.bysj.document.entity.EachReportTemplate">
+        SELECT
+            teaa.name as eachName,
+            sub.subject_name as subjectName,
+            stu.name as studentName,
+            cla.name as className,
+            tea.name as firstTeacherName,
+            tit.name as firstTitle
+        FROM
+            subject sub
+                LEFT JOIN each_mark em
+                          ON em.subject_id = sub.id
+                LEFT JOIN student stu
+                          ON stu.subject_id = sub.id
+                LEFT JOIN teacher tea
+                          ON sub.first_teacher_id=tea.id
+                LEFT JOIN teacher teaa
+                          ON em.teacher_id=teaa.id
+                LEFT JOIN teacher_title tit
+                          ON tit.id = tea.title_id
+                LEFT JOIN class cla
+                          ON cla.id = stu.class_id
+        WHERE sub.major_id = #{majorId} AND sub.grade=#{grade} and em.status=1
+    </select>
+    <select id="selectGroupMenberByMajorId" resultType="edu.dlu.bysj.document.entity.GroupMemberTemplate">
+        SELECT
+            tu.serial,
+            stu.student_number AS studentNumber,
+            stu.name as studentName,
+            cla.name AS className,
+            sub.subject_name AS subjectName,
+            tea.name AS firstTeacherName,
+            teaa.name AS eachName
+        FROM
+            team_user tu
+                LEFT JOIN student stu
+                          ON stu.id = tu.user_id
+                LEFT JOIN class cla
+                          ON stu.class_id = cla.id
+                LEFT JOIN subject sub
+                          ON stu.subject_id = sub.id
+                LEFT JOIN teacher tea
+                          ON tea.id = sub.first_teacher_id
+                LEFT JOIN each_mark em
+                          ON em.subject_id = sub.id
+                LEFT JOIN teacher teaa
+                          ON teaa.id = em.teacher_id
+        WHERE tu.team_id=#{teamId}
+          AND tu.is_student=1
+          AND em.status=1
+          AND sub.grade=#{grade}
+    </select>
 
 </mapper>
