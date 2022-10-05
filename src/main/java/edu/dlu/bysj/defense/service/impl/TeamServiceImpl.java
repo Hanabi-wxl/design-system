@@ -99,7 +99,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
                         .eq("is_student", 1));
                 Team teamInfo = baseMapper.selectById(teamUser.getTeamId());
                 StudentGroupVo groupVo = baseMapper.selectStudentInfofSimilarGroup(teamUser.getUserId());
-                groupVo.setGroupNumber(teamInfo.getTeamNumber());
+                groupVo.setGroupNumber(teamInfo.getTeamNumber().toString());
                 groupVo.setStartTime(teamInfo.getStartDate());
                 groupVo.setEndTime(teamInfo.getEndTime());
                 groupVo.setAddress(teamInfo.getAddress());

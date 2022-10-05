@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * @author XiangXinGang
@@ -20,16 +21,13 @@ public class TeacherGroupVo {
     private Integer groupId;
 
     @ApiModelProperty(value = "教师id")
-    @NotNull
-    private Integer teacherId;
+    private List<Integer> teacherId;
 
     @ApiModelProperty(value = "职责, 0表示组长,1表示副组长,2表示秘书,3表示组员,4表示答辩人")
-    @NotNull
-    private Integer responsibility;
+    private List<Integer> responsibility;
 
     @ApiModelProperty(value = "是否为本专业")
-    @NotNull
-    private Integer inMajor;
+    private List<Integer> inMajor;
 
     @ApiModelProperty(value = "是否二答")
     private Integer isSecond;

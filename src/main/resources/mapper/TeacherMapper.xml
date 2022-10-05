@@ -93,11 +93,9 @@
         teacher.sex as sex,
         teacher.email as email,
         teacher.can_use as can_use,
-        major.name as majorName,
-        tr.role_id as roleId
+        major.name as majorName
         from teacher
         inner join major on teacher.major_id = major.id
-        inner join teacher_role tr on teacher.id = tr.teacher_id and tr.status = 1
         where teacher.status = 1
         and teacher.major_id = #{majorId}
         <if test="userName != null and userName != ''">
@@ -168,7 +166,7 @@
 
             from major
 
-            where major.code = (
+            where major.id = (
                 select teacher.major_id
                 from teacher
                 where teacher.teacher_number = #{teacherNumber}
@@ -514,7 +512,7 @@
                  inner join major m
                             on teacher.major_id = m.id
                  inner join office o
-                            on m.id = o.major_id
+                            on teacher.office_id = o.id
                  inner join degree d
                             on teacher.degree_id = d.id
                  inner join teacher_title t
@@ -582,6 +580,13 @@
                WHERE subject.major_id = #{majorId}
                  AND subject.grade = #{grade}
                  AND subject.first_teacher_id IS NOT NULL)
+    </select>
+    <select id="listByNumbers" resultType="edu.dlu.bysj.base.model.entity.TeacherRole">
+        select id as teacherId from teacher
+        where teacher_number in
+        <foreach collection="numberList" close=")" open="(" separator="," item="id">
+            #{id}
+        </foreach>
     </select>
 
 

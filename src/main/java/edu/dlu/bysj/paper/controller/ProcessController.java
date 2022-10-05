@@ -58,6 +58,7 @@ public class ProcessController {
             process.setWeek(week);
             processList.add(process);
         }
+        processService.remove(new QueryWrapper<Process>().eq("subject_id", subjectId));
         return processService.saveBatch(processList) ? CommonResult.success("设置成功") : CommonResult.failed("设置失败");
     }
 

@@ -40,7 +40,7 @@
         select
             s.id as subjectId,s.subject_name as subjectName,stu.name studentName,stu.student_number as studentNumber,stu.phone_number as studentPhone
         from subject s, student stu
-        where s.student_id=stu.id and s.student_id = (
+        where s.student_id=stu.id and s.student_id in (
             select tu.user_id from team_user tu where tu.team_id = #{groupId} and tu.is_student=1)
         limit #{start},#{size}
     </select>
@@ -49,7 +49,7 @@
         select
             s.id,s.subject_name as subjectName,stu.name,stu.student_number as studentNumber,stu.phone_number as phoneNumber
         from subject s, student stu
-        where s.student_id=stu.id and s.student_id = (
+        where s.student_id=stu.id and s.student_id in (
             select tu.user_id from team_user tu where tu.team_id = #{groupId} and tu.is_student=1)) as s
     </select>
     <select id="groupMemberInfo" resultType="java.util.Map">

@@ -65,5 +65,11 @@ public interface FileDownLoadService {
 
     void staticsEachTable(Integer majorId, Integer year, HttpServletResponse response) throws IOException;
 
-    void staticsGroupTable(Integer majorId, Integer year, HttpServletResponse response) throws IOException;
+    void staticsGroupTable(Integer majorId, Integer year, Boolean isRepeat, HttpServletResponse response) throws IOException;
+
+    void teacherInfoTable(HttpServletResponse response);
+
+    void studentInfoTable(HttpServletResponse response);
+
+    void middleStatistics(Integer majorId, Integer year, HttpServletResponse response) throws IOException;
 }

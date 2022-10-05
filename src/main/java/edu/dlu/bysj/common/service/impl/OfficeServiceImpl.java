@@ -19,23 +19,11 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 public class OfficeServiceImpl extends ServiceImpl<OfficeMapper, Office> implements OfficeService {
-  @Autowired private OfficeMapper officeMapper;
-  @Autowired private RedisTemplate redisTemplate;
+  @Autowired
+  private OfficeMapper officeMapper;
 
   @Override
   public List<OfficeSimplifyVo> officeSimplifyInfo() {
-    String key = RedisKeyEnum.OFFICE_NAME_ID_KEY.getKeyValue();
-    List<OfficeSimplifyVo> result = null;
-    if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
-      Long size = redisTemplate.boundListOps(key).size();
-      result = (List<OfficeSimplifyVo>) redisTemplate.boundListOps(key).range(0, size).get(0);
-    } else {
-      result = officeMapper.selectAllSimplifyOffice();
-      if (result != null && !result.isEmpty()) {
-        redisTemplate.boundListOps(key).rightPushAll(result);
-        redisTemplate.expire(key, 10, TimeUnit.DAYS);
-      }
-    }
-    return result;
+    return officeMapper.selectAllSimplifyOffice();
   }
 }

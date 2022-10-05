@@ -20,7 +20,7 @@ public class ApplyReplyVo {
     @ApiModelProperty(value = "需要的材料（材料齐全则为空）")
     private List<String> need;
     @ApiModelProperty(value = "分组编号")
-    private String groupNumber;
+    private Integer groupNumber;
     @ApiModelProperty(value = "答辩序号")
     private Integer serial;
 

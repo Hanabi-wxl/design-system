@@ -43,6 +43,7 @@
         from major
                  inner join college on major.college_id = college.id
         where college.id = (select college_id from major where major.id = #{majorId})
+          and major.status=1
     </select>
     <select id="obtainCollegeTeacher" resultType="edu.dlu.bysj.base.model.vo.UserVo">
         select

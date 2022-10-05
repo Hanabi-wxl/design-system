@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 public class ReplyInfo {
 
     @ApiModelProperty(value = "分组编号")
-    private String groupNumber;
+    private Integer groupNumber;
     @ApiModelProperty(value = "答辩序号")
     private Integer serial;
     @ApiModelProperty(value = "开始时间")

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.dlu.bysj.base.exception.GlobalException;
 import edu.dlu.bysj.base.model.dto.MajorFillingDto;
+import edu.dlu.bysj.base.model.entity.Student;
 import edu.dlu.bysj.base.model.entity.Subject;
 import edu.dlu.bysj.base.model.entity.Teacher;
 import edu.dlu.bysj.base.model.enums.ProcessEnum;
@@ -48,6 +49,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
@@ -150,21 +152,44 @@ public class SubjectApprovalController {
         boolean flag = false;
         String jwt = request.getHeader("jwt");
         Integer userId = JwtUtil.getUserId(jwt);
-        List<Integer> roleIds = JwtUtil.getRoleIds(jwt);
-        if (roleIds.get(0)==1) {
+        boolean isStudent = JwtUtil.getRoleIds(jwt).contains(1);
+        Integer grade = GradeUtils.getGrade();
+        StringBuilder subjectId = new StringBuilder();
+        if (isStudent) {
             Integer number = studentService.idToNumber(userId);
+            subjectId.append(grade+3).append(number).append("001");
             if(!number.equals(subjectApprovalVo.getStudentNumber())) {
                 return CommonResult.failed("请勿给他人报题");
             }
         } else {
             Integer teacherId = subjectApprovalVo.getTeacherId();
+            String number = teacherService.idToNumber(teacherId);
+            int sum = subjectService.count(new QueryWrapper<Subject>()
+                    .eq("first_teacher_id", teacherId)
+                    .eq("grade", grade));
+            DecimalFormat decimalFormat = new DecimalFormat("000");
+            String numFormat= decimalFormat.format(sum+1);
+            subjectId.append(grade+3).append(number).append(numFormat);
             if(!teacherId.equals(userId)) {
                 return CommonResult.failed("请勿给他人报题");
             }
         }
         /*新增*/
         if (subjectApprovalVo.getSubjectId().equals("")) {
+            if(isStudent) {
+                int sum = subjectService.count(new QueryWrapper<Subject>()
+                        .eq("student_id", userId)
+                        .eq("grade", grade));
+                if(sum >= 1)
+                    return CommonResult.failed("参与课题超过限制");
+            }
+            subjectApprovalVo.setSubjectId(subjectId.toString());
             flag = subjectService.addedApprove(subjectApprovalVo);
+            if(flag) {
+                Student student = studentService.getById(userId);
+                student.setSubjectId(subjectService.getBySubjectId(subjectId.toString()).getId());
+                studentService.updateById(student);
+            }
         } else {
             /*修改*/
             Integer progressId = subjectService.getOne(new QueryWrapper<Subject>()
@@ -392,7 +417,7 @@ public class SubjectApprovalController {
                         return CommonResult.failed("该题目不在本阶段内");
                     }
                 }
-            } else if (roleIds.contains(3)) {
+            } else {
                 Integer currentCode = ProcessEnum.TOPIC_MAJOR_AUDIT.getProcessCode();
                 if (currentCode != null) {
                     if (currentCode.equals(value.getProgressId()) || currentCode.equals(value.getProgressId() + 1)) {

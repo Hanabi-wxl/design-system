@@ -76,12 +76,26 @@ public class GroupController {
     @RequiresPermissions({"group:list"})
     @ApiOperation(value = "查看专业答辩分组")
     public CommonResult<List<TeamInfoVo>> majorDefenseTeam(@Valid @NotNull(message = "专业信息不能为空") Integer majorId,
-                                                           @Valid @NotNull(message = "二答信息不能为空") Integer isSecond) {
+                                                           @Valid @NotNull(message = "二答信息不能为空") Integer isSecond,
+                                                           HttpServletRequest request) {
         int year = LocalDateTime.now().getYear();
         Integer grade = GradeUtils.getGrade(year);
-        List<Team> list = teamService.list(new QueryWrapper<Team>().eq("major_id", majorId)
-                .eq("grade", grade).eq("is_repeat", isSecond));
+        String jwt = request.getHeader("jwt");
+        Integer teacherMajor = JwtUtil.getMajorId(jwt);
+        List<Integer> roleIds = JwtUtil.getRoleIds(jwt);
+        List<Team> list;
         List<TeamInfoVo> result = new ArrayList<>();
+        if(roleIds.contains(4)) {
+            list = teamService.list(new QueryWrapper<Team>().eq("major_id", majorId)
+                    .eq("grade", grade).eq("is_repeat", isSecond));
+        } else {
+            if (!teacherMajor.equals(majorId))
+                return CommonResult.success(result);
+            else
+                list = teamService.list(new QueryWrapper<Team>().eq("major_id", majorId)
+                        .eq("grade", grade).eq("is_repeat", isSecond));
+        }
+
         if (list != null && !list.isEmpty()) {
             for (Team element : list) {
                 TeamInfoVo teamInfoVo = new TeamInfoVo();
@@ -113,30 +127,23 @@ public class GroupController {
     @RequiresPermissions({"group:teacherGroup"})
     @ApiOperation(value = "提交教师分组")
     public CommonResult<Object> submitTeacherGroup(@Valid @RequestBody TeacherGroupVo group) {
-        TeamUser teamUser = teamUserService.getOne(new QueryWrapper<TeamUser>()
-                .eq("user_id", group.getTeacherId())
-                .eq("team_id", group.getGroupId())
-                .eq("is_student", 0));
-        Optional<TeamUser> teamUserValue = Optional.ofNullable(teamUser);
-        boolean flag;
-        if (teamUserValue.isPresent()) {
-            /*跟新*/
-            teamUser.setTeamId(group.getGroupId());
-            teamUser.setInMajor(group.getInMajor());
-            teamUser.setUserId(group.getTeacherId());
-            teamUser.setResposiblity(group.getResponsibility());
-            flag = teamUserService.updateById(teamUser);
-        } else {
-            /*新建*/
+        Integer groupId = group.getGroupId();
+        List<TeamUser> teamUsers = new ArrayList<>();
+        teamUserService.remove(new QueryWrapper<TeamUser>().eq("team_id", groupId));
+        for (int i = 0; i < group.getTeacherId().size(); i++) {
             TeamUser value = new TeamUser();
-            value.setInMajor(group.getInMajor());
-            value.setTeamId(group.getGroupId());
-            value.setUserId(group.getTeacherId());
-            value.setResposiblity(group.getResponsibility());
+            value.setInMajor(group.getInMajor().get(i));
+            value.setTeamId(groupId);
+            value.setUserId(group.getTeacherId().get(i));
+            value.setResposiblity(group.getResponsibility().get(i));
             /*1学生, 0非学生*/
             value.setIsStudent(0);
-            flag = teamUserService.save(value);
+            teamUsers.add(value);
         }
+        if (group.getTeacherId().size() == 0)
+            CommonResult.success("提交成功");
+
+        boolean flag = teamUserService.saveBatch(teamUsers);
         return flag ? CommonResult.success("提交成功") : CommonResult.failed("提交失败，查看教师信息");
     }
 
@@ -166,14 +173,16 @@ public class GroupController {
                 team.setId(groupVo.getId());
                 team.setTeamNumber(groupVo.getTeamNumber());
             }
-
-            team.setStartDate(groupVo.getStartDate());
+            DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            LocalDateTime start = LocalDateTime.parse(groupVo.getStartDate(),df);
+            LocalDateTime end = LocalDateTime.parse(groupVo.getEndTime(),df);
+            team.setStartDate(start);
+            team.setEndTime(end);
             team.setTeamNumber(groupVo.getTeamNumber());
-            team.setEndTime(groupVo.getEndTime());
             team.setAddress(groupVo.getAddress());
             team.setRequest(groupVo.getRequire());
             team.setGrade(GradeUtils.getGrade());
-            team.setIsRepeat(groupVo.getIsRepeat());
+            team.setIsRepeat(groupVo.getIsRepeat() ? 1: 0);
             team.setType(groupVo.getType());
             team.setMajorId(groupVo.getMajorId());
 
@@ -231,14 +240,13 @@ public class GroupController {
     @ApiImplicitParam(name = "groupId", value = "分组id")
     public CommonResult<List<Map<String, Object>>> obtainStudentSequenceOfGroup(@NotNull Integer groupId) {
 
-        Map<String, Object> result = new HashMap<>(16);
-
         List<TeamUser> list = teamUserService.list(new QueryWrapper<TeamUser>()
                 .eq("team_id", groupId)
                 .eq("is_student", 1));
         List<Map<String, Object>> resList = new LinkedList<>();
         if (ObjectUtil.isNotNull(list)) {
             for (TeamUser teamUser : list) {
+                Map<String, Object> result = new HashMap<>(16);
                 Student student = studentService.getById(teamUser.getUserId());
                 Team team = teamService.getById(groupId);
                 result.put("serial", teamUser.getSerial());
@@ -316,10 +324,11 @@ public class GroupController {
         groupVo.setAddress(team.getAddress());
         groupVo.setTeamNumber(team.getTeamNumber());
         groupVo.setType(team.getType());
-        groupVo.setEndTime(team.getEndTime());
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        groupVo.setStartDate(df.format(team.getStartDate()));
+        groupVo.setEndTime(df.format(team.getEndTime()));
         groupVo.setId(team.getId());
         groupVo.setRequire(team.getRequest());
-        groupVo.setStartDate(team.getStartDate());
         return CommonResult.success(groupVo);
     }
 

@@ -259,7 +259,7 @@ public class TaskBookController {
                             }
                         }
                     }
-                } else if (roleIds.contains(3)) {
+                } else {
                     /*专业级审阅任务书,task,subject 同时不为空时跟新*/
                     if (ObjectUtil.isNotNull(subject) && ObjectUtil.isNotNull(task)) {
                         Integer processCode = ProcessEnum.TASK_BOOK_MAJOR_AUDIT.getProcessCode();

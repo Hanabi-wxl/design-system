@@ -15,7 +15,8 @@
     </resultMap>
 
     <resultMap id="entrustSubjectMap" type="edu.dlu.bysj.base.model.vo.EntrustInfoVo">
-        <id column="id" property="subjectId"/>
+        <id column="id" property="id"/>
+        <id column="subject_id" property="subjectId"/>
         <result column="subject_name" property="subjectName"/>
         <result column="teacherName" property="firstTeacherName"/>
         <result column="titleName" property="firstTeacherTitle"/>
@@ -239,7 +240,7 @@
                            on progress.id = s.progress_id
                  left join teacher as t
                            on t.id = #{teacherId}
-                 left join score sc
+                 inner join score sc
                            on sc.subject_id = s.id
 
         limit #{start} ,#{pageSize}
@@ -300,53 +301,59 @@
     </select>
 
     <select id="totalAdminCollegeApprovalList" resultType="java.lang.Integer">
+        <choose>
+            <when test="searchContent != ''">
+                <bind name="content_pattern" value="'%'+searchContent+'%'"/>
+            </when>
+        </choose>
         select count(ss.id) as total
         from(
-            select
-            s.id
-            from (
-            select
-            subject.id,
-            subject.subject_id,
-            subject.subject_name,
-            subject.first_teacher_id,
-            subject.second_teacher_id,
-            subject.progress_id,
-            subject.student_id,
-            subject.filing_number
-            from subject
-            <choose>
-                <when test="searchContent != ''">
-                    where subject.first_teacher_id in (
-                    select id from teacher t
-                    where
-                    t.teacher_number like #{searchContent} or
-                    t.name like #{searchContent}
-                    )
-                    and subject.status = 1
-                </when>
-                <when test="teacherId != null">
-                    where subject.first_teacher_id = #{teacherId}
-                    and subject.status = 1
-                </when>
-            </choose>
-            <if test="searchContent == '' and teacherId == null">
-                where subject.status = 1
-            </if>
-            and grade = #{year}
-            and subject.subject_id in (
-            select subject_major.subject_id
-            from subject_major
-            where subject_major.major_id = #{majorId}
-            )
-            ) as s
-            left join progress
-            on progress.id = s.progress_id
+        select
+        s.id
+        from (
+        select
+        subject.id,
+        subject.subject_id,
+        subject.subject_name,
+        subject.first_teacher_id,
+        subject.second_teacher_id,
+        subject.progress_id,
+        subject.student_id,
+        subject.filing_number
+        from subject
+        <choose>
+            <when test="searchContent != ''">
+                where subject.first_teacher_id in (
+                select id from teacher t
+                where
+                t.teacher_number like #{content_pattern} or
+                t.name like #{content_pattern}
+                )
+                and subject.status = 1
+            </when>
+            <when test="teacherId != null">
+                where subject.first_teacher_id = #{teacherId}
+                and subject.status = 1
+            </when>
+        </choose>
+        <if test="searchContent == '' and teacherId == null">
+            where subject.status = 1
+        </if>
+        and grade = #{year}
+        and subject.subject_id in (
+        select subject_major.subject_id
+        from subject_major
+        where subject_major.major_id = #{majorId}
+        )
+        ) as s
+        left join progress
+        on progress.id = s.progress_id
         ) as ss
     </select>
 
     <select id="entrustSubjectPagination" resultMap="entrustSubjectMap">
         select s.id,
+        s.subject_id,
         s.subject_name,
         teacher.name as teacherName,
         t.name as titleName,
@@ -357,7 +364,8 @@
         s.filing_number
 
         from (select
-        subject.subject_id as id,
+        subject.id,
+        subject.subject_id,
         subject.subject_name,
         subject.first_teacher_id,
         subject.student_id,
@@ -415,14 +423,8 @@
 
     <select id="studentSelectSubject" resultMap="studentSelectSubjectMap">
         <choose>
-            <when test="teacherName != null and teacherName != ''">
-                <bind name="teacherName_pattern" value="'%'+teacherName+'%'"/>
-            </when>
-        </choose>
-
-        <choose>
-            <when test="subjectName != null and subjectName != ''">
-                <bind name="subjectName_pattern" value="'%'+subjectName+'%'"/>
+            <when test="content != null">
+                <bind name="content_pattern" value="'%'+content+'%'"/>
             </when>
         </choose>
 
@@ -445,6 +447,7 @@
             and sm.status = 1
             and subject.grade = #{grade}
             and subject.progress_id = 3
+            and subject.student_id is null
         ) as s
 
         left join teacher
@@ -452,11 +455,8 @@
         left join teacher_title t
         on teacher.title_id = t.id
         <where>
-            <if test="teacherName != null and teacherName != '' ">
-                teacher.name like #{teacherName_pattern}
-            </if>
-            <if test="subjectName != null and subjectName != '' ">
-                and s.subject_name like #{subjectName_pattern}
+            <if test="content != null">
+                teacher.name like #{content_pattern} or s.subject_name like #{content_pattern}
             </if>
         </where>
 
@@ -466,14 +466,8 @@
     <select id="totalStudentSelectSubject" resultType="java.lang.Integer">
 
         <choose>
-            <when test="teacherName != null and teacherName != ''">
-                <bind name="teacherName_pattern" value="'%'+teacherName+'%'"/>
-            </when>
-        </choose>
-
-        <choose>
-            <when test="subjectName != null and subjectName != ''">
-                <bind name="subjectName_pattern" value="'%'+subjectName+'%'"/>
+            <when test="content != null">
+                <bind name="content_pattern" value="'%'+content+'%'"/>
             </when>
         </choose>
 
@@ -492,6 +486,7 @@
         and sm.status = 1
         and subject.grade = #{grade}
         and subject.progress_id = 3
+        and subject.student_id is null
         ) as s
 
         left join teacher
@@ -499,11 +494,8 @@
         left join teacher_title t
         on teacher.title_id = t.id
         <where>
-            <if test="teacherName != null and teacherName != '' ">
-                teacher.name like #{teacherName_pattern}
-            </if>
-            <if test="subjectName != null and subjectName != '' ">
-                and s.subject_name like #{subjectName_pattern}
+            <if test="content != null">
+                teacher.name like #{content_pattern}
             </if>
         </where>
 
@@ -730,6 +722,11 @@
     </select>
 
     <select id="approvalListPagination" resultType="edu.dlu.bysj.base.model.dto.AdminApprovalConvey">
+        <choose>
+            <when test="searchContent != ''">
+                <bind name="content_pattern" value="'%'+searchContent+'%'"/>
+            </when>
+        </choose>
         select
         s.id                as id,
         s.student_id        as studentId,
@@ -756,8 +753,8 @@
                   where subject.first_teacher_id in (
                     select id from teacher t
                     where
-                      t.teacher_number like #{searchContent} or
-                      t.name like #{searchContent}
+                      t.teacher_number like #{content_pattern} or
+                      t.name like #{content_pattern}
                     )
                     and subject.status = 1
                 </when>
@@ -1048,6 +1045,26 @@
           AND tu.is_student=1
           AND em.status=1
           AND sub.grade=#{grade}
+    </select>
+    <select id="selectMiddleStaByMajorId" resultType="edu.dlu.bysj.document.entity.MiddleStaTemplate">
+        SELECT
+            stu.name AS studentName,
+            sub.subject_name AS subjectName,
+            mc.has_openreport as hasOpenReport,
+            mc.has_taskbook as hasTaskBook,
+            mc.literature_quantity as literatureQuantity,
+            mc.working_speed as workingSpeed,
+            mc.finish_date as finishDate,
+            mc.difficulty as difficulty,
+            mc.college_agree as collegeAgree
+        FROM
+            subject sub
+                LEFT JOIN student stu
+                          ON sub.student_id = stu.id
+                LEFT JOIN middle_check mc
+                          ON sub.id=mc.subject_id
+        WHERE sub.major_id = #{majorId}
+          AND sub.grade = #{grade}
     </select>
 
 </mapper>

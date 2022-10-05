@@ -31,9 +31,6 @@ public class Office implements Serializable {
     @ApiModelProperty(value = "科室名称")
     private String name;
 
-    @ApiModelProperty(value = "专业id")
-    private Integer majorId;
-
     @ApiModelProperty(value = "此条数据是否有效（1：有效，0：无效）")
     @TableLogic
     private Integer status;

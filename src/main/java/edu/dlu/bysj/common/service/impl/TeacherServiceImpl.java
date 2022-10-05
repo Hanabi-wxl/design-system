@@ -281,4 +281,13 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher>
     public String idToNumber(Integer userId) {
         return baseMapper.selectById(userId).getTeacherNumber();
     }
+
+    @Override
+    public List<TeacherRole> listByNumbers(List<Integer> numberList) {
+        List<TeacherRole> teacherRoles = baseMapper.listByNumbers(numberList);
+        for (TeacherRole teacherRole : teacherRoles) {
+            teacherRole.setRoleId(2);
+        }
+        return teacherRoles;
+    }
 }

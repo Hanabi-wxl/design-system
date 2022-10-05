@@ -69,7 +69,7 @@ public class MiddleCheckController {
     @LogAnnotation(content = "提交修改中期检查表")
     @RequiresPermissions({"middleCheck:content"})
     @ApiOperation(value = "提交/修改中期检查表")
-    public CommonResult<Object> modifyMiddleCheckTable(@RequestBody ModifyMiddleCheckVo checkVo) {
+    public CommonResult<Object> modifyMiddleCheckTable(@RequestBody @Valid ModifyMiddleCheckVo checkVo) {
 
         Integer processCode = ProcessEnum.SUBMIT_MIDDLE_CHECK.getProcessCode();
 
@@ -203,7 +203,7 @@ public class MiddleCheckController {
                         } else {
                             return CommonResult.failed("该题目没有到达符合的阶段");
                         }
-                    } else if (roleIds.contains(3)) {
+                    } else {
                         Integer processCode = ProcessEnum.MIDDLE_CHECK_MAJOR_AUDIT.getProcessCode();
                         if (processCode.equals(subjectValue.getProgressId()) || processCode.equals(subjectValue.getProgressId() + 1)) {
                             /*修改题目审批表和中期检查表*/

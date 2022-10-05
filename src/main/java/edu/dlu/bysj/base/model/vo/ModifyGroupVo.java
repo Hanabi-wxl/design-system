@@ -32,15 +32,15 @@ public class ModifyGroupVo {
     private Integer id;
 
     @ApiModelProperty(value = "组号")
-    private String teamNumber;
+    private Integer teamNumber;
 
     @ApiModelProperty(value = "开始时间")
     @NotNull(message = "开始时间不能为空")
-    private LocalDateTime startDate;
+    private String startDate;
 
     @ApiModelProperty(value = "结束时间")
     @NotNull(message = "结束时间不能为空")
-    private LocalDateTime endTime;
+    private String endTime;
 
     @ApiModelProperty(value = "地址")
     @NotBlank(message = "地址不能为空")
@@ -60,5 +60,5 @@ public class ModifyGroupVo {
     private Integer grade;
 
     @ApiModelProperty(value = "是否二答")
-    private Integer isRepeat;
+    private Boolean isRepeat;
 }

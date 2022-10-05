@@ -136,15 +136,12 @@ public interface SubjectMapper extends BaseMapper<Subject> {
      *            开始位置
      * @param pageSize
      *            每页记录数
-     * @param subjectName
-     *            题目名称
-     * @param teacherName
-     *            教师名称
+     * @param content
+     *
      * @return
      */
     List<TopicsVo> studentSelectSubject(@Param("majorId") Integer majorId, @Param("grade") Integer grade,
-        @Param("start") Integer start, @Param("pageSize") Integer pageSize, @Param("teacherName") String teacherName,
-        @Param("subjectName") String subjectName);
+        @Param("start") Integer start, @Param("pageSize") Integer pageSize, @Param("content") String content);
 
     /**
      * 获取 studentSelectSubject查询下的总数
@@ -153,14 +150,12 @@ public interface SubjectMapper extends BaseMapper<Subject> {
      *            专业id
      * @param grade
      *            年级
-     * @param teacherName
-     *            教师名称
-     * @param subjectName
-     *            题目名称
+     * @param content
+     *
      * @return 总数
      */
     Integer totalStudentSelectSubject(@Param("majorId") Integer majorId, @Param("grade") Integer grade,
-        @Param("teacherName") String teacherName, @Param("subjectName") String subjectName);
+        @Param("content") String content);
 
     /**
      * 通过teacherId 查询该garde下以确定该教师为指导教师的题目
@@ -243,4 +238,7 @@ public interface SubjectMapper extends BaseMapper<Subject> {
     List<EachReportTemplate> selectEachByMajorId(Integer majorId, Integer grade);
 
     List<GroupMemberTemplate> selectGroupMenberByMajorId(Integer teamId, Integer grade);
+
+    List<MiddleStaTemplate> selectMiddleStaByMajorId(Integer majorId, Integer grade);
+
 }

@@ -65,20 +65,26 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topics> implement
 
         List<TotalVolunteerPackage<UnselectStudentVo>> volunteerList = new ArrayList<>();
         for (Subject element : records) {
-            /*该题目被学生作为第一志愿*/
-            /*参数1， 为该题目是第一志愿的类型*/
-            List<UnselectStudentVo> firstStudentVos = topicMapper.firstAndSecondVolunteer(element.getId(), 1);
+            if(ObjectUtil.isNull(element.getStudentId())) {
+                /*该题目被学生作为第一志愿*/
+                /*参数1， 为该题目是第一志愿的类型*/
+                List<UnselectStudentVo> firstStudentVos = topicMapper.firstAndSecondVolunteer(element.getId(), 1);
 
-            /*该题目被学生选为第二志愿 */
-            /*参数 2 为该题作为第二志愿的类型*/
-            List<UnselectStudentVo> secondStudentVos = topicMapper.firstAndSecondVolunteer(element.getId(), 2);
+                /*该题目被学生选为第二志愿 */
+                /*参数 2 为该题作为第二志愿的类型*/
+                List<UnselectStudentVo> secondStudentVos = topicMapper.firstAndSecondVolunteer(element.getId(), 2);
 
-            TotalVolunteerPackage<UnselectStudentVo> value = new TotalVolunteerPackage<>();
-            value.setFirstVolunteer(firstStudentVos);
-            value.setSecondVolunteer(secondStudentVos);
-            value.setSubjectId(element.getId());
-            value.setSubjectName(element.getSubjectName());
-            volunteerList.add(value);
+                TotalVolunteerPackage<UnselectStudentVo> value = new TotalVolunteerPackage<>();
+                value.setFirstVolunteer(firstStudentVos);
+                value.setSecondVolunteer(secondStudentVos);
+                value.setSubjectId(element.getId());
+                value.setSubjectName(element.getSubjectName());
+                volunteerList.add(value);
+            } else {
+                // 学生报题更新
+                element.setProgressId(4);
+                subjectService.updateById(element);
+            }
         }
         result.setArrays(volunteerList);
 

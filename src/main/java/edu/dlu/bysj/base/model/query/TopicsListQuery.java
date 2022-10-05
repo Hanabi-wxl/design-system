@@ -14,13 +14,10 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class TopicsListQuery  extends CommonPage {
     @Builder
-    public TopicsListQuery(Integer pageSize, Integer pageNumber, String teacherName, String subjectName) {
+    public TopicsListQuery(Integer pageSize, Integer pageNumber, String searchContent) {
         super(pageSize, pageNumber);
-        this.teacherName = teacherName;
-        this.subjectName = subjectName;
+        this.searchContent = searchContent;
     }
-    @ApiModelProperty(value = "教师姓名（可为空)")
-    private String teacherName;
-    @ApiModelProperty(value = "题目名称（可为空)")
-    private String subjectName;
+    @ApiModelProperty(value = "搜索内容（可为空)")
+    private String searchContent;
 }

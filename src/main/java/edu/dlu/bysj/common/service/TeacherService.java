@@ -3,6 +3,7 @@ package edu.dlu.bysj.common.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.dlu.bysj.base.model.entity.Teacher;
+import edu.dlu.bysj.base.model.entity.TeacherRole;
 import edu.dlu.bysj.base.model.query.UserListQuery;
 import edu.dlu.bysj.base.model.vo.*;
 
@@ -121,4 +122,6 @@ public interface TeacherService extends IService<Teacher> {
     boolean addTeacher(ModifyUserVo userVo);
 
     String idToNumber(Integer userId);
+
+    List<TeacherRole> listByNumbers(List<Integer> numberList);
 }

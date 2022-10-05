@@ -143,7 +143,7 @@ public class OnlineGlobalException {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ResponseBody
     public CommonResult<Object> unauthorizedExceptionHandler(HttpServletRequest request, UnauthorizedException pe) {
-        logger.error("异常:" + request.getRequestURI(), pe);
+        logger.error("异常:" + request.getRequestURI(), pe.getMessage());
         CommonResult<Object> restResultWrapper = new CommonResult<>();
         restResultWrapper.setCode(HttpStatus.UNAUTHORIZED.value());
         restResultWrapper.setMessage("无相关权限");
@@ -157,10 +157,10 @@ public class OnlineGlobalException {
      * @param pe
      * @return
      */
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler(GlobalException.class)
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public CommonResult<Object> otherException(HttpServletRequest request, Exception pe) {
+    public CommonResult<Object> otherException(HttpServletRequest request, GlobalException pe) {
         logger.error("异常:" + request.getRequestURI(), pe);
         CommonResult<Object> commonResult = new CommonResult<>();
         commonResult.setCode(HttpStatus.BAD_REQUEST.value());

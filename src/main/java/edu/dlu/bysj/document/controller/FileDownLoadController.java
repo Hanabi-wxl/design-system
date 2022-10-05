@@ -324,6 +324,20 @@ public class FileDownLoadController {
         fileDownLoadService.openReport(subjectId, response);
     }
 
+    @LogAnnotation(content = "下载教师信息模板")
+    @RequiresPermissions({"file:uploadUser"})
+    @GetMapping("/teacherInfoTable")
+    public void downloadTeacherTable(HttpServletResponse response) {
+        fileDownLoadService.teacherInfoTable(response);
+    }
+
+    @LogAnnotation(content = "下载学生信息模板")
+    @RequiresPermissions({"file:uploadUser"})
+    @GetMapping("/studentInfoTable")
+    public void downloadStudentTable(HttpServletResponse response) {
+        fileDownLoadService.studentInfoTable(response);
+    }
+
 
     @LogAnnotation(content = "下载中期检查表")
     @RequiresPermissions({"approve:download"})
@@ -437,15 +451,46 @@ public class FileDownLoadController {
         }
     }
 
+    @LogAnnotation(content = "下载中期检查统计表")
+    @RequiresPermissions({"approve:downloadAll"})
+    @GetMapping(value = "/middleStatistics")
+    public void middleStatistics(
+            @Valid @NotNull(message = "专业信息不能为空") Integer majorId,
+            @Valid @NotNull(message = "专业信息不能为空") Integer year,
+            HttpServletResponse response) {
+        try {
+            fileDownLoadService.middleStatistics(majorId, year, response);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载中期检查统计失败");
+        }
+    }
+
+    @LogAnnotation(content = "下载中期检查统计表")
+    @RequiresPermissions({"approve:downloadAll"})
+    @GetMapping(value = "/scoreSummary")
+    public void scoreSummary(
+            @Valid @NotNull(message = "专业信息不能为空") Integer majorId,
+            @Valid @NotNull(message = "专业信息不能为空") Integer year,
+            HttpServletResponse response) {
+        try {
+            fileDownLoadService.middleStatistics(majorId, year, response);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载中期检查统计失败");
+        }
+    }
+
     @LogAnnotation(content = "下载分组统计表")
     @RequiresPermissions({"approve:downloadAll"})
     @GetMapping(value = "/groupStatics")
     public void groupStaticsTable(
             @Valid @NotNull(message = "专业信息不能为空") Integer majorId,
             @Valid @NotNull(message = "年份不能为空") Integer year,
+            @Valid @NotNull(message = "组别不能为空") Boolean isRepeat,
             HttpServletResponse response) {
         try {
-            fileDownLoadService.staticsGroupTable(majorId, year, response);
+            fileDownLoadService.staticsGroupTable(majorId, year, isRepeat, response);
         } catch (IOException e) {
             e.printStackTrace();
             throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载分组统计表失败");

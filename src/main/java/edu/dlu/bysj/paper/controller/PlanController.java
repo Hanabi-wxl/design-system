@@ -58,7 +58,7 @@ public class PlanController {
         Integer subjectId = weekPlans.getSubjectId();
         Integer progressId = subjectService.getById(subjectId).getProgressId();
         Integer processCode = ProcessEnum.CHOOSE_TOPIC.getProcessCode();
-        if(processCode.equals(progressId)) {
+        if(processCode.equals(progressId) || processCode.equals(progressId-1)) {
             List<Plan> plansValue = new ArrayList<>();
             int count = planService.count(new QueryWrapper<Plan>().eq("subject_id", weekPlans.getSubjectId()));
             if (count == 20)

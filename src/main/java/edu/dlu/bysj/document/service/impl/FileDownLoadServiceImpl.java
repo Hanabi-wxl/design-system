@@ -3,6 +3,7 @@ package edu.dlu.bysj.document.service.impl;
 import java.io.*;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -171,14 +172,10 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         /*模板sheet*/
         Sheet sheetAt = workbook.getSheetAt(0);
         for (Map.Entry<Integer, Map<String, Object>> element : majorMap.entrySet()) {
-            /*创建新sheet*/
-            Sheet sheet = workbook.createSheet(((String)element.getValue().get("majorName")));
-            fillingReportStaticsSheetTitle(sheet, sheetAt, element.getValue(), year);
-            /*中间内容部分*/
-//            System.out.println("key" + element.getKey());
-
             List<ReportStaticsTemplate> value = subjectMapper.selectReportByMajorId(element.getKey());
-            if (ObjectUtil.isNotNull(value)) {
+            if (ObjectUtil.isNotNull(value) && !value.isEmpty()) {
+                Sheet sheet = workbook.createSheet(((String)element.getValue().get("majorName")));
+                fillingReportStaticsSheetTitle(sheet, sheetAt, element.getValue(), year);
                 Row fixedRow2 = null;
                 int row = 3;
                 for (int i = 0; i < value.size(); i++) {
@@ -328,13 +325,10 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         /*模板sheet*/
         Sheet sheetAt = workbook.getSheetAt(0);
         for (Map.Entry<Integer, Map<String, Object>> element : majorMap.entrySet()) {
-            /*创建新sheet*/
-            Sheet sheet = workbook.createSheet(((String)element.getValue().get("majorName")));
-            fillingSelectStaticsSheetTitle(sheet, sheetAt, element.getValue(), year);
-            /*中间内容部分*/
-            System.out.println("key" + element.getKey());
             List<SelectStaticsTemplate> value = subjectMapper.selectAllSelectStaticsByMajorId(element.getKey());
-            if (ObjectUtil.isNotNull(value)) {
+            if (ObjectUtil.isNotNull(value) && !value.isEmpty()) {
+                Sheet sheet = workbook.createSheet(((String)element.getValue().get("majorName")));
+                fillingSelectStaticsSheetTitle(sheet, sheetAt, element.getValue(), year);
                 Row fixedRow2 = null;
                 int row = 3;
                 for (int i = 0; i < value.size(); i++) {
@@ -1241,14 +1235,19 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         if (conclude==2) s ="差";
         template.setConclude(s);
         template.setArrange(middleCheck.getArrange());
-        template.setMajorAgree(middleCheck.getMajorAgree()==1?"同意":"不同意");
-        String majorName = teacherMapper.selectOne(new QueryWrapper<Teacher>().eq("id", middleCheck.getMajorLeadingId())).getName();
-        String collegeName = teacherMapper.selectOne(new QueryWrapper<Teacher>().eq("id", middleCheck.getCollegeAgree())).getName();
-        template.setMajorSign(majorName);
-        template.setMajorDate(middleCheck.getMajorDate().toString());
-        template.setCollegeAgree(middleCheck.getCollegeAgree()==1?"同意":"不同意");
-        template.setCollegeSign(collegeName);
-        template.setCollegeDate(middleCheck.getCollegeDate().toString());
+        if(ObjectUtil.isNotNull(middleCheck.getMajorAgree())) {
+            template.setMajorAgree(middleCheck.getMajorAgree()==1?"同意":"不同意");
+            String majorName = teacherMapper.selectOne(new QueryWrapper<Teacher>().eq("id", middleCheck.getMajorLeadingId())).getName();
+            template.setMajorSign(majorName);
+            template.setMajorDate(middleCheck.getMajorDate().toString());
+        }
+        if(ObjectUtil.isNotNull(middleCheck.getCollegeAgree())) {
+            template.setCollegeAgree(middleCheck.getCollegeAgree()==1?"同意":"不同意");
+            String collegeName = teacherMapper.selectOne(new QueryWrapper<Teacher>().eq("id", middleCheck.getCollegeAgree())).getName();
+            template.setCollegeSign(collegeName);
+            template.setCollegeDate(middleCheck.getCollegeDate().toString());
+        }
+
         return template;
     }
 
@@ -1331,11 +1330,12 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
     }
 
     @Override
-    public void staticsGroupTable(Integer majorId, Integer year, HttpServletResponse response) throws IOException {
+    public void staticsGroupTable(Integer majorId, Integer year, Boolean isRepeat, HttpServletResponse response) throws IOException {
         /*该专业下的所有分组*/
         List<Team> teams = teamMapper.selectList(new QueryWrapper<Team>()
                 .eq("major_id", majorId)
-                .eq("grade", GradeUtils.getGrade(year)));
+                .eq("grade", GradeUtils.getGrade(year))
+                .eq("is_repeat", isRepeat? 1: 0));
 
         ClassPathResource resource = new ClassPathResource("template/excel/GroupTableTemplate.xlsx");
 
@@ -1350,7 +1350,7 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
         Sheet sheetAt = workbook.getSheetAt(0);
         for (Team element: teams) {
             /*创建新sheet*/
-            Sheet sheet = workbook.createSheet(element.getTeamNumber());
+            Sheet sheet = workbook.createSheet(element.getTeamNumber().toString());
             List<TeamUser> teamUsers = teamUserMapper.selectList(new QueryWrapper<TeamUser>()
                     .eq("team_id", element.getId())
                     .eq("is_student", 0));
@@ -1412,6 +1412,228 @@ public class FileDownLoadServiceImpl implements FileDownLoadService {
 
         /*将内容导出到outPutStream*/
         workbook.write(response.getOutputStream());
+    }
+
+    @Override
+    public void teacherInfoTable(HttpServletResponse response) {
+        // 获取文件
+        String dir = "";
+        if(sys.equals("win")) {
+            dir = "template/file/teacherTemplate.xlsx";
+        } else if(sys.equals("linux")) {
+            dir = "/usr/fileDownload/teacherTemplate.xlsx";
+        }
+        String fileName = "教师信息表_" + DateUtil.year(new Date()) + ".xlsx";
+        fileDownload(dir, fileName, response);
+    }
+
+    @Override
+    public void studentInfoTable(HttpServletResponse response) {
+        // 获取文件
+        String dir = "";
+        if(sys.equals("win")) {
+            dir = "template/file/studentTemplate.xlsx";
+        } else if(sys.equals("linux")) {
+            dir = "/usr/fileDownload/studentTemplate.xlsx";
+        }
+        String fileName = "学生信息表_" + DateUtil.year(new Date()) + ".xlsx";
+        fileDownload(dir, fileName, response);
+    }
+
+    @Override
+    public void middleStatistics(Integer majorId, Integer year, HttpServletResponse response) throws IOException {
+        /*该学院下的所有专业名称*/
+        Map<Integer, Map<String, Object>> majorMap = majorMapper.selectAllMajorOfCollege(majorId);
+
+        ClassPathResource resource = new ClassPathResource("template/excel/MiddleCheckStatisticsTenplate.xlsx");
+
+        /*获取模板*/
+        Workbook workbook = new XSSFWorkbook(resource.getInputStream());
+
+        Integer grade = GradeUtils.getGrade(year);
+
+        //sheetAt 是模板
+        //sheet 是需要操作的
+        /*模板sheet*/
+        Sheet sheetAt = workbook.getSheetAt(0);
+        for (Map.Entry<Integer, Map<String, Object>> element : majorMap.entrySet()) {
+            /*创建新sheet*/
+            Sheet sheet = workbook.createSheet(((String)element.getValue().get("majorName")));
+            fillingMiddleStaSheetTitle(sheet, sheetAt, element.getValue(), year);
+
+            /*中间内容部分*/
+            List<MiddleStaTemplate> value = subjectMapper.selectMiddleStaByMajorId(element.getKey(), grade);
+            if (ObjectUtil.isNotNull(value)) {
+                Row fixedRow2 = null;
+                int row = 4;
+                for (int i = 0; i < value.size(); i++) {
+                    // 4
+                    fixedRow2 = sheet.createRow(row);
+
+                    Cell sequenceCell2 = fixedRow2.createCell(0);
+                    sequenceCell2.setCellStyle(sheetAt.getRow(4).getCell(0).getCellStyle());
+                    sequenceCell2.setCellValue(i + 1);
+
+                    Cell topicCell2 = fixedRow2.createCell(1);
+                    topicCell2.setCellStyle(sheetAt.getRow(4).getCell(1).getCellStyle());
+                    topicCell2.setCellValue(value.get(i).getStudentName());
+
+                    Cell topicCell3 = fixedRow2.createCell(2);
+                    topicCell3.setCellStyle(sheetAt.getRow(4).getCell(2).getCellStyle());
+                    topicCell3.setCellValue(value.get(i).getSubjectName());
+
+                    Cell sNameCell2 = fixedRow2.createCell(3);
+                    sNameCell2.setCellStyle(sheetAt.getRow(4).getCell(3).getCellStyle());
+                    sNameCell2.setCellValue(value.get(i).getHasOpenReport()==1?"完成":"未完成");
+
+                    Cell cNameCell2 = fixedRow2.createCell(4);
+                    cNameCell2.setCellStyle(sheetAt.getRow(4).getCell(4).getCellStyle());
+                    cNameCell2.setCellValue(value.get(i).getHasTaskBook()==1?"完成":"未完成");
+
+                    Cell gNameCell2 = fixedRow2.createCell(5);
+                    gNameCell2.setCellStyle(sheetAt.getRow(4).getCell(5).getCellStyle());
+                    gNameCell2.setCellValue(value.get(i).getLiteratureQuantity());
+
+                    Cell sourceCell2 = fixedRow2.createCell(6);
+                    sourceCell2.setCellStyle(sheetAt.getRow(4).getCell(6).getCellStyle());
+                    Integer workingSpeed = value.get(i).getWorkingSpeed();
+                    if(workingSpeed==0)
+                        sourceCell2.setCellValue("快");
+                    else if(workingSpeed==1)
+                        sourceCell2.setCellValue("适中");
+                    else if(workingSpeed==2)
+                        sourceCell2.setCellValue("慢");
+
+                    Cell gNameCe = fixedRow2.createCell(7);
+                    gNameCe.setCellStyle(sheetAt.getRow(4).getCell(7).getCellStyle());
+                    gNameCe.setCellValue(value.get(i).getFinishDate().toString());
+
+                    Cell sourceCell8 = fixedRow2.createCell(8);
+                    sourceCell8.setCellStyle(sheetAt.getRow(4).getCell(8).getCellStyle());
+                    Integer di = value.get(i).getDifficulty();
+                    if(di==0)
+                        sourceCell8.setCellValue("偏难");
+                    else if(di==1)
+                        sourceCell8.setCellValue("适中");
+                    else if(di==2)
+                        sourceCell8.setCellValue("偏易");
+
+                    Cell cNameCl2 = fixedRow2.createCell(9);
+                    cNameCl2.setCellStyle(sheetAt.getRow(4).getCell(9).getCellStyle());
+                    cNameCl2.setCellValue(value.get(i).getCollegeAgree()==1?"通过":"未通过");
+
+                    fixedRow2.setHeightInPoints(20);
+
+                    row++;
+                }
+            }
+        }
+
+        /*删除模板sheet(0)*/
+        workbook.removeSheetAt(0);
+
+        String fileName = "MiddleCheckStatistics_" +  GradeUtils.getGrade(DateUtil.year(new Date())) + "_" + majorMap.get(majorId).get("collegeId") + ".xlsx";
+
+        /*设置导出参数*/
+        response.setContentType("application/vnd.ms-excel");
+        response.addHeader("Access-Control-Expose-Headers", "Content-Disposition");
+        response.addHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+
+        /*将内容导出到outPutStream*/
+        workbook.write(response.getOutputStream());
+    }
+
+    private void fillingMiddleStaSheetTitle(Sheet sheet, Sheet sheetAt, Map<String, Object> element, Integer year) {
+        /*设置行高列宽*/
+        sheet.setColumnWidth(0, sheetAt.getColumnWidth(0));
+        sheet.setColumnWidth(1, sheetAt.getColumnWidth(1));
+        sheet.setColumnWidth(2, sheetAt.getColumnWidth(2));
+        sheet.setColumnWidth(3, sheetAt.getColumnWidth(3));
+        sheet.setColumnWidth(4, sheetAt.getColumnWidth(4));
+        sheet.setColumnWidth(5, sheetAt.getColumnWidth(5));
+        sheet.setColumnWidth(6, sheetAt.getColumnWidth(6));
+        sheet.setColumnWidth(7, sheetAt.getColumnWidth(7));
+        sheet.setColumnWidth(8, sheetAt.getColumnWidth(8));
+        sheet.setColumnWidth(9, sheetAt.getColumnWidth(9));
+
+        /**/
+        /*合并单元格，创建单元格填充数据*/
+        /*设置跨行*/
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 9));
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 9));
+        sheet.addMergedRegion(new CellRangeAddress(2, 3, 0, 0));
+        sheet.addMergedRegion(new CellRangeAddress(2, 3, 1, 1));
+        sheet.addMergedRegion(new CellRangeAddress(2, 3, 2, 2));
+        sheet.addMergedRegion(new CellRangeAddress(2, 2, 3, 9));
+
+
+        /*表头 (1)*/
+        Row titleRow = sheet.createRow(0);
+        Cell titleCell = titleRow.createCell(0);
+        titleCell.setCellStyle(sheetAt.getRow(0).getCell(0).getCellStyle());
+        int grade = GradeUtils.getGrade(year);
+        titleCell.setCellValue((grade+3) + "-" + (grade + 4) + "(2)毕业论文(设计)中期检查情况汇总表");
+        titleRow.setHeightInPoints(25);
+
+        /*学院专业打印时间*/
+        Row printRow = sheet.createRow(1);
+        Cell collegeMajorCell = printRow.createCell(0);
+        collegeMajorCell.setCellStyle(sheetAt.getRow(1).getCell(0).getCellStyle());
+        collegeMajorCell.setCellValue(
+                "学院: " + element.get("collegeName") + "  " +
+                "专业: " + element.get("majorName") + "  " +
+                "打印时间: " + DateUtil.format(new Date(), "yyyy-MM-dd") + "  " +
+                "教学院长: ");
+
+        /*固定列名 (2)*/
+        Row fixedRow = sheet.createRow(2);
+        Cell sequenceCell = fixedRow.createCell(0);
+        sequenceCell.setCellStyle(sheetAt.getRow(2).getCell(0).getCellStyle());
+        sequenceCell.setCellValue("序号");
+
+        Cell topicCell = fixedRow.createCell(1);
+        topicCell.setCellStyle(sheetAt.getRow(2).getCell(1).getCellStyle());
+        topicCell.setCellValue("选题学生");
+
+        Cell topicCell1 = fixedRow.createCell(2);
+        topicCell1.setCellStyle(sheetAt.getRow(2).getCell(2).getCellStyle());
+        topicCell1.setCellValue("毕业论文(设计)选题");
+
+        Cell sNameCell = fixedRow.createCell(3);
+        sNameCell.setCellStyle(sheetAt.getRow(2).getCell(2).getCellStyle());
+        sNameCell.setCellValue("完成情况");
+
+        Row fixedRow3 = sheet.createRow(3);
+        Cell cNameCell = fixedRow3.createCell(3);
+        cNameCell.setCellStyle(sheetAt.getRow(3).getCell(3).getCellStyle());
+        cNameCell.setCellValue("开题报告完成情况");
+
+        Cell gNameCell = fixedRow3.createCell(4);
+        gNameCell.setCellStyle(sheetAt.getRow(3).getCell(4).getCellStyle());
+        gNameCell.setCellValue("任务书完成情况");
+
+        Cell sourceCell4 = fixedRow3.createCell(5);
+        sourceCell4.setCellStyle(sheetAt.getRow(3).getCell(5).getCellStyle());
+        sourceCell4.setCellValue("阅读文献数");
+        Cell sourceCell = fixedRow3.createCell(6);
+        sourceCell.setCellStyle(sheetAt.getRow(3).getCell(6).getCellStyle());
+        sourceCell.setCellValue("工作进度");
+        Cell sourceCell1 = fixedRow3.createCell(7);
+        sourceCell1.setCellStyle(sheetAt.getRow(3).getCell(7).getCellStyle());
+        sourceCell1.setCellValue("初稿预计完成时间");
+        Cell sourceCell2 = fixedRow3.createCell(8);
+        sourceCell2.setCellStyle(sheetAt.getRow(3).getCell(8).getCellStyle());
+        sourceCell2.setCellValue("选题情况");
+        Cell sourceCell3 = fixedRow3.createCell(9);
+        sourceCell3.setCellStyle(sheetAt.getRow(3).getCell(9).getCellStyle());
+        sourceCell3.setCellValue("结论");
+
+        setBorder(sheet, new CellRangeAddress(2, 3, 0, 0));
+        setBorder(sheet, new CellRangeAddress(2, 3, 1, 1));
+        setBorder(sheet, new CellRangeAddress(2, 3, 2, 2));
+        setBorder(sheet, new CellRangeAddress(2, 2, 3, 9));
+        fixedRow3.setHeightInPoints(30);
+        fixedRow.setHeightInPoints(20);
     }
 
     private void fillingTeamReportSheetTitle(Sheet sheet, Sheet sheetAt, Team element, List<TeamUser> teamUsers, Integer year) {

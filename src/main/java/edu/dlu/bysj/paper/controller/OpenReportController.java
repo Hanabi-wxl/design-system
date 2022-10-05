@@ -249,9 +249,9 @@ public class OpenReportController {
                         return CommonResult.failed("题目没有到达该阶段");
                     }
                 } else {
-                    return CommonResult.failed("开题报告未上传或文件失效");
+                    return CommonResult.failed("所选题目未提交开题报告");
                 }
-            } else if (roleIds.contains(3)) {
+            } else {
                 Integer processCode = ProcessEnum.OPEN_REPORT_MAJOR_AUDIT.getProcessCode();
                 /*open report 和 subject都存在*/
                 if (ObjectUtil.isNotNull(subject) && ObjectUtil.isNotNull(opeReport)) {

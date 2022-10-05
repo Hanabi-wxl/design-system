@@ -53,7 +53,7 @@ public class SubjectApprovalVo {
     private Integer sourceId;
 
     @ApiModelProperty(value = "内容摘要")
-    @NotNull(message = "内容摘要不能为空")
+    @NotBlank(message = "内容摘要不能为空")
     private String abstractContext;
 
     @ApiModelProperty(value = "必要性")

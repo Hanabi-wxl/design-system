@@ -39,7 +39,7 @@ public class ClassController {
     @ApiOperation(value = "查询班级列表(根据专业id)")
     public CommonResult<TotalPackageVo<Class>> classList(@RequestParam Integer major, @RequestParam Integer year) {
         TotalPackageVo<Class> res = new TotalPackageVo<>();
-        List<Class> classes = classService.list(new QueryWrapper<Class>().eq("major_id", major).eq("grade",year));
+        List<Class> classes = classService.list(new QueryWrapper<Class>().eq("major_id", major).eq("grade",GradeUtils.getGrade(year)));
         res.setArrays(classes);
         res.setTotal(classes.size());
         return CommonResult.success(res);

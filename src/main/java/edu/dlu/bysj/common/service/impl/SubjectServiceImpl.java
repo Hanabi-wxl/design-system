@@ -362,9 +362,9 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
         Integer start = (query.getPageNumber() - 1) * query.getPageSize();
         /*分页获取该年度该题目的指定条件下的记录*/
         List<TopicsVo> topicsVos = subjectMapper.studentSelectSubject(majorId, grade, start, query.getPageSize(),
-            query.getTeacherName(), query.getSubjectName());
+            query.getSearchContent());
         Integer total =
-            subjectMapper.totalStudentSelectSubject(majorId, grade, query.getTeacherName(), query.getSubjectName());
+            subjectMapper.totalStudentSelectSubject(majorId, grade, query.getSearchContent());
         result.setTotal(total);
 
         for (int i = 0; i < topicsVos.size(); i++) {
@@ -398,10 +398,9 @@ public class SubjectServiceImpl extends ServiceImpl<SubjectMapper, Subject> impl
     @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean addedApprove(SubjectApprovalVo subjectApprovalVo) {
-        subjectApprovalVo.setSubjectId(String.valueOf(snowflakeConfig.snowflakeId()));
         Integer studentNumber = subjectApprovalVo.getStudentNumber();
         Integer total = subjectMapper.totalSubjectListByStudent(studentService.numberToId(studentNumber),GradeUtils.getGrade(LocalDate.now().getYear()));
-        if (total < 3) {
+        if (total < 10) {
             subjectApprovalVo.setStudentId(studentService.numberToId(studentNumber));
             Subject subject = new Subject();
             this.packageSubject(subjectApprovalVo, subject);
