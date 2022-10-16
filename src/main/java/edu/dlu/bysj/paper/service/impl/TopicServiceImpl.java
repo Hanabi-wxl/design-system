@@ -82,8 +82,10 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topics> implement
                 volunteerList.add(value);
             } else {
                 // 学生报题更新
-                element.setProgressId(4);
-                subjectService.updateById(element);
+                if (element.getProgressId() == 3) {
+                    element.setProgressId(4);
+                    subjectService.updateById(element);
+                }
             }
         }
         result.setArrays(volunteerList);

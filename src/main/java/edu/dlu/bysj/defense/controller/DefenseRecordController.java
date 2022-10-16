@@ -80,11 +80,14 @@ public class DefenseRecordController {
     @RequiresPermissions({"record:delete"})
     @ApiOperation(value = "删除答辩记录")
     @ApiImplicitParam(name = "recordId", value = "答辩记录id")
-    public CommonResult<Object> deleteDefenceRecord(@NotNull @RequestBody String recordId) {
+    public CommonResult<Object> deleteDefenceRecord(@NotNull @RequestBody String recordId, HttpServletRequest request) {
         Integer id = JSONUtil.parseObj(recordId).get("recordId", Integer.class);
-        DefenceRecord record = defenseRecordService.getOne(new QueryWrapper<DefenceRecord>().eq("id", recordId));
-        if(ObjectUtil.isNull(record))
-            return CommonResult.success(null,"移除成功");
+        DefenceRecord record = defenseRecordService.getOne(new QueryWrapper<DefenceRecord>().eq("id", id));
+        if(ObjectUtil.isNull(record)) {
+            return CommonResult.success(null, "移除成功");
+        } else if(!record.getNoteTakerId().equals(JwtUtil.getUserId(request.getHeader("JWT")))) {
+            return CommonResult.failed("无法移除他人记录");
+        }
         return defenseRecordService.removeById(id) ? CommonResult.success("删除成功") : CommonResult.failed("删除失败");
     }
 

@@ -1,11 +1,13 @@
 package edu.dlu.bysj.paper.controller;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.dlu.bysj.base.exception.GlobalException;
 import edu.dlu.bysj.base.model.dto.MajorFillingDto;
+import edu.dlu.bysj.base.model.entity.Score;
 import edu.dlu.bysj.base.model.entity.Student;
 import edu.dlu.bysj.base.model.entity.Subject;
 import edu.dlu.bysj.base.model.entity.Teacher;
@@ -22,6 +24,7 @@ import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.StudentService;
 import edu.dlu.bysj.common.service.SubjectService;
 import edu.dlu.bysj.common.service.TeacherService;
+import edu.dlu.bysj.grade.service.ScoreService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
 import edu.dlu.bysj.paper.service.MessageService;
 import edu.dlu.bysj.paper.service.SourceService;
@@ -39,6 +42,7 @@ import org.apache.poi.ss.formula.functions.T;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -72,6 +76,7 @@ public class SubjectApprovalController {
     private final SubjectTypeService subjectTypeService;
     private final MajorService majorService;
     private final CollegeService collegeService;
+    private final ScoreService scoreService;
     private final MessageService messageService;
 
     private static final Integer ONE = 1;
@@ -80,6 +85,7 @@ public class SubjectApprovalController {
     @Autowired
     public SubjectApprovalController(TeacherService teacherService,
                                      StudentService studentService,
+                                     ScoreService scoreService,
                                      MessageService messageService,
                                      SourceService sourceService,
                                      SubjectService subjectService,
@@ -88,6 +94,7 @@ public class SubjectApprovalController {
                                      CollegeService collegeService) {
         this.teacherService = teacherService;
         this.messageService = messageService;
+        this.scoreService = scoreService;
         this.studentService = studentService;
         this.sourceService = sourceService;
         this.subjectService = subjectService;
@@ -144,6 +151,7 @@ public class SubjectApprovalController {
      * @param request
      * @return edu.dlu.bysj.base.result.CommonResult<java.lang.Object>
      **/
+    @Transactional(rollbackFor = Exception.class)
     @PostMapping(value = "/approve/teacherCommitSubject")
     @LogAnnotation(content = "教师提交/修改题目审批表")
     @RequiresPermissions({"approve:subjectApprove"})
@@ -157,8 +165,8 @@ public class SubjectApprovalController {
         StringBuilder subjectId = new StringBuilder();
         if (isStudent) {
             Integer number = studentService.idToNumber(userId);
-            subjectId.append(grade+3).append(number).append("001");
-            if(!number.equals(subjectApprovalVo.getStudentNumber())) {
+            subjectId.append(grade+3).append(number).append("001");  // 学生报题编号
+            if(!number.equals(subjectApprovalVo.getStudentNumber())) { // 学生判断是否填写他人学号
                 return CommonResult.failed("请勿给他人报题");
             }
         } else {
@@ -169,14 +177,14 @@ public class SubjectApprovalController {
                     .eq("grade", grade));
             DecimalFormat decimalFormat = new DecimalFormat("000");
             String numFormat= decimalFormat.format(sum+1);
-            subjectId.append(grade+3).append(number).append(numFormat);
-            if(!teacherId.equals(userId)) {
+            subjectId.append(grade+3).append(number).append(numFormat); // 教师报题编号
+            if(!teacherId.equals(userId)) { // 教师判断是否填写他人工号
                 return CommonResult.failed("请勿给他人报题");
             }
         }
         /*新增*/
         if (subjectApprovalVo.getSubjectId().equals("")) {
-            if(isStudent) {
+            if(isStudent) { // 判断学生是否超过报题限制
                 int sum = subjectService.count(new QueryWrapper<Subject>()
                         .eq("student_id", userId)
                         .eq("grade", grade));
@@ -184,14 +192,22 @@ public class SubjectApprovalController {
                     return CommonResult.failed("参与课题超过限制");
             }
             subjectApprovalVo.setSubjectId(subjectId.toString());
+            // 提交报题
             flag = subjectService.addedApprove(subjectApprovalVo);
-            if(flag) {
+            Subject saveSubject = null;
+            if (flag)
+                saveSubject = subjectService.getBySubjectId(subjectId.toString());
+            if(ObjectUtil.isNotNull(saveSubject) && isStudent) { // 如为学生将课题id填入学生信息
                 Student student = studentService.getById(userId);
-                student.setSubjectId(subjectService.getBySubjectId(subjectId.toString()).getId());
+                student.setSubjectId(saveSubject.getId());
                 studentService.updateById(student);
             }
-        } else {
-            /*修改*/
+            if(ObjectUtil.isNotNull(saveSubject)) { // 保存后填入成绩信息
+                Score sc = new Score();
+                sc.setSubjectId(saveSubject.getId());
+                scoreService.save(sc);
+            }
+        } else { // 修改课题信息
             Integer progressId = subjectService.getOne(new QueryWrapper<Subject>()
                     .eq("subject_id", subjectApprovalVo.getSubjectId()))
                     .getProgressId();
@@ -254,6 +270,7 @@ public class SubjectApprovalController {
         Integer roleId = Collections.max(JwtUtil.getRoleIds(jwt));
         Integer userId = JwtUtil.getUserId(jwt);
         TotalPackageVo<SubjectDetailVo> subjectVo;
+
         if (roleId > 1)
             subjectVo = subjectService.teacherSubjectList(query, userId);
         else

@@ -7,6 +7,7 @@ import edu.dlu.bysj.base.result.ResultCodeEnum;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.security.model.token.JwtToken;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.subject.Subject;
@@ -79,7 +80,6 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
      */
     @Override
     protected boolean executeLogin(ServletRequest request, ServletResponse response) throws Exception {
-
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         String token = httpServletRequest.getHeader("JWT");
         JwtToken jwtToken = new JwtToken(token);
@@ -87,7 +87,7 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
         try {
             getSubject(request, response).login(jwtToken);
             // 如果没有抛出异常则代表登入成功，返回true
-            return true;
+            return onLoginSuccess(jwtToken, SecurityUtils.getSubject(),request,response);
         } catch (AuthenticationException e) {
             return this.onLoginFailure(jwtToken, e, request, response);
         }
@@ -104,7 +104,6 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
         if (token instanceof JwtToken) {
             newToken = JwtUtil.refreshToken(token.getCredentials().toString());
         }
-
         //将新token 放入到Header中;
         if (newToken != null) {
             httpServletResponse.setHeader(JwtUtil.AUTH_HEADER, newToken);
@@ -158,6 +157,7 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
         response.getWriter().write(result);
         //添加跨域支持;
         this.fillCorsHeader(WebUtils.toHttp(request), httpServletResponse);
+
         //扔出异常判断是否登录情况;
         return false;
     }
@@ -168,8 +168,8 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
     protected void fillCorsHeader(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
         httpServletResponse.setHeader("Access-control-Allow-Origin", httpServletRequest.getHeader("Origin"));
         httpServletResponse.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS,HEAD,DELETE,PUT,PATCH");
-        httpServletResponse.setHeader("Access-Control-Allow-Headers",
-                httpServletRequest.getHeader("Access-Control-Request-Headers"));
+        httpServletResponse.setHeader("Access-Control-Allow-Headers", httpServletRequest.getHeader("Access-Control-Request-Headers"));
+        httpServletResponse.setHeader("Access-Control-Expose-Headers","JWT");
     }
 
 }

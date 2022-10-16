@@ -37,7 +37,9 @@
                  left join teacher
                            on m.sender_id = teacher.id
         where teacher.status = 1
+        order by m.id desc
         limit #{start}, #{pageSize}
+
     </select>
     <select id="totalMessageAsReviver" resultType="java.lang.Integer">
         select count(m.id) as total

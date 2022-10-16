@@ -151,7 +151,8 @@ public class ReplyController {
 
             if (need == null || need.isEmpty()) {
                 /*答辩角色设置未4答辩人*/
-                flag = teamUserService.addReplyStudent(JwtUtil.getUserId(jwt), JwtUtil.getMajorId(jwt), 4, subjectId);
+                while (!flag)
+                    flag = teamUserService.addReplyStudent(JwtUtil.getUserId(jwt), JwtUtil.getMajorId(jwt), 4, subjectId);
                 /*再次查询申请答辩后此人的组信息*/
                 if (flag) {
                     TeamUser teamuser = teamUserService.getOne(new QueryWrapper<TeamUser>()

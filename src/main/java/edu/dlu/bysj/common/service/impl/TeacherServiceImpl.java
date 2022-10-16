@@ -100,7 +100,8 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher>
             degreeAndTileConvey = teacherMapper.teacherDegreeAndTitle(teacherId);
             String value = objectMapper.writeValueAsString(degreeAndTileConvey);
             // 设置10天过期时间
-            redisTemplate.opsForValue().set(key, value, 10, TimeUnit.DAYS);
+            if(ObjectUtil.isNotNull(value))
+                redisTemplate.opsForValue().set(key, value, 10, TimeUnit.DAYS);
         }
 
         Optional<DegreeAndTileConvey> degreeTitleValue = Optional.ofNullable(degreeAndTileConvey);

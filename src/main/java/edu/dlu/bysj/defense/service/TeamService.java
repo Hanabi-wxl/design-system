@@ -43,9 +43,9 @@ public interface TeamService extends IService<Team> {
      */
     List<StudentGroupVo> studentReplyInfoOfSimilarGroup(Integer majorId, Integer grade, Integer isSecond, Integer teacherId);
 
-    List<Integer> similarGuideTeacher(Integer firstTeacherId, Integer grade);
+    List<Integer> similarGuideTeacher(Integer firstTeacherId, Integer grade, Integer majorId);
 
-    List<Integer> differentGuideTeacher(Integer firstTeacherId, Integer grade);
+    List<Integer> differentGuideTeacher(Integer firstTeacherId, Integer grade, Integer majorId);
 
-    List<Integer> similarOtherTeacher(Integer otherPersonId, Integer grade);
+    List<Integer> similarOtherTeacher(Integer otherPersonId, Integer grade, Integer majorId);
 }

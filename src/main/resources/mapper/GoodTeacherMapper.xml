@@ -47,6 +47,7 @@
         where subject.status = 1
         and score.status = 1
         and major.id = #{majorId}
+        group by score.sum_score
         <if test="teacherNumber != null and teacherNumber != ''">
             and teacher.teacher_number like #{number_pattern}
         </if>

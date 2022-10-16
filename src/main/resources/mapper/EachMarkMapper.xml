@@ -1,17 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="edu.dlu.bysj.defense.mapper.EachMarkMapper">
-    <resultMap id="eachMarkInfoMap" type="edu.dlu.bysj.base.model.vo.MutualEvaluationVo">
-        <id column="subjectId" property="subjectId"/>
-        <result column="subject_name" property="subjectName"/>
-        <result column="teacherName" property="firstTeacherName"/>
-        <result column="titleName" property="firstTeacherTitle"/>
-        <result column="studentName" property="studentName"/>
-        <result column="className" property="className"/>
-        <result column="content" property="progress"/>
-        <result column="phone_number" property="firstTeacherPhone"/>
-        <result column="majorName" property="firstTeacherMajor"/>
-    </resultMap>
 
     <update id="removeBySubjectIds">
         update each_mark set status = 0 where subject_id in
@@ -21,59 +10,7 @@
     </update>
 
 
-    <select id="selectEachMarkInfoByQuery" resultMap="eachMarkInfoMap">
 
-        <if test="query.searchContent != null and query.searchContent != ''">
-            <bind name="name_pattern" value="'%'+query.searchContent+'%'"/>
-            <bind name="umber_pattern" value="'%'+query.searchContent+'%'"/>
-        </if>
-
-        select s.id as subjectId ,
-        s.subject_name,
-        teacher.name as teacherName,
-        title.name as titleName,
-        student.name as studentName,
-        class.name as className,
-        progress.content,
-        teacher.phone_number,
-        major.name as majorName
-        from
-
-        (select subject.first_teacher_id,subject.student_id,subject.subject_name,subject.id,subject.progress_id
-        from subject
-        where subject.status = 1
-        <if test="query.teacherId != null">
-            and subject.first_teacher_id = #{query.teacherId}
-        </if>
-        and subject.grade = #{query.year}
-        and subject.major_id = #{query.majorId}) as s
-        left join progress
-        on s.progress_id = progress.id
-
-        left join teacher
-        on teacher.id = s.first_teacher_id
-
-        left join major
-        on teacher.major_id = major.id
-
-        left join teacher_title title
-        on teacher.title_id = title.id
-
-        left join student
-        on student.id = s.student_id
-
-        left join class
-        on student.class_id = class.id
-
-        <where>
-            <if test="query.searchContent != null and query.searchContent != ''">
-                and teacher.name like #{name_pattern} or teacher.teacher_number like #{umber_pattern}
-            </if>
-        </where>
-
-        limit #{start}, #{pageSize}
-
-    </select>
     <select id="totalEachMarkInfoByQuery" resultType="java.lang.Integer">
 
         <if test="query.searchContent != null and query.searchContent != ''">
@@ -162,6 +99,58 @@
 
                  left join major
                            on teacher.major_id = major.id
+    </select>
+    <select id="selectEachMarkInfoByQuery" resultType="edu.dlu.bysj.base.model.vo.MutualEvaluationVo">
+        <if test="query.searchContent != null and query.searchContent != ''">
+            <bind name="name_pattern" value="'%'+query.searchContent+'%'"/>
+            <bind name="umber_pattern" value="'%'+query.searchContent+'%'"/>
+        </if>
+
+        SELECT
+        s.id AS subjectId,
+        s.subject_name AS subjectName,
+        teacher.name AS firstTeacherName,
+        title.name AS firstTeacherTitle,
+        student.name AS studentName,
+        class.name AS className,
+        progress.content AS progress,
+        teacher.phone_number AS firstTeacherPhone,
+        major.name AS firstTeacherMajor
+        FROM
+        (SELECT
+        subject.first_teacher_id,
+        subject.student_id,
+        subject.subject_name,
+        subject.id,
+        subject.progress_id
+        FROM
+        subject
+        WHERE subject.status = 1
+        <if test="query.teacherId != null">
+            and subject.first_teacher_id = #{query.teacherId}
+        </if>
+        AND subject.grade = #{query.year}
+        AND subject.major_id = #{query.majorId}) as s
+        LEFT JOIN progress
+        ON s.progress_id = progress.id
+        LEFT JOIN teacher
+        ON teacher.id = s.first_teacher_id
+        LEFT JOIN major
+        ON teacher.major_id = major.id
+        LEFT JOIN teacher_title title
+        ON teacher.title_id = title.id
+        LEFT JOIN student
+        ON student.id = s.student_id
+        LEFT JOIN class
+        ON student.class_id = class.id
+
+        <where>
+            <if test="query.searchContent != null and query.searchContent != ''">
+                and teacher.name like #{name_pattern} or teacher.teacher_number like #{umber_pattern}
+            </if>
+        </where>
+
+        limit #{start}, #{pageSize}
     </select>
 
 

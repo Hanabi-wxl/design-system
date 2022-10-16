@@ -112,12 +112,13 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     }
 
     @Override
-    public List<Integer> similarGuideTeacher(Integer teacherId, Integer grade) {
+    public List<Integer> similarGuideTeacher(Integer teacherId, Integer grade, Integer majorId) {
         List<TeamUser> teamUsers = teamUserMapper.selectList(new QueryWrapper<TeamUser>().eq("user_id", teacherId));
         List<Integer> ids = teamUsers.stream().map(TeamUser::getTeamId).collect(Collectors.toList());
         List<Team> teams = baseMapper.selectBatchIds(ids);
         ids.clear();
         teams.stream()
+                .filter(item -> item.getMajorId().equals(majorId))
                 .filter(item -> item.getGrade().equals(grade))
                 .filter(item -> item.getType().equals(0))
                 .forEach(item -> ids.add(item.getId()));
@@ -125,14 +126,15 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     }
 
     @Override
-    public List<Integer> differentGuideTeacher(Integer firstTeacherId, Integer grade) {
+    public List<Integer> differentGuideTeacher(Integer firstTeacherId, Integer grade, Integer majorId) {
         List<Team> teams = baseMapper.selectList(new QueryWrapper<Team>()
                 .eq("grade", grade)
-                .eq("type", 2));
+                .eq("type", 2)
+                .eq("major_id", majorId));
         List<Integer> ids = teams.stream().map(Team::getId).collect(Collectors.toList());
         List<TeamUser> teamUsers = teamUserMapper.selectList(new QueryWrapper<TeamUser>().in("team_id", ids));
         List<Integer> collect = teamUsers.stream()
-                .filter(item -> item.getUserId().equals(firstTeacherId))
+                .filter(item -> !item.getUserId().equals(firstTeacherId))
                 .map(TeamUser::getTeamId)
                 .collect(Collectors.toList());
         ids = ids.stream().filter(item -> !collect.contains(item)).collect(Collectors.toList());
@@ -140,8 +142,11 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
     }
 
     @Override
-    public List<Integer> similarOtherTeacher(Integer otherPersonId, Integer grade) {
-        List<TeamUser> teamUsers = teamUserMapper.selectList(new QueryWrapper<TeamUser>().eq("user_id", otherPersonId));
+    public List<Integer> similarOtherTeacher(Integer otherPersonId, Integer grade, Integer majorId) {
+        List<TeamUser> teamUsers = teamUserMapper.selectList(
+                new QueryWrapper<TeamUser>()
+                        .eq("user_id", otherPersonId)
+                        .eq("major_id", majorId));
         List<Integer> ids = new LinkedList<>();
         teamUsers.forEach(item -> ids.add(item.getTeamId()));
         List<Team> teams = baseMapper.selectBatchIds(ids);

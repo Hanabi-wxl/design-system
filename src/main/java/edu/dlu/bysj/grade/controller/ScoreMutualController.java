@@ -65,12 +65,25 @@ public class ScoreMutualController {
         String jwt = request.getHeader("jwt");
 
         Integer processCode = ProcessEnum.MUTUAL_EVALUATION.getProcessCode();
+        List<EachMark> eachMarks = eachMarkService.list(new QueryWrapper<EachMark>()
+                .eq("teacher_id", JwtUtil.getUserId(jwt)));
+        Integer subjectId = scoreVo.getSubjectId();
+        boolean flag = false;
+        for (EachMark eachMark : eachMarks) {
+            if (eachMark.getSubjectId().equals(subjectId)) {
+                flag = true;
+                break;
+            }
+        }
+        if (!flag)
+            return CommonResult.failed("互评异常");
+
         boolean subjectFlag = false, scoreFlag = false;
         Subject subject = subjectService.getById(scoreVo.getSubjectId());
         if (ObjectUtil.isNotNull(subject)) {
             if (processCode.equals(subject.getProgressId()) || processCode.equals(subject.getProgressId() + 1)) {
                 Score scoreOne =
-                    scoreService.getOne(new QueryWrapper<Score>().eq("subject_id", scoreVo.getSubjectId()));
+                    scoreService.getOne(new QueryWrapper<Score>().eq("subject_id", subjectId));
                 if (ObjectUtil.isNotNull(scoreOne)) {
                     scoreOne.setOtherQuality(scoreVo.getQuality());
                     scoreOne.setOtherAbility(scoreVo.getAbility());
@@ -102,7 +115,7 @@ public class ScoreMutualController {
      **/
     @GetMapping(value = "/score/other/list")
     @LogAnnotation(content = "获取互评列表")
-    @RequiresPermissions({"each:commentFrom"})
+    @RequiresPermissions({"each:list"})
     @ApiOperation(value = "获取互评")
     public CommonResult<Object> listOtherEvaluation(@Valid SubjectListQuery query, HttpServletRequest request) {
         String jwt = request.getHeader("jwt");

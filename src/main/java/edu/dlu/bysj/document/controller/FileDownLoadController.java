@@ -22,9 +22,7 @@ import edu.dlu.bysj.base.util.GradeUtils;
 import edu.dlu.bysj.base.util.JwtUtil;
 import edu.dlu.bysj.common.service.StudentService;
 import edu.dlu.bysj.common.service.SubjectService;
-import edu.dlu.bysj.document.entity.MiddleCheckTemplate;
-import edu.dlu.bysj.document.entity.PaperCoverTemplate;
-import edu.dlu.bysj.document.entity.SubjectApproveFormTemplate;
+import edu.dlu.bysj.document.entity.*;
 import edu.dlu.bysj.document.service.FileDownLoadService;
 import edu.dlu.bysj.log.annotation.LogAnnotation;
 import edu.dlu.bysj.paper.service.MiddleCheckService;
@@ -495,5 +493,66 @@ public class FileDownLoadController {
             e.printStackTrace();
             throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载分组统计表失败");
         }
+    }
+
+    @LogAnnotation(content = "下载优秀指导教师申报表")
+    @RequiresPermissions({"approve:download"})
+    @GetMapping(value = "/goodTeacherAuditTable")
+    public void goodTeacherAuditTable(Integer year, HttpServletRequest request, HttpServletResponse response) throws IOException {
+//        String jwt = request.getHeader("jwt");
+//        Integer userId = JwtUtil.getUserId("jwt");
+//        GoodTeacherFormTemplate result = fileDownLoadService.packPageGoodTeacherFormData(year, userId);
+//        GoodTeacherGuideTemplate resGuide = fileDownLoadService.packPageGoodTeacherFormData(year, userId);
+//        Subject subject = subjectService.getBySubjectId(subjectId);
+//        String studentNumber = "";
+//        String studentName = "";
+//        if (ObjectUtil.isNotNull(subject)) {
+//            Student student = studentService.getById(subject.getStudentId());
+//            if (ObjectUtil.isNotNull(student)) {
+//                studentNumber = student.getStudentNumber();
+//                studentName = student.getName();
+//            }
+//        }
+//
+//        Map<String, Object> objectMap = BeanUtil.beanToMap(result);
+//
+//        ClassPathResource resource = null;
+//
+//        ByteArrayOutputStream byteArrayOut = new ByteArrayOutputStream();
+//        QrcodeGenerator generate = new SimpleQrcodeGenerator().generate(subject.getSubjectId());
+//        BufferedImage image = generate.getImage();
+//        ImageIO.write(image, "png", byteArrayOut);
+//
+//        resource = new ClassPathResource("template/excel/SubjectApproveFormTeacher.xlsx");
+//
+//        String fileName = "题目审批表_" + GradeUtils.getGrade() + "_TMSPB_" + studentNumber + ".xlsx";
+//        TemplateExportParams params = new TemplateExportParams(resource.getPath(), true);
+//
+//        Workbook workbook = null;
+//        try {
+//            workbook = ExcelExportUtil.exportExcel(params, objectMap);
+//            workbook.setSheetName(0, studentName + "的审题统计表");
+//
+//            Sheet sheetAt = workbook.getSheetAt(0);
+//            XSSFClientAnchor xssfClientAnchor = new XSSFClientAnchor(0, 0, 500000, 500000, (short) 0, 0, (short) 0, 0);
+//            xssfClientAnchor.setAnchorType(ClientAnchor.AnchorType.byId(1));
+//            //插入图片
+//            Drawing<?> patriarch = sheetAt.createDrawingPatriarch();
+//            patriarch.createPicture(xssfClientAnchor,workbook.addPicture(byteArrayOut.toByteArray(), XSSFWorkbook.PICTURE_TYPE_JPEG));
+//            byteArrayOut.close();
+//
+//            try {
+//                response.setContentType("application/vnd.ms-excel");
+//                response.addHeader("Access-Control-Expose-Headers", "Content-Disposition");
+//                response.addHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+//                workbook.write(response.getOutputStream());
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "下载题目审批表失败");
+//            }
+//        } catch (Exception e) {
+//            throw new GlobalException(ResultCodeEnum.FAILED.getCode(), "题目信息不完整");
+//        }
+
     }
 }

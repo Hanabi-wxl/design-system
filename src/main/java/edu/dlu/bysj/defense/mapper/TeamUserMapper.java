@@ -40,6 +40,6 @@ public interface TeamUserMapper extends BaseMapper<TeamUser> {
 
     Integer totalGroupMemberByGroupId(Integer groupId);
 
-    @MapKey("")
+    @MapKey("id")
     List<Map<String, String>> groupMemberInfo(List<Integer> ids);
 }

@@ -235,12 +235,11 @@
               where subject.status = 1
                 and subject.first_teacher_id = #{teacherId}
                 and grade = #{grade}) as s
-
                  left join progress
                            on progress.id = s.progress_id
                  left join teacher as t
                            on t.id = #{teacherId}
-                 inner join score sc
+                 left join score sc
                            on sc.subject_id = s.id
 
         limit #{start} ,#{pageSize}
