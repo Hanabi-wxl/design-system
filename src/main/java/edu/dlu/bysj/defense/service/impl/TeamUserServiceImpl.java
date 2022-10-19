@@ -45,6 +45,8 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
 
     private final TeamService teamService;
 
+    private final TeamUserMapper teamUserMapper;
+
 
     @Autowired
     public TeamUserServiceImpl(SubjectService subjectService,
@@ -54,7 +56,7 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
                                MiddleCheckService middleCheckService,
                                FileInformationService fileInformationService,
                                ScoreService scoreService,
-                               TeamService teamService) {
+                               TeamService teamService, TeamUserMapper teamUserMapper) {
         this.subjectService = subjectService;
         this.studentService = studentService;
         this.taskBookService = taskBookService;
@@ -63,6 +65,7 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
         this.fileInformationService = fileInformationService;
         this.scoreService = scoreService;
         this.teamService = teamService;
+        this.teamUserMapper = teamUserMapper;
     }
 
     @Override
@@ -209,6 +212,7 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
             }
             Random random = new Random();
             int type = idList.get(random.nextInt(idList.size()));
+//            System.out.println("--------------------------"+type);
             /*根据分组规则插入分组*/
             return this.addRespondentByRule(studentId, type, resposiblity, subjectId, grade, majorId);
         } else {
@@ -224,17 +228,35 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
         teamUser.setResposiblity(resposiblity);
         if (configRule.equals(0)) {
             /*与指导教师同组*/
+
+            //判断教导教师是否在本专业可选组里
+            int count = teamUserMapper.selectCount(new QueryWrapper<TeamUser>().eq("user_id", subject.getFirstTeacherId()));
+            if (count == 0) {
+                return false;
+            }
+
             List<Integer> teamIds = teamService.similarGuideTeacher(subject.getFirstTeacherId(), grade, majorId);
             return this.fillingSerialAndTeamId(teamUser, teamIds);
         } else if (configRule.equals(1)) {
             /*互评教师与学生同组*/
             Score score = scoreService.getOne(new QueryWrapper<Score>().eq("subject_id", subjectId));
             Integer otherPersonId = score.getOtherPersonId();
+
+            //判断互评教师是否在本专业可选组中
+            int count = teamUserMapper.selectCount(new QueryWrapper<TeamUser>().eq("user_id", otherPersonId).eq("in_major", 1));
+            if (count == 0) {
+                return false;
+            }
+
             List<Integer> teamIds = teamService.similarOtherTeacher(otherPersonId, grade, majorId);
             return this.fillingSerialAndTeamId(teamUser, teamIds);
         } else if (configRule.equals(2)) {
             /*不与指导教师同组*/
             List<Integer> teamIds = teamService.differentGuideTeacher(subject.getFirstTeacherId(), grade, majorId);
+            if(teamIds.size() == 0){
+                return false;
+            }
+//            return false;
             return this.fillingSerialAndTeamId(teamUser, teamIds);
         } else {
             /*随机分配*/
@@ -242,6 +264,12 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
                     .eq("grade", grade)
                     .eq("major_id", majorId));
             int i = RandomUtil.randomInt(0, teams.size());
+
+            //防止出现随机到不合理的组别
+            if(i!=3) {
+                return this.addRespondentByRule(studentId, i, resposiblity, subjectId, grade, majorId);
+            }
+
             teamUser.setTeamId(teams.get(i).getId());
             int count = this.count(new QueryWrapper<TeamUser>()
                     .eq("team_id", teams.get(i).getId())
@@ -264,9 +292,10 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
                     .eq("team_id", teamIds.get(i))
                     .eq("is_student", 1));
             teamUser.setSerial(count + 1);
+//            return false;
+            return this.save(teamUser);
         } else
             return false;
-        return false;
     }
 
 }

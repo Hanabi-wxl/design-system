@@ -15,6 +15,7 @@ import edu.dlu.bysj.defense.mapper.TeamMapper;
 import edu.dlu.bysj.defense.mapper.TeamUserMapper;
 import edu.dlu.bysj.defense.service.TeamService;
 import edu.dlu.bysj.system.mapper.MajorMapper;
+import org.apache.commons.collections.ListUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -132,21 +133,37 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
                 .eq("type", 2)
                 .eq("major_id", majorId));
         List<Integer> ids = teams.stream().map(Team::getId).collect(Collectors.toList());
-        List<TeamUser> teamUsers = teamUserMapper.selectList(new QueryWrapper<TeamUser>().in("team_id", ids));
-        List<Integer> collect = teamUsers.stream()
-                .filter(item -> !item.getUserId().equals(firstTeacherId))
+//        List<TeamUser> teamUsers = teamUserMapper.selectList(new QueryWrapper<TeamUser>().in("team_id", ids));
+//        List<Integer> collect = teamUsers.stream()
+//                .filter(item -> !item.getUserId().equals(firstTeacherId))
+//                .map(TeamUser::getTeamId)
+//                .collect(Collectors.toList());
+//        ids = ids.stream().filter(item -> !collect.contains(item)).collect(Collectors.toList());
+
+        List<Integer> firstTeacherTeamIds = teamUserMapper.selectList(new QueryWrapper<TeamUser>()
+                .eq("user_id", firstTeacherId)
+                .eq("is_student", 0))
+                .stream()
                 .map(TeamUser::getTeamId)
                 .collect(Collectors.toList());
-        ids = ids.stream().filter(item -> !collect.contains(item)).collect(Collectors.toList());
+
+        for (int i = 0; i < ids.size(); i++) {
+
+            for (int j = 0; j < firstTeacherTeamIds.size(); j++) {
+                if (ids.get(i).equals(firstTeacherTeamIds.get(j))){
+                    ids.remove(i);
+                    i--;
+                    break;
+                }
+            }
+        }
+
         return ids;
     }
 
     @Override
     public List<Integer> similarOtherTeacher(Integer otherPersonId, Integer grade, Integer majorId) {
-        List<TeamUser> teamUsers = teamUserMapper.selectList(
-                new QueryWrapper<TeamUser>()
-                        .eq("user_id", otherPersonId)
-                        .eq("major_id", majorId));
+        List<TeamUser> teamUsers = teamUserMapper.selectList(new QueryWrapper<TeamUser>().eq("user_id", otherPersonId));
         List<Integer> ids = new LinkedList<>();
         teamUsers.forEach(item -> ids.add(item.getTeamId()));
         List<Team> teams = baseMapper.selectBatchIds(ids);

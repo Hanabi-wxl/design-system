@@ -150,10 +150,16 @@ public class ReplyController {
 //            result.setNeed(need);
 
             if (need == null || need.isEmpty()) {
+
+//                int a=0;
                 /*答辩角色设置未4答辩人*/
-                while (!flag)
+                while (!flag) {
+//                    a++;
+//                    System.out.println(a);
                     flag = teamUserService.addReplyStudent(JwtUtil.getUserId(jwt), JwtUtil.getMajorId(jwt), 4, subjectId);
+                }
                 /*再次查询申请答辩后此人的组信息*/
+
                 if (flag) {
                     TeamUser teamuser = teamUserService.getOne(new QueryWrapper<TeamUser>()
                             .eq("user_id", userId)
