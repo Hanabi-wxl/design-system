@@ -214,7 +214,7 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
             int type = idList.get(random.nextInt(idList.size()));
 //            System.out.println("--------------------------"+type);
             /*根据分组规则插入分组*/
-            return this.addRespondentByRule(studentId, 3, resposiblity, subjectId, grade, majorId);
+            return this.addRespondentByRule(studentId, type, resposiblity, subjectId, grade, majorId);
         } else {
             throw new GlobalException(500, "请等待设置分组");
         }
