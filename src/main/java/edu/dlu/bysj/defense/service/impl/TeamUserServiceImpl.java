@@ -214,7 +214,7 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
             int type = idList.get(random.nextInt(idList.size()));
 //            System.out.println("--------------------------"+type);
             /*根据分组规则插入分组*/
-            return this.addRespondentByRule(studentId, type, resposiblity, subjectId, grade, majorId);
+            return this.addRespondentByRule(studentId, 3, resposiblity, subjectId, grade, majorId);
         } else {
             throw new GlobalException(500, "请等待设置分组");
         }
@@ -236,6 +236,10 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
             }
 
             List<Integer> teamIds = teamService.similarGuideTeacher(subject.getFirstTeacherId(), grade, majorId);
+            if(teamIds.size() == 0){
+                return false;
+            }
+
             return this.fillingSerialAndTeamId(teamUser, teamIds);
         } else if (configRule.equals(1)) {
             /*互评教师与学生同组*/
@@ -249,6 +253,10 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
             }
 
             List<Integer> teamIds = teamService.similarOtherTeacher(otherPersonId, grade, majorId);
+            if(teamIds.size() == 0){
+                return false;
+            }
+
             return this.fillingSerialAndTeamId(teamUser, teamIds);
         } else if (configRule.equals(2)) {
             /*不与指导教师同组*/
@@ -256,7 +264,6 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
             if(teamIds.size() == 0){
                 return false;
             }
-//            return false;
             return this.fillingSerialAndTeamId(teamUser, teamIds);
         } else {
             /*随机分配*/
@@ -266,7 +273,7 @@ public class TeamUserServiceImpl extends ServiceImpl<TeamUserMapper, TeamUser> i
             int i = RandomUtil.randomInt(0, teams.size());
 
             //防止出现随机到不合理的组别
-            if(i!=3) {
+            if(teams.get(i).getType()!=3) {
                 return this.addRespondentByRule(studentId, i, resposiblity, subjectId, grade, majorId);
             }
 
